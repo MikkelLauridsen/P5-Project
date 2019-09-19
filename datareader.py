@@ -55,28 +55,28 @@ pattern2 = r"(?P<id>[0-9a-f]*)	(?P<dlc>[0-8])	(?P<data>(([0-9a-f]*)( )?)*)		( )*
 
 #Loads data from "Attack_free_dataset.txt"
 def load_attack_free1(start = 0, limit = None):
-    return load_data("Attack_free_dataset.txt", pattern1, start, limit)
+    return load_data("data/Attack_free_dataset.txt", pattern1, start, limit)
 
 #Loads data from "Attack_free_dataset2.txt"
 def load_attack_free2(start = 0, limit = None):
-    return load_data("Attack_free_dataset2.txt", pattern2, start + 1, limit)
+    return load_data("data/Attack_free_dataset2.txt", pattern2, start + 1, limit)
 
 #Loads data from "Impersonation_attack_dataset.txt"
 def load_impersonation_1(start = 0, limit = None):
-    return load_data("Impersonation_attack_dataset.txt", start, limit)
+    return load_data("data/Impersonation_attack_dataset.txt", start, limit)
 
 #Loads data from "170907_impersonation.txt"
 def load_impersonation_2(start = 0, limit = None):
-    return load_data("170907_impersonation.txt", start, limit)
+    return load_data("data/170907_impersonation.txt", start, limit)
 
 #Loads data from "170907_impersonation_2.txt"
 def load_impersonation_3(start = 0, limit = None):
-    return load_data("170907_impersonation_2.txt", start, limit)
+    return load_data("data/170907_impersonation_2.txt", start, limit)
 
 #Loads data from "DoS_attack_dataset.txt"
 def load_dos(start = 0, limit = None):
-    return load_data("DoS_attack_dataset.txt", start, limit)
+    return load_data("data/DoS_attack_dataset.txt", start, limit)
 
 #Loads data from "Fuzzy_attack_dataset.txt"
 def load_fuzzy(start = 0, limit = None):
-    return load_data("Fuzzy_attack_dataset.txt", start, limit)
+    return load_data("data/Fuzzy_attack_dataset.txt", start, limit)
