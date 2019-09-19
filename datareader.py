@@ -63,20 +63,20 @@ def load_attack_free2(start = 0, limit = None):
 
 #Loads data from "Impersonation_attack_dataset.txt"
 def load_impersonation_1(start = 0, limit = None):
-    return load_data("data/Impersonation_attack_dataset.txt", start, limit)
+    return load_data("data/Impersonation_attack_dataset.txt", pattern1, start, limit)
 
 #Loads data from "170907_impersonation.txt"
 def load_impersonation_2(start = 0, limit = None):
-    return load_data("data/170907_impersonation.txt", start, limit)
+    return load_data("data/170907_impersonation.txt", pattern1, start, limit)
 
 #Loads data from "170907_impersonation_2.txt"
 def load_impersonation_3(start = 0, limit = None):
-    return load_data("data/170907_impersonation_2.txt", start, limit)
+    return load_data("data/170907_impersonation_2.txt", pattern1, start, limit)
 
 #Loads data from "DoS_attack_dataset.txt"
 def load_dos(start = 0, limit = None):
-    return load_data("data/DoS_attack_dataset.txt", start, limit)
+    return load_data("data/DoS_attack_dataset.txt", pattern1, start, limit)
 
 #Loads data from "Fuzzy_attack_dataset.txt"
 def load_fuzzy(start = 0, limit = None):
-    return load_data("data/Fuzzy_attack_dataset.txt", start, limit)
+    return load_data("data/Fuzzy_attack_dataset.txt", pattern1, start, limit)
