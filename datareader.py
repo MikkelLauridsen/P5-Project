@@ -54,10 +54,9 @@ def load_data(filepath, pattern, start=0, limit=None):
     return data
 
 
-pattern1 = r"Timestamp:( )*(?P<timestamp>.*)        ID: (?P<id>[0-9a-f]*)    (?P<add>[01]*)    DLC: (?P<dlc>[0-8])(   "\
-           r" (?P<data>(([0-9a-f]+)( )?)*))? "
+pattern1 = r"Timestamp:( )*(?P<timestamp>.*)        ID: (?P<id>[0-9a-f]*)    (?P<add>[01]*)    "\
+           r"DLC: (?P<dlc>[0-8])(    (?P<data>(([0-9a-f]+)( )?)*))?"
 pattern2 = r"(?P<id>[0-9a-f]*)	(?P<dlc>[0-8])	(?P<data>(([0-9a-f]*)( )?)*)		( )*(?P<timestamp>.*)"
-
 
 # Loads data from "Attack_free_dataset.txt"
 def load_attack_free1(start=0, limit=None):
