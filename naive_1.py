@@ -1,4 +1,4 @@
-import datareader
+import datareader_csv
 
 
 def build_transition_matrix(ids):
@@ -36,11 +36,11 @@ def combine_matrix(mat1, mat2):
     return res
 
 
-ids_attack_free = [message.id for message in datareader.load_attack_free1(0, 10000)]
-ids_attack_free_2 = [message.id for message in datareader.load_attack_free2(0, 10000)]
-ids_fuzzy_bad = [message.id for message in datareader.load_fuzzy(500000, 50)]
-ids_dos = [message.id for message in datareader.load_dos(0, 50)]
-ids_imp = [message.id for message in datareader.load_impersonation_1(0, 50)]
+ids_attack_free = [message.id for message in datareader_csv.load_attack_free1(0, 10000)]
+ids_attack_free_2 = [message.id for message in datareader_csv.load_attack_free2(0, 10000)]
+ids_fuzzy_bad = [message.id for message in datareader_csv.load_fuzzy(500000, 50)]
+ids_dos = [message.id for message in datareader_csv.load_dos(0, 50)]
+ids_imp = [message.id for message in datareader_csv.load_impersonation_1(0, 50)]
 
 mat1 = build_transition_matrix(ids_attack_free)
 mat2 = build_transition_matrix(ids_attack_free_2)
@@ -51,8 +51,8 @@ print(is_intrusion(ids_fuzzy_bad, matrix))
 print(is_intrusion(ids_dos, matrix))
 print(is_intrusion(ids_imp, matrix))
 
-ids_fuzzy_good_1 = [message.id for message in datareader.load_fuzzy(0, 100000)]
-ids_fuzzy_good_2 = [message.id for message in datareader.load_fuzzy(100000, 1000)]
+ids_fuzzy_good_1 = [message.id for message in datareader_csv.load_fuzzy(0, 100000)]
+ids_fuzzy_good_2 = [message.id for message in datareader_csv.load_fuzzy(100000, 1000)]
 
 matrix_fuzzy = build_transition_matrix(ids_fuzzy_good_1)
 print(is_intrusion(ids_fuzzy_good_2, matrix_fuzzy))
