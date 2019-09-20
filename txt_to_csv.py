@@ -3,13 +3,13 @@ import datareader_old
 import os
 
 # Setting up a link between each txt file function and their equivalent csv file.
-txt_to_csv = [(datareader_old.load_impersonation_2, "data/170907_impersonation.csv"),
-              (datareader_old.load_impersonation_3, "data/170907_impersonation_2.csv"),
-              (datareader_old.load_attack_free1, "data/Attack_free_dataset.csv"),
-              (datareader_old.load_attack_free2, "data/Attack_free_dataset2.csv"),
-              (datareader_old.load_dos, "data/DoS_attack_dataset.csv"),
-              (datareader_old.load_fuzzy, "data/Fuzzy_attack_dataset.csv"),
-              (datareader_old.load_impersonation_1, "data/Impersonation_attack_dataset.csv")]
+txt_to_csv = [(datareader_old.load_impersonation_2, "data_csv/170907_impersonation.csv"),
+              (datareader_old.load_impersonation_3, "data_csv/170907_impersonation_2.csv"),
+              (datareader_old.load_attack_free1, "data_csv/Attack_free_dataset.csv"),
+              (datareader_old.load_attack_free2, "data_csv/Attack_free_dataset2.csv"),
+              (datareader_old.load_dos, "data_csv/DoS_attack_dataset.csv"),
+              (datareader_old.load_fuzzy, "data_csv/Fuzzy_attack_dataset.csv"),
+              (datareader_old.load_impersonation_1, "data_csv/Impersonation_attack_dataset.csv")]
 
 # Going through each link between txt file functions and csv files.
 for i in range(len(txt_to_csv)):
@@ -31,4 +31,4 @@ for i in range(len(txt_to_csv)):
             csv_writer.writerow(row)
 
         # Removing the txt file after it has been converted to a csv file.
-        os.remove(txt_to_csv[i][1][:-3] + "txt")
+        # os.remove(txt_to_csv[i][1][:-3] + "txt")
