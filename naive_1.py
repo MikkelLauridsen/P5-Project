@@ -23,22 +23,24 @@ def is_intrusion(ids, matrix):
 
 def combine_matrix(mat1, mat2):
     res = {}
-    for i in range(2**16):
-        for j in range(2**16):
-            if mat1.get(i, None) is not None and mat1[i].get(j, None):
-                res.setdefault(i, {})
-                res[i][j] = True
-            elif mat2.get(i, None) is not None and mat2[i].get(j, None):
-                res.setdefault(i, {})
-                res[i][j] = True
+    for row in mat1.keys():
+        for col in mat1[row].keys():
+            res.setdefault(row, {})
+            res[row][col] = mat1[row][col]
+
+    for row in mat2.keys():
+        for col in mat2[row].keys():
+            res.setdefault(row, {})
+            res[row][col] = mat2[row][col]
+
+    return res
 
 
-
-ids_attack_free = [message.id for message in datareader_old.load_attack_free1(0)]
-ids_attack_free_2 = [message.id for message in datareader_old.load_attack_free2(0)]
-ids_fuzzy_bad = [message.id for message in datareader_old.load_fuzzy(500000, 50)]
-ids_dos = [message.id for message in datareader_old.load_dos(0, 50)]
-ids_imp = [message.id for message in datareader_old.load_impersonation_1(0, 50)]
+ids_attack_free = [message.id for message in datareader.load_attack_free1(0, 10000)]
+ids_attack_free_2 = [message.id for message in datareader.load_attack_free2(0, 10000)]
+ids_fuzzy_bad = [message.id for message in datareader.load_fuzzy(500000, 50)]
+ids_dos = [message.id for message in datareader.load_dos(0, 50)]
+ids_imp = [message.id for message in datareader.load_impersonation_1(0, 50)]
 
 mat1 = build_transition_matrix(ids_attack_free)
 mat2 = build_transition_matrix(ids_attack_free_2)
@@ -49,8 +51,8 @@ print(is_intrusion(ids_fuzzy_bad, matrix))
 print(is_intrusion(ids_dos, matrix))
 print(is_intrusion(ids_imp, matrix))
 
-ids_fuzzy_good_1 = [message.id for message in datareader_old.load_fuzzy(0, 100000)]
-ids_fuzzy_good_2 = [message.id for message in datareader_old.load_fuzzy(100000, 1000)]
+ids_fuzzy_good_1 = [message.id for message in datareader.load_fuzzy(0, 100000)]
+ids_fuzzy_good_2 = [message.id for message in datareader.load_fuzzy(100000, 1000)]
 
 matrix_fuzzy = build_transition_matrix(ids_fuzzy_good_1)
 print(is_intrusion(ids_fuzzy_good_2, matrix_fuzzy))
