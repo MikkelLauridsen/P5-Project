@@ -14,6 +14,7 @@ class Message(dataobject):
         return f"{{{self.timestamp}, {self.id}, {self.add}, {self.dlc}, {self.data}}}"
 
 
+
 def parse_message(message_str, pattern):
     m = re.match(pattern, message_str)
     timestamp = float(m.group("timestamp"))
