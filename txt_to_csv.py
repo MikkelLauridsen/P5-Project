@@ -13,7 +13,7 @@ load_functions_and_paths = datareader_txt.get_load_functions_and_paths()
 for i in range(len(load_functions_and_paths)):
     text_file = load_functions_and_paths[i][0](mode="txt_to_csv")
 
-    with open(load_functions_and_paths[i][1], "w", newline="") as csv_file:
+    with open(load_functions_and_paths[i][1][:-3] + "csv", "w", newline="") as csv_file:
         csv_writer = csv.writer(csv_file, quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
         csv_writer.writerow(["timestamp", "id", "add", "dlc", "data"])

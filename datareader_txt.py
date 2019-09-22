@@ -100,10 +100,10 @@ def load_fuzzy(start=0, limit=None, mode="txt"):
 
 # Returning a list containing all the different load functions and corresponding paths in no particular order.
 def get_load_functions_and_paths():
-    return [(load_attack_free1, "data_csv/Attack_free_dataset.csv"),
-            (load_attack_free2, "data_csv/Attack_free_dataset2.csv"),
-            (load_impersonation_1, "data_csv/Impersonation_attack_dataset.csv"),
-            (load_impersonation_2, "data_csv/170907_impersonation.csv"),
-            (load_impersonation_3, "data_csv/170907_impersonation_2.csv"),
-            (load_dos, "data_csv/DoS_attack_dataset.csv"),
-            (load_fuzzy, "data_csv/Fuzzy_attack_dataset.csv")]
+    return [(load_attack_free1, "data_csv/Attack_free_dataset.txt"),
+            (load_attack_free2, "data_csv/Attack_free_dataset2.txt"),
+            (load_impersonation_1, "data_csv/Impersonation_attack_dataset.txt"),
+            (load_impersonation_2, "data_csv/170907_impersonation.txt"),
+            (load_impersonation_3, "data_csv/170907_impersonation_2.txt"),
+            (load_dos, "data_csv/DoS_attack_dataset.txt"),
+            (load_fuzzy, "data_csv/Fuzzy_attack_dataset.txt")]
