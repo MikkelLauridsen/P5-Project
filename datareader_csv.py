@@ -62,7 +62,7 @@ def load_attack_free1(start=0, limit=None):
 
 # Loads data from "Attack_free_dataset2.txt"
 def load_attack_free2(start=0, limit=None):
-    return load_data("data_csv/Attack_free_dataset2.csv", start + 1, limit)
+    return load_data("data_csv/Attack_free_dataset2.csv", start, limit)
 
 
 # Loads data from "Impersonation_attack_dataset.txt"
