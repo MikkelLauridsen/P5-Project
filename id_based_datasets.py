@@ -9,10 +9,11 @@ class IDPoint(dataobject):
     variance_id_frequency: float
     num_id_transitions: int
     num_ids: int
+    num_msgs: int
 
     def __str__(self):
         return f"injected: {self.is_injected} mean interval: {self.mean_id_interval} frequency variance: " \
-            f"{self.variance_id_frequency} transitions: {self.num_id_transitions} ids: {self.num_ids}"
+            f"{self.variance_id_frequency} transitions: {self.num_id_transitions} ids: {self.num_ids} msgs: {self.num_msgs}"
 
 
 # Finds and returns the mean ID interval,
@@ -79,8 +80,9 @@ def messages_to_idpoint(messages, is_injected):
     variance_id_frequency = calculate_variance_id_frequency(messages)
     num_id_transitions = calculate_num_id_transitions(messages)
     num_ids = calculate_num_ids(messages)
+    num_msgs = len(messages)
 
-    return IDPoint(is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids)
+    return IDPoint(is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids, num_msgs)
 
 
 # Converts a list of messages to a list of IDPoints,
@@ -103,7 +105,7 @@ def messages_to_idpoints(messages, period_ms, is_injected):
     return idpoints
 
 
-messages = datareader_csv.load_data("data_csv/Attack_free_dataset.csv", 0, 10000)
+messages = datareader_csv.load_data("data_csv/Attack_free_dataset.csv", 0, 1000000)
 idpoints = messages_to_idpoints(messages, 100, False)
 
 print(idpoints)
