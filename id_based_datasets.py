@@ -1,5 +1,7 @@
 import datareader_csv
 from recordclass import dataobject
+import os
+import csv
 import math
 
 
@@ -105,8 +107,34 @@ def messages_to_idpoints(messages, period_ms, is_injected):
     return idpoints
 
 
+def write_idpoint_csv(idpoint, datafile_writer):
+    datafile_writer.writerow([
+        str(idpoint.is_injected), str(idpoint.mean_id_interval),
+        str(idpoint.variance_id_frequency), str(idpoint.num_id_transitions),
+        str(idpoint.num_ids), str(idpoint.num_msgs)])
+
+
+def write_idpoints_csv(idpoints, period_ms):
+    # Creating a csv path for the new file using the corresponding csv file currently loaded from.
+    dir = "idpoint_dataset/"
+    csv_path = dir + str(len(idpoints)) + "_" + str(period_ms) + ".csv"
+
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+    with open(csv_path, "w", newline="") as datafile:
+        datafile_writer = csv.writer(datafile, delimiter=",")
+
+        # Writing the header.
+        datafile_writer.writerow([
+            "is_injected", "mean_id_interval", "variance_id_frequency",
+            "num_id_transitions", "num_ids", "num_msgs"])
+
+        for idpoint in idpoints:
+            write_idpoint_csv(idpoint, datafile_writer)
+
+
 messages = datareader_csv.load_data("data_csv/Attack_free_dataset.csv", 0, 1000000)
 idpoints = messages_to_idpoints(messages, 100, False)
 
-print(idpoints)
-print(f"Num idpoints: {len(idpoints)}")
+write_idpoints_csv(idpoints, 100)
