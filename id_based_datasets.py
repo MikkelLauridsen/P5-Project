@@ -6,6 +6,7 @@ import math
 
 
 class IDPoint(dataobject):
+    time_ms: int
     is_injected: bool
     mean_id_interval: float
     variance_id_frequency: float
@@ -14,7 +15,7 @@ class IDPoint(dataobject):
     num_msgs: int
 
     def __str__(self):
-        return f"injected: {self.is_injected} mean interval: {self.mean_id_interval} frequency variance: " \
+        return f"time_ms: {self.time_ms} injected: {self.is_injected} mean interval: {self.mean_id_interval} frequency variance: " \
             f"{self.variance_id_frequency} transitions: {self.num_id_transitions} ids: {self.num_ids} msgs: {self.num_msgs}"
 
 
@@ -78,13 +79,15 @@ def calculate_num_ids(messages):
 # Converts input 'messages' to an IDPoint object.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 def messages_to_idpoint(messages, is_injected):
+    # this function may never be called with an empty list
+    time_ms = messages[0].timestamp * 1000
     mean_id_interval = calculate_mean_id_interval(messages)
     variance_id_frequency = calculate_variance_id_frequency(messages)
     num_id_transitions = calculate_num_id_transitions(messages)
     num_ids = calculate_num_ids(messages)
     num_msgs = len(messages)
 
-    return IDPoint(is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids, num_msgs)
+    return IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids, num_msgs)
 
 
 # Converts a list of messages to a list of IDPoints,
@@ -109,7 +112,7 @@ def messages_to_idpoints(messages, period_ms, is_injected):
 
 def write_idpoint_csv(idpoint, datafile_writer):
     datafile_writer.writerow([
-        str(idpoint.is_injected), str(idpoint.mean_id_interval),
+        str(idpoint.time_ms), str(idpoint.is_injected), str(idpoint.mean_id_interval),
         str(idpoint.variance_id_frequency), str(idpoint.num_id_transitions),
         str(idpoint.num_ids), str(idpoint.num_msgs)])
 
@@ -127,7 +130,7 @@ def write_idpoints_csv(idpoints, period_ms):
 
         # Writing the header.
         datafile_writer.writerow([
-            "is_injected", "mean_id_interval", "variance_id_frequency",
+            "time_ms", "is_injected", "mean_id_interval", "variance_id_frequency",
             "num_id_transitions", "num_ids", "num_msgs"])
 
         for idpoint in idpoints:
