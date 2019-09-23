@@ -11,10 +11,11 @@ class IDPoint(dataobject):
     num_ids: int
 
     def __str__(self):
-        return f"injected: {self.is_injected} mean interval: {self.mean_id_interval} frequency variance: {self.variance_id_frequency} transitions: {self.num_id_transitions} ids: {self.num_ids}"
+        return f"injected: {self.is_injected} mean interval: {self.mean_id_interval} frequency variance: " \
+            f"{self.variance_id_frequency} transitions: {self.num_id_transitions} ids: {self.num_ids}"
 
 
-# finds and returns the mean ID interval,
+# Finds and returns the mean ID interval,
 # where an ID interval is the time period between two messages of the same ID.
 def calculate_mean_id_interval(messages):
     intervals = []
@@ -29,7 +30,7 @@ def calculate_mean_id_interval(messages):
     return intervals[math.floor(len(intervals) / 2)]
 
 
-# finds and returns the variance of ID frequencies in 'messages',
+# Finds and returns the variance of ID frequencies in 'messages',
 # where a frequency is the number of times a given ID was used in 'messages'.
 def calculate_variance_id_frequency(messages):
     frequencies = {}
@@ -45,7 +46,7 @@ def calculate_variance_id_frequency(messages):
     return max(values) - min(values)
 
 
-# finds and returns the number of unique ID transitions in 'messages',
+# Finds and returns the number of unique ID transitions in 'messages',
 # where (msg1.ID -> msg2.ID) is a transition.
 def calculate_num_id_transitions(messages):
     if len(messages) == 0:
@@ -61,7 +62,7 @@ def calculate_num_id_transitions(messages):
     return len(transitions_seen)
 
 
-# finds and returns the number of unique IDs in 'messages'
+# Finds and returns the number of unique IDs in 'messages'
 def calculate_num_ids(messages):
     ids_seen = set()
 
@@ -71,7 +72,7 @@ def calculate_num_ids(messages):
     return len(ids_seen)
 
 
-# converts input 'messages' to an IDPoint object.
+# Converts input 'messages' to an IDPoint object.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 def messages_to_idpoint(messages, is_injected):
     mean_id_interval = calculate_mean_id_interval(messages)
@@ -82,7 +83,7 @@ def messages_to_idpoint(messages, is_injected):
     return IDPoint(is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids)
 
 
-# converts a list of messages to a list of IDPoints,
+# Converts a list of messages to a list of IDPoints,
 # where each point is comprised of 'messages' in 'period_ms' time interval.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 def messages_to_idpoints(messages, period_ms, is_injected):
