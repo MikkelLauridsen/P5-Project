@@ -129,7 +129,7 @@ def write_idpoints_csv(idpoints, period_ms, name):
         os.makedirs(dir)
 
     with open(csv_path, "w", newline="") as datafile:
-        datafile_writer = csv.writer(datafile, delimiter=";")
+        datafile_writer = csv.writer(datafile, delimiter=",")
 
         # Writing the header.
         datafile_writer.writerow([
@@ -197,18 +197,34 @@ def get_mixed_datasets(period_ms):
         messages_to_idpoints(imp_messages3[0:534000], period_ms, False),
         messages_to_idpoints(imp_messages3[534000:], period_ms, True)]
 
+    offset_training, offset_validation, offset_test = 0, 0, 0
+
     for set in datasets:
         training_high = math.floor(len(set) * 0.70)
         validation_high = math.floor(len(set) * 0.85)
 
-        training += set[0:training_high]
-        validation += set[training_high:validation_high]
-        test += set[validation_high:]
+        training_low = set[0].time_ms
+        validation_low = set[training_high].time_ms
+        test_low = set[validation_high].time_ms
 
-    return (training, validation, test)
+        training += [offset_idpoint(idp, offset_training - training_low) for idp in set[0:training_high]]
+        validation += [offset_idpoint(idp, offset_validation - validation_low) for idp in set[training_high:validation_high]]
+        test += [offset_idpoint(idp, offset_test - test_low) for idp in set[validation_high:]]
+
+        offset_training = training[len(training) - 1].time_ms
+        offset_validation = validation[len(validation) - 1].time_ms
+        offset_test = test[len(test) - 1].time_ms
+
+    return training, validation, test
 
 
-(training_set, validation_set, test_set) = get_mixed_datasets(100)
+def offset_idpoint(idp, offset):
+    idp.time_ms += offset
+
+    return idp
+
+
+training_set, validation_set, test_set = get_mixed_datasets(100)
 
 write_idpoints_csv(training_set, 100, "mixed_training")
 write_idpoints_csv(validation_set, 100, "mixed_validation")
