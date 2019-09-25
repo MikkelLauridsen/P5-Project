@@ -31,7 +31,7 @@ def calculate_mean_id_interval(messages):
 
         last_seen_timestamps[message.id] = message.timestamp
 
-    return intervals[math.floor(len(intervals) / 2)]
+    return math.fsum(intervals) / len(intervals)
 
 
 # Finds and returns the variance of ID frequencies in 'messages',
@@ -46,8 +46,14 @@ def calculate_variance_id_frequency(messages):
             frequencies[message.id] += 1
 
     values = frequencies.values()
+    avg_freq = math.fsum(values) / len(values)
+    variance = 0
 
-    return max(values) - min(values)
+    for freq in values:
+        deviation = freq - avg_freq
+        variance += deviation * deviation
+
+    return (1.0 / len(values)) * variance
 
 
 # Finds and returns the number of unique ID transitions in 'messages',
@@ -150,7 +156,9 @@ def concat_messages(msgs1, msgs2):
 
     return msgs1 + msgs2
 
-
+# modifies input list of messages,
+# such that the first message starts at time 0.
+# returns the changed input list.
 def neutralize_offset(messages):
     offset = messages[0].timestamp
 
