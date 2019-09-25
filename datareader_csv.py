@@ -21,7 +21,7 @@ def __parse_message(row):
 
 def __parse_idpoint(row):
     time_ms = float(row[0])
-    is_injected = bool(row[1])
+    is_injected = True if row[1] == "True" else False
     mean_id_interval = float(row[2])
     variance_id_frequency = float(row[3])
     num_id_transitions = int(row[4])
