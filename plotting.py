@@ -2,12 +2,27 @@ import datareader_csv
 import matplotlib.pyplot as plt
 import id_based_datasets
 
-#training_set, validation_set, test_set = id_based_datasets.get_mixed_datasets(100)
-#idpoints = training_set
+training_set, validation_set, test_set = id_based_datasets.get_mixed_datasets(100)
+idpoints = training_set
 
-idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_training_32888_100ms.csv", 0)
+#idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_training_32888_100ms.csv", 0)
 #idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_validation_7046_100ms.csv", 0)
 #idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_test_7053_100ms.csv", 0)
+
+#dataset = datareader_csv.load_impersonation_3()
+#idpoints = id_based_datasets.messages_to_idpoints(dataset[0:533000], 100, False)
+#idpoints += id_based_datasets.messages_to_idpoints(dataset[533000:], 100, True)
+
+#dataset = datareader_csv.load_fuzzy()
+#idpoints = id_based_datasets.messages_to_idpoints(dataset[0:450000], 100, False)
+#idpoints += id_based_datasets.messages_to_idpoints(dataset[450000:], 100, True)
+
+#dataset = datareader_csv.load_dos()
+#idpoints = id_based_datasets.messages_to_idpoints(dataset, 100, True)
+
+#dataset = datareader_csv.load_attack_free1()
+#idpoints = id_based_datasets.messages_to_idpoints(dataset, 100, False)
+
 
 time_ms = [idpoint.time_ms for idpoint in idpoints]
 is_injected = [idpoint.is_injected for idpoint in idpoints]
@@ -18,46 +33,38 @@ num_ids = [idpoint.num_ids for idpoint in idpoints]
 num_msgs = [idpoint.num_msgs for idpoint in idpoints]
 mean_id_intervals_variances = [idpoint.mean_id_intervals_variance for idpoint in idpoints]
 
+injected_colors = ["#ff0000" if inj else "#0000ff" for inj in is_injected]
 
-plt.figure(figsize=(20, 10))
-plt.scatter(time_ms, mean_id_interval)
-plt.xlabel("Time")
-plt.ylabel("Median id interval")
+
+def setup_scatter(xaxis, yaxis, xlabel, ylabel, colors=injected_colors, legend=""):
+    plt.figure(figsize=(12, 7))
+    plt.scatter(xaxis, yaxis, s=5, c=colors)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend(legend)
+
+
+setup_scatter(time_ms, mean_id_interval, "Time", "Mean id interval")
 plt.show()
 
-plt.figure(figsize=(20, 10))
-plt.scatter(time_ms, variance_id_frequency)
-plt.xlabel("Time")
-plt.ylabel("Variance id frequency")
+setup_scatter(time_ms, variance_id_frequency, "Time", "Variance id frequency")
 plt.show()
 
-plt.figure(figsize=(20, 10))
-plt.scatter(time_ms, num_id_transitions)
-plt.xlabel("Time")
-plt.ylabel("# id transitions")
+setup_scatter(time_ms, num_id_transitions, "Time", "# id transitions")
 plt.show()
 
-plt.figure(figsize=(20, 10))
-plt.scatter(time_ms, num_ids)
-plt.xlabel("Time")
-plt.ylabel("# ids")
+setup_scatter(time_ms, num_ids, "Time", "# ids")
 plt.show()
 
-plt.figure(figsize=(20, 10))
-plt.scatter(time_ms, num_msgs)
-plt.xlabel("Time")
-plt.ylabel("# messages")
+setup_scatter(time_ms, num_msgs, "Time", "# messages")
 plt.show()
 
-plt.figure(figsize=(20, 10))
+setup_scatter(time_ms, mean_id_intervals_variances, "Time", "mean_id_intervals_variances")
+plt.ylim(top=0.0005, bottom=-0.00025)
+plt.show()
+
+plt.figure(figsize=(10, 5))
 plt.stackplot(time_ms, is_injected)
 plt.xlabel("Time")
 plt.ylabel("Is injected")
-plt.show()
-
-plt.figure(figsize=(20, 10))
-plt.scatter(time_ms, mean_id_intervals_variances)
-plt.ylim(top=0.0005, bottom=-0.00025)
-plt.xlabel("Time")
-plt.ylabel("mean_id_intervals_variances")
 plt.show()
