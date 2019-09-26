@@ -17,6 +17,9 @@ num_id_transitions = [idpoint.num_id_transitions for idpoint in idpoints]
 num_ids = [idpoint.num_ids for idpoint in idpoints]
 num_msgs = [idpoint.num_msgs for idpoint in idpoints]
 mean_id_intervals_variances = [idpoint.mean_id_intervals_variance for idpoint in idpoints]
+mean_data_bit_counts = [idpoint.mean_data_bit_count for idpoint in idpoints]
+variance_data_bit_counts = [idpoint.variance_data_bit_count for idpoint in idpoints]
+mean_variance_data_bit_count_ids = [idpoint.mean_variance_data_bit_count_id for idpoint in idpoints]
 
 
 plt.figure(figsize=(20, 10))
@@ -60,4 +63,22 @@ plt.scatter(time_ms, mean_id_intervals_variances)
 plt.ylim(top=0.0005, bottom=-0.00025)
 plt.xlabel("Time")
 plt.ylabel("mean_id_intervals_variances")
+plt.show()
+
+plt.figure(figsize=(20, 10))
+plt.scatter(time_ms, mean_data_bit_counts)
+plt.xlabel("Time")
+plt.ylabel("Mean data bit-counts")
+plt.show()
+
+plt.figure(figsize=(20, 10))
+plt.scatter(time_ms, variance_data_bit_counts)
+plt.xlabel("Time")
+plt.ylabel("Variance data bit-counts")
+plt.show()
+
+plt.figure(figsize=(20, 10))
+plt.scatter(time_ms, mean_variance_data_bit_count_ids)
+plt.xlabel("Time")
+plt.ylabel("Mean variance data bit-count ids")
 plt.show()
