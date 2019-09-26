@@ -1,34 +1,6 @@
 import csv
-from message import Message
-from idpoint import IDPoint
-
-
-def __parse_message(row):
-    timestamp = float(row[0])
-    id = int(row[1])
-    add = int(row[2])
-    dlc = int(row[3])
-
-    data = None
-    if dlc > 0:
-        raw_data = row[4].split(" ")
-        while len(raw_data) > dlc:
-            raw_data.pop()
-        data = bytearray([int(i, 16) for i in raw_data])
-
-    return Message(timestamp, id, add, dlc, data)
-
-
-def __parse_idpoint(row):
-    time_ms = float(row[0])
-    is_injected = True if row[1] == "True" else False
-    mean_id_interval = float(row[2])
-    variance_id_frequency = float(row[3])
-    num_id_transitions = int(row[4])
-    num_ids = int(row[5])
-    num_msgs = int(row[6])
-
-    return IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids, num_msgs)
+import message
+import idpoint
 
 
 def __load_data(filepath, parse_func, start, limit):
@@ -58,11 +30,11 @@ def __load_data(filepath, parse_func, start, limit):
 
 
 def load_messages(filepath, start = 0, limit = None):
-    return __load_data(filepath, __parse_message, start, limit)
+    return __load_data(filepath, message.parse_csv_row, start, limit)
 
 
 def load_idpoints(filepath, start = 0, limit = None):
-    return __load_data(filepath, __parse_idpoint, start, limit)
+    return __load_data(filepath, idpoint.parse_csv_row, start, limit)
 
 
 # Loads data from "Attack_free_dataset.txt"
