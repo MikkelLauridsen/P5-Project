@@ -19,18 +19,23 @@ class IDPoint(dataobject):
             f"{self.variance_id_frequency} transitions: {self.num_id_transitions} ids: {self.num_ids} msgs: {self.num_msgs}"
 
 
+csv_header_row = ["time_ms", "is_injected", "mean_id_interval", "variance_id_frequency",
+                  "num_id_transitions", "num_ids", "num_msgs", "mean_id_intervals_variance",
+                  "mean_data_bit_count", "variance_data_bit_count", "mean_variance_data_bit_count_id"]
+
+
 def parse_csv_row(row):
-    time_ms = float(row[0])
-    is_injected = True if row[1] == "True" else False
-    mean_id_interval = float(row[2])
-    variance_id_frequency = float(row[3])
-    num_id_transitions = int(row[4])
-    num_ids = int(row[5])
-    num_msgs = int(row[6])
-    mean_id_intervals_variance = float(row[7])
-    mean_data_bit_count = float(row[8])
-    variance_data_bit_count = float(row[9])
-    mean_variance_data_bit_count_id = float(row[10])
+    time_ms = row[0]
+    is_injected = row[1]
+    mean_id_interval = row[2]
+    variance_id_frequency = row[3]
+    num_id_transitions = row[4]
+    num_ids = row[5]
+    num_msgs = row[6]
+    mean_id_intervals_variance = row[7]
+    mean_data_bit_count = row[8]
+    variance_data_bit_count = row[9]
+    mean_variance_data_bit_count_id = row[10]
 
     return IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency,
                    num_id_transitions, num_ids, num_msgs, mean_id_intervals_variance,

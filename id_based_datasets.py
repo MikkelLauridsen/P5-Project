@@ -193,9 +193,7 @@ def write_idpoints_csv(idpoints, period_ms, name):
         datafile_writer = csv.writer(datafile, delimiter=",")
 
         # Writing the header.
-        datafile_writer.writerow([
-            "time_ms", "is_injected", "mean_id_interval", "variance_id_frequency",
-            "num_id_transitions", "num_ids", "num_msgs"])
+        datafile_writer.writerow(idp.csv_header_row)
 
         for idpoint in idpoints:
             datafile_writer.writerow(idp.get_csv_row(idpoint))

@@ -2,10 +2,10 @@ import datareader_csv
 import matplotlib.pyplot as plt
 import id_based_datasets
 
-training_set, validation_set, test_set = id_based_datasets.get_mixed_datasets(100)
-idpoints = training_set
+#training_set, validation_set, test_set = id_based_datasets.get_mixed_datasets(100)
+#idpoints = training_set
 
-#idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_training_32888_100ms.csv", 0)
+idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_training_32888_100ms.csv", 0)
 #idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_validation_7046_100ms.csv", 0)
 #idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_test_7053_100ms.csv", 0)
 
@@ -36,7 +36,7 @@ mean_data_bit_counts = [idpoint.mean_data_bit_count for idpoint in idpoints]
 variance_data_bit_counts = [idpoint.variance_data_bit_count for idpoint in idpoints]
 mean_variance_data_bit_count_ids = [idpoint.mean_variance_data_bit_count_id for idpoint in idpoints]
 
-injected_colors = ["#ff0000" if inj else "#0000ff" for inj in is_injected]
+injected_colors = ["#B62121" if inj else "#246EB6" for inj in is_injected]
 
 
 def setup_scatter(xaxis, yaxis, xlabel, ylabel, colors=injected_colors, legend=""):
@@ -66,26 +66,17 @@ setup_scatter(time_ms, mean_id_intervals_variances, "Time", "mean_id_intervals_v
 plt.ylim(top=0.0005, bottom=-0.00025)
 plt.show()
 
+setup_scatter(time_ms, mean_data_bit_counts, "Time", "Mean data bit-counts")
+plt.show()
+
+setup_scatter(time_ms, variance_data_bit_counts, "Time", "Variance data bit-counts")
+plt.show()
+
+setup_scatter(time_ms, mean_variance_data_bit_count_ids, "Time", "Mean variance data bit-count ids")
+plt.show()
+
 plt.figure(figsize=(10, 5))
 plt.stackplot(time_ms, is_injected)
 plt.xlabel("Time")
 plt.ylabel("Is injected")
-plt.show()
-
-plt.figure(figsize=(20, 10))
-plt.scatter(time_ms, mean_data_bit_counts)
-plt.xlabel("Time")
-plt.ylabel("Mean data bit-counts")
-plt.show()
-
-plt.figure(figsize=(20, 10))
-plt.scatter(time_ms, variance_data_bit_counts)
-plt.xlabel("Time")
-plt.ylabel("Variance data bit-counts")
-plt.show()
-
-plt.figure(figsize=(20, 10))
-plt.scatter(time_ms, mean_variance_data_bit_count_ids)
-plt.xlabel("Time")
-plt.ylabel("Mean variance data bit-count ids")
 plt.show()
