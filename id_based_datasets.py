@@ -1,8 +1,38 @@
-from idpoint import IDPoint
+import idpoint as idp
 import datareader_csv
 import os
 import csv
 import math
+
+
+def __calculate_variance(values):
+    avg_freq = math.fsum(values) / len(values)
+    variance = 0
+
+    for freq in values:
+        deviation = freq - avg_freq
+        variance += deviation * deviation
+
+    return (1.0 / len(values)) * variance
+
+
+def calculate_mean_id_intervals_variance(messages):
+    id_timestamp_intervals = {}
+    last_seen_timestamps = {}
+
+    for message in messages:
+        if message.id in last_seen_timestamps:
+            interval = message.timestamp - last_seen_timestamps[message.id]
+            id_timestamp_intervals.setdefault(message.id, [])
+            id_timestamp_intervals[message.id].append(interval)
+
+        last_seen_timestamps[message.id] = message.timestamp
+
+    intervals_variances = []
+    for intervals in id_timestamp_intervals.values():
+        intervals_variances.append(__calculate_variance(intervals))
+
+    return math.fsum(intervals_variances) / len(intervals_variances)
 
 
 # Finds and returns the mean ID interval,
@@ -32,14 +62,7 @@ def calculate_variance_id_frequency(messages):
             frequencies[message.id] += 1
 
     values = frequencies.values()
-    avg_freq = math.fsum(values) / len(values)
-    variance = 0
-
-    for freq in values:
-        deviation = freq - avg_freq
-        variance += deviation * deviation
-
-    return (1.0 / len(values)) * variance
+    return __calculate_variance(values)
 
 
 # Finds and returns the number of unique ID transitions in 'messages',
@@ -78,8 +101,9 @@ def messages_to_idpoint(messages, is_injected):
     num_id_transitions = calculate_num_id_transitions(messages)
     num_ids = calculate_num_ids(messages)
     num_msgs = len(messages)
+    mean_id_intervals_variance = calculate_mean_id_intervals_variance(messages)
 
-    return IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids, num_msgs)
+    return idp.IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids, num_msgs, mean_id_intervals_variance)
 
 
 # Converts a list of messages to a list of IDPoints,
@@ -102,15 +126,6 @@ def messages_to_idpoints(messages, period_ms, is_injected):
     return idpoints
 
 
-# writes input IDPoint to file,
-# using the input writer.
-def write_idpoint_csv(idpoint, datafile_writer):
-    datafile_writer.writerow([
-        str(idpoint.time_ms), str(idpoint.is_injected), str(idpoint.mean_id_interval),
-        str(idpoint.variance_id_frequency), str(idpoint.num_id_transitions),
-        str(idpoint.num_ids), str(idpoint.num_msgs)])
-
-
 # writes a list of IDPoints to file.
 def write_idpoints_csv(idpoints, period_ms, name):
     # Creating a csv path for the new file using the corresponding csv file currently loaded from.
@@ -129,7 +144,7 @@ def write_idpoints_csv(idpoints, period_ms, name):
             "num_id_transitions", "num_ids", "num_msgs"])
 
         for idpoint in idpoints:
-            write_idpoint_csv(idpoint, datafile_writer)
+            datafile_writer.writerow(idp.get_csv_row(idpoint))
 
 
 # joins two lists of messages,
