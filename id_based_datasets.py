@@ -16,6 +16,20 @@ def __calculate_variance(values):
     return (1.0 / len(values)) * variance
 
 
+def __calculate_bit_count(message):
+    if message.dlc == 0:
+        return 0
+
+    count = 0
+
+    for byte in message.data:
+        for i in range(8):
+            if byte & (0b10000000 >> i):
+                count += 1
+
+    return count
+
+
 def calculate_mean_id_intervals_variance(messages):
     id_timestamp_intervals = {}
     last_seen_timestamps = {}
@@ -33,6 +47,41 @@ def calculate_mean_id_intervals_variance(messages):
         intervals_variances.append(__calculate_variance(intervals))
 
     return math.fsum(intervals_variances) / len(intervals_variances)
+
+
+def calculate_mean_data_bit_count(messages):
+    counts = []
+
+    for message in messages:
+        counts += [__calculate_bit_count(message)]
+
+    return math.fsum(counts) / len(counts)
+
+
+def calculate_variance_data_bit_count(messages):
+    counts = []
+
+    for message in messages:
+        counts += [__calculate_bit_count(message)]
+
+    return __calculate_variance(counts)
+
+
+def calculate_mean_variance_data_bit_count_id(messages):
+    id_counts = {}
+
+    for message in messages:
+        if message.id in id_counts:
+            id_counts[message.id] += [__calculate_bit_count(message)]
+        else:
+            id_counts[message.id] = [__calculate_bit_count(message)]
+
+    variances = []
+
+    for counts in id_counts.values():
+        variances += [__calculate_variance(counts)]
+
+    return math.fsum(variances) / len(variances)
 
 
 # Finds and returns the mean ID interval,
@@ -102,8 +151,13 @@ def messages_to_idpoint(messages, is_injected):
     num_ids = calculate_num_ids(messages)
     num_msgs = len(messages)
     mean_id_intervals_variance = calculate_mean_id_intervals_variance(messages)
+    mean_data_bit_count = calculate_mean_data_bit_count(messages)
+    variance_data_bit_count = calculate_variance_data_bit_count(messages)
+    mean_variance_data_bit_count_id = calculate_mean_variance_data_bit_count_id(messages)
 
-    return idp.IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids, num_msgs, mean_id_intervals_variance)
+    return idp.IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency,
+                       num_id_transitions, num_ids, num_msgs, mean_id_intervals_variance,
+                       mean_data_bit_count, variance_data_bit_count, mean_variance_data_bit_count_id)
 
 
 # Converts a list of messages to a list of IDPoints,
