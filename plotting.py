@@ -35,6 +35,7 @@ mean_id_intervals_variances = [idpoint.mean_id_intervals_variance for idpoint in
 mean_data_bit_counts = [idpoint.mean_data_bit_count for idpoint in idpoints]
 variance_data_bit_counts = [idpoint.variance_data_bit_count for idpoint in idpoints]
 mean_variance_data_bit_count_ids = [idpoint.mean_variance_data_bit_count_id for idpoint in idpoints]
+mean_probability_bits = [idpoint.mean_probability_bits for idpoint in idpoints]
 
 injected_colors = ["#B62121" if inj else "#246EB6" for inj in is_injected]
 
@@ -73,6 +74,9 @@ setup_scatter(time_ms, variance_data_bit_counts, "Time", "Variance data bit-coun
 plt.show()
 
 setup_scatter(time_ms, mean_variance_data_bit_count_ids, "Time", "Mean variance data bit-count ids")
+plt.show()
+
+setup_scatter(time_ms, mean_probability_bits, "Time", "Mean probability bits")
 plt.show()
 
 plt.figure(figsize=(10, 5))

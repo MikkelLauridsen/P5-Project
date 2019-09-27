@@ -30,6 +30,22 @@ def __calculate_bit_count(message):
     return count
 
 
+def calculate_mean_probability_bits(messages):
+    bits = [0 for i in range(64)]
+
+    for message in messages:
+        if message.dlc != 0:
+            for i in range(len(message.data)):
+                for j in range(8):
+                    if message.data[i] & (0b10000000 >> j):
+                        bits[i*8+j] += 1
+
+    for i in range(64):
+        bits[i] = bits[i] / len(messages)
+
+    return math.fsum(bits) / 64.0
+
+
 def calculate_mean_id_intervals_variance(messages):
     id_timestamp_intervals = {}
     last_seen_timestamps = {}
@@ -154,10 +170,12 @@ def messages_to_idpoint(messages, is_injected):
     mean_data_bit_count = calculate_mean_data_bit_count(messages)
     variance_data_bit_count = calculate_variance_data_bit_count(messages)
     mean_variance_data_bit_count_id = calculate_mean_variance_data_bit_count_id(messages)
+    mean_probability_bits = calculate_mean_probability_bits(messages)
 
     return idp.IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency,
                        num_id_transitions, num_ids, num_msgs, mean_id_intervals_variance,
-                       mean_data_bit_count, variance_data_bit_count, mean_variance_data_bit_count_id)
+                       mean_data_bit_count, variance_data_bit_count,
+                       mean_variance_data_bit_count_id, mean_probability_bits)
 
 
 # Converts a list of messages to a list of IDPoints,
@@ -249,8 +267,7 @@ def get_mixed_datasets(period_ms):
         messages_to_idpoints(attack_free_messages1, period_ms, False),
         messages_to_idpoints(attack_free_messages2, period_ms, False),
         messages_to_idpoints(dos_messages, period_ms, True),
-        messages_to_idpoints(fuzzy_messages[0:450000], period_ms, False),
-        messages_to_idpoints(fuzzy_messages[450000:], period_ms, True),
+        messages_to_idpoints(fuzzy_messages, period_ms, True),
         messages_to_idpoints(imp_messages1[0:517000], period_ms, False),
         messages_to_idpoints(imp_messages1[517000:], period_ms, True),
         messages_to_idpoints(imp_messages2[0:330000], period_ms, False),
