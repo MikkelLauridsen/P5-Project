@@ -4,10 +4,10 @@ import id_based_datasets
 
 
 # Load idpoints from datasets
-idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_training_32888_100ms.csv", 0)
-#idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_validation_7046_100ms.csv", 0)
-#idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_test_7053_100ms.csv", 0)
-#idpoints = datareader_csv.load_idpoints("idpoint_dataset/impersonation_full_11180_100ms.csv", 0)
+idpoints = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_32888_100ms.csv", 0)
+#idpoints = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_validation_7046_100ms.csv", 0)
+#idpoints = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_test_7053_100ms.csv", 0)
+#idpoints = datareader_csv.load_idpoints("data/idpoint_dataset/impersonation_full_11180_100ms.csv", 0)
 
 # Generate and plot impersonation 3
 #dataset = datareader_csv.load_impersonation_3()

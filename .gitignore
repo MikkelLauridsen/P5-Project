@@ -107,7 +107,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-raw_data/
-data_csv/
-frequency_features_data/
-idpoint_dataset/
+data/raw_data/
+data/data_csv/
+data/idpoint_dataset/

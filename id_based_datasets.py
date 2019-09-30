@@ -201,7 +201,7 @@ def messages_to_idpoints(messages, period_ms, is_injected):
 # writes a list of IDPoints to file.
 def write_idpoints_csv(idpoints, period_ms, name):
     # Creating a csv path for the new file using the corresponding csv file currently loaded from.
-    dir = "idpoint_dataset/"
+    dir = "data/idpoint_dataset/"
     csv_path = dir + name + "_" + str(len(idpoints)) + "_" + str(period_ms) + "ms.csv"
 
     if not os.path.exists(dir):
@@ -309,25 +309,3 @@ if __name__ == "__main__":
     write_idpoints_csv(training_set, 100, "mixed_training")
     write_idpoints_csv(validation_set, 100, "mixed_validation")
     write_idpoints_csv(test_set, 100, "mixed_test")
-
-
-    # attack_free_messages = concat_messages(datareader_csv.load_attack_free1(), datareader_csv.load_attack_free2())
-    # attack_free_idpoints = messages_to_idpoints(attack_free_messages, 100, False)
-    # write_idpoints_csv(attack_free_idpoints, 100, "attack_free_full")
-
-    # dos_idpoints = messages_to_idpoints(datareader_csv.load_dos(), 100, True)
-    # write_idpoints_csv(dos_idpoints, 100, "dos_full")
-
-    # fuzzy_idpoints = messages_to_idpoints(datareader_csv.load_fuzzy(0, 450000), 100, False) + messages_to_idpoints(datareader_csv.load_fuzzy(450000), 100, True)
-    # write_idpoints_csv(fuzzy_idpoints, 100, "fuzzy_full")
-
-    # imp_messages1 = neutralize_offset(datareader_csv.load_impersonation_1())
-    # imp_idpoints1 = messages_to_idpoints(imp_messages1[0:517000], 100, False) + messages_to_idpoints(imp_messages1[517000:], 100, True)
-    # imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2())
-    # imp_idpoints2 = messages_to_idpoints(imp_messages2[0:330000], 100, False) + messages_to_idpoints(imp_messages2[330000:], 100, True)
-    # imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
-    # imp_idpoints3 = messages_to_idpoints(imp_messages3[0:534000], 100, False) + messages_to_idpoints(imp_messages3[534000:], 100, True)
-    # imp_idpoints = concat_idpoints(concat_idpoints(imp_idpoints1, imp_idpoints2), imp_idpoints3)
-    # write_idpoints_csv(imp_idpoints, 100, "impersonation_full")
-
-
