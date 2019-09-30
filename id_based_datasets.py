@@ -227,6 +227,7 @@ def concat_messages(msgs1, msgs2):
 
     return msgs1 + msgs2
 
+
 # modifies input list of messages,
 # such that the first message starts at time 0.
 # returns the changed input list.

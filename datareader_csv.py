@@ -19,11 +19,11 @@ def __load_data(filepath, parse_func, start, limit):
     return data
 
 
-def load_messages(filepath, start = 0, limit = None):
+def load_messages(filepath, start=0, limit=None):
     return __load_data(filepath, message.parse_csv_row, start, limit)
 
 
-def load_idpoints(filepath, start = 0, limit = None):
+def load_idpoints(filepath, start=0, limit=None):
     return __load_data(filepath, idpoint.parse_csv_row, start, limit)
 
 

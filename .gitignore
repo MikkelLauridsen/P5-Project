@@ -1,4 +1,4 @@
-data/*
+raw_data/*
 .idea/*
 
 # Byte-compiled / optimized / DLL files
@@ -106,7 +106,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-data/
+raw_data/
 data_csv/
 frequency_features_data/
 idpoint_dataset/

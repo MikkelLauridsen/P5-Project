@@ -47,10 +47,10 @@ pattern2 = r"(?P<id>[0-9a-f]*)	(?P<dlc>[0-8])	(?P<data>(([0-9a-f]*)( )?)*)		( )*
 
 # Returning a list containing all the different txt file paths in no particular order.
 def __get_paths():
-    return ["data/Attack_free_dataset.txt", "data/Attack_free_dataset2.txt",
-            "data/Impersonation_attack_dataset.txt", "data/170907_impersonation.txt",
-            "data/170907_impersonation_2.txt", "data/DoS_attack_dataset.txt",
-            "data/Fuzzy_attack_dataset.txt"]
+    return ["raw_data/Attack_free_dataset.txt", "raw_data/Attack_free_dataset2.txt",
+            "raw_data/Impersonation_attack_dataset.txt", "raw_data/170907_impersonation.txt",
+            "raw_data/170907_impersonation_2.txt", "raw_data/DoS_attack_dataset.txt",
+            "raw_data/Fuzzy_attack_dataset.txt"]
 
 
 def txt_to_csv():
@@ -63,8 +63,8 @@ def txt_to_csv():
 
     # Going through each link between txt file functions and csv files.
     for i in range(len(txt_file_paths)):
-        # The attack free 2 data set needs to be called with special conditions because of its format.
-        if txt_file_paths[i] == "data/Attack_free_dataset2.txt":
+        # The attack free 2 raw_data set needs to be called with special conditions because of its format.
+        if txt_file_paths[i] == "raw_data/Attack_free_dataset2.txt":
             text_file = __load_data(txt_file_paths[i], pattern2, start=1)
         else:
             text_file = __load_data(txt_file_paths[i], pattern1)
