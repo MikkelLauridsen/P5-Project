@@ -156,6 +156,24 @@ def calculate_num_ids(messages):
     return len(ids_seen)
 
 
+def calculate_req_to_res_time_variance(messages):
+    intervals = []
+    latest_remote_frame_timestamp = {}
+
+    for message in messages:
+        if message.add == 0b100:
+            latest_remote_frame_timestamp[message.id] = message.timestamp
+        elif message.add == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
+            intervals.append(message.timestamp - latest_remote_frame_timestamp[message.id])
+            latest_remote_frame_timestamp[message.id] = None
+
+    if len(intervals) == 0:
+        return 0
+
+    #return math.fsum(intervals) / len(intervals)
+    return __calculate_variance(intervals)
+
+
 # Converts input 'messages' to an IDPoint object.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 def messages_to_idpoint(messages, is_injected):
@@ -171,11 +189,12 @@ def messages_to_idpoint(messages, is_injected):
     variance_data_bit_count = calculate_variance_data_bit_count(messages)
     mean_variance_data_bit_count_id = calculate_mean_variance_data_bit_count_id(messages)
     mean_probability_bits = calculate_mean_probability_bits(messages)
+    req_to_res_time_variance = calculate_req_to_res_time_variance(messages)
 
     return idp.IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency,
                        num_id_transitions, num_ids, num_msgs, mean_id_intervals_variance,
                        mean_data_bit_count, variance_data_bit_count,
-                       mean_variance_data_bit_count_id, mean_probability_bits)
+                       mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance)
 
 
 # Converts a list of messages to a list of IDPoints,
@@ -309,3 +328,12 @@ if __name__ == "__main__":
     write_idpoints_csv(training_set, 100, "mixed_training")
     write_idpoints_csv(validation_set, 100, "mixed_validation")
     write_idpoints_csv(test_set, 100, "mixed_test")
+
+    #imp_messages1 = neutralize_offset(datareader_csv.load_impersonation_1())
+    #imp_idpoints1 = messages_to_idpoints(imp_messages1[0:517000], 100, False) + messages_to_idpoints(imp_messages1[517000:], 100, True)
+    #imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2())
+    #imp_idpoints2 = messages_to_idpoints(imp_messages2[0:330000], 100, False) + messages_to_idpoints(imp_messages2[330000:], 100, True)
+    #imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
+    #imp_idpoints3 = messages_to_idpoints(imp_messages3[0:534000], 100, False) + messages_to_idpoints(imp_messages3[534000:], 100, True)
+    #imp_idpoints = concat_idpoints(concat_idpoints(imp_idpoints1, imp_idpoints2), imp_idpoints3)
+    #write_idpoints_csv(imp_idpoints, 100, "impersonation_full")
