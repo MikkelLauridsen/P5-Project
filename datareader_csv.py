@@ -6,8 +6,13 @@ import message
 
 def __load_data(filepath, parse_func, start, limit):
     data = []
-    # Creating a dataframe that contains the specified rows of the specified csv file.
-    df = pd.read_csv(filepath, header=0, skiprows=range(1, start + 1), nrows=limit)
+
+    try:
+        # Creating a dataframe that contains the specified rows of the specified csv file.
+        df = pd.read_csv(filepath, header=0, skiprows=range(1, start + 1), nrows=limit)
+    except FileNotFoundError:
+        print("The file does not exist")
+        return
 
     df_list = df.values.tolist()
 
