@@ -51,6 +51,7 @@ mean_data_bit_counts = [idpoint.mean_data_bit_count for idpoint in idpoints]
 variance_data_bit_counts = [idpoint.variance_data_bit_count for idpoint in idpoints]
 mean_variance_data_bit_count_ids = [idpoint.mean_variance_data_bit_count_id for idpoint in idpoints]
 mean_probability_bits = [idpoint.mean_probability_bits for idpoint in idpoints]
+req_to_res_time_variances = [idpoint.req_to_res_time_variance for idpoint in idpoints]
 injected_colors = [class_to_color(cls) for cls in is_injected]
 
 
@@ -98,4 +99,8 @@ setup_scatter(time_ms, mean_variance_data_bit_count_ids, "Time", "Mean variance 
 plt.show()
 
 setup_scatter(time_ms, mean_probability_bits, "Time", "Mean probability bits")
+plt.show()
+
+setup_scatter(time_ms, req_to_res_time_variances, "Time", "req_to_res_time_variances")
+plt.ylim(top=0.0005, bottom=-0.00025)  # Manually set axis limits
 plt.show()
