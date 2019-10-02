@@ -27,9 +27,9 @@ idpoints = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_328
 
 def class_to_color(cls):
     if cls == "normal":
-        return "#B62121"
-    elif cls == "dos":
         return "#246EB6"
+    elif cls == "dos":
+        return "#B62121"
     elif cls == "fuzzy":
         return "#0A813E"
     elif cls == "impersonation":
