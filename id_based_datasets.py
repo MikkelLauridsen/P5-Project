@@ -3,6 +3,18 @@ import datareader_csv
 import os
 import csv
 import math
+import functools as ft
+
+
+def __calculate_kurtosis(values):
+    n = len(values)
+    avg = math.fsum(values) / n
+    s2 = ft.reduce(lambda x: (x - avg) ** 2, values, 0)
+    s4 = ft.reduce(lambda x: (x - avg) ** 4, values, 0)
+    m2 = s2 / n
+    m4 = s4 / n
+
+    return m4 / (m2 ** 2)
 
 
 def __calculate_variance(values):
