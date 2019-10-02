@@ -170,7 +170,6 @@ def calculate_req_to_res_time_variance(messages):
     if len(intervals) == 0:
         return 0
 
-    #return math.fsum(intervals) / len(intervals)
     return __calculate_variance(intervals)
 
 
@@ -284,16 +283,16 @@ def get_mixed_datasets(period_ms):
     imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
 
     datasets = [
-        messages_to_idpoints(attack_free_messages1, period_ms, False),
-        messages_to_idpoints(attack_free_messages2, period_ms, False),
-        messages_to_idpoints(dos_messages, period_ms, True),
-        messages_to_idpoints(fuzzy_messages, period_ms, True),
-        messages_to_idpoints(imp_messages1[0:517000], period_ms, False),
-        messages_to_idpoints(imp_messages1[517000:], period_ms, True),
-        messages_to_idpoints(imp_messages2[0:330000], period_ms, False),
-        messages_to_idpoints(imp_messages2[330000:], period_ms, True),
-        messages_to_idpoints(imp_messages3[0:534000], period_ms, False),
-        messages_to_idpoints(imp_messages3[534000:], period_ms, True)]
+        messages_to_idpoints(attack_free_messages1, period_ms, "normal"),
+        messages_to_idpoints(attack_free_messages2, period_ms, "normal"),
+        messages_to_idpoints(dos_messages, period_ms, "dos"),
+        messages_to_idpoints(fuzzy_messages, period_ms, "fuzzy"),
+        messages_to_idpoints(imp_messages1[0:517000], period_ms, "normal"),
+        messages_to_idpoints(imp_messages1[517000:], period_ms, "impersonation"),
+        messages_to_idpoints(imp_messages2[0:330000], period_ms, "normal"),
+        messages_to_idpoints(imp_messages2[330000:], period_ms, "impersonation"),
+        messages_to_idpoints(imp_messages3[0:534000], period_ms, "normal"),
+        messages_to_idpoints(imp_messages3[534000:], period_ms, "impersonation")]
 
     offset_training, offset_validation, offset_test = 0, 0, 0
 
