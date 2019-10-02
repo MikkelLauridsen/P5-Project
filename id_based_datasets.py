@@ -185,27 +185,56 @@ def calculate_req_to_res_time_variance(messages):
     return __calculate_variance(intervals)
 
 
+def calculate_kurtosis_id_frequency(messages):
+    frequencies = {}
+
+    for message in messages:
+        if message.id not in frequencies:
+            frequencies[message.id] = 1
+        else:
+            frequencies[message.id] += 1
+
+    values = frequencies.values()
+    return __calculate_kurtosis(values)
+
+
 # Converts input 'messages' to an IDPoint object.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 def messages_to_idpoint(messages, is_injected):
     # this function may never be called with an empty list
-    time_ms = messages[0].timestamp * 1000
-    mean_id_interval = calculate_mean_id_interval(messages)
-    variance_id_frequency = calculate_variance_id_frequency(messages)
-    num_id_transitions = calculate_num_id_transitions(messages)
-    num_ids = calculate_num_ids(messages)
-    num_msgs = len(messages)
-    mean_id_intervals_variance = calculate_mean_id_intervals_variance(messages)
-    mean_data_bit_count = calculate_mean_data_bit_count(messages)
-    variance_data_bit_count = calculate_variance_data_bit_count(messages)
-    mean_variance_data_bit_count_id = calculate_mean_variance_data_bit_count_id(messages)
-    mean_probability_bits = calculate_mean_probability_bits(messages)
-    req_to_res_time_variance = calculate_req_to_res_time_variance(messages)
 
-    return idp.IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency,
-                       num_id_transitions, num_ids, num_msgs, mean_id_intervals_variance,
-                       mean_data_bit_count, variance_data_bit_count,
-                       mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance)
+    # maps a function to an attribute. The function must accept a list of messages.
+    # missing mappings are allowed, and will give the feature a value of 0
+    attribute_function_mappings = {
+        "time_ms": lambda msgs: msgs[0].timestamp * 1000,
+        "is_injected": lambda msgs: is_injected,
+        "mean_id_interval": calculate_mean_id_interval,
+        "variance_id_frequency": calculate_variance_id_frequency,
+        "num_id_transitions": calculate_num_id_transitions,
+        "num_ids": calculate_num_ids,
+        "num_msgs": len,
+        "mean_id_intervals_variance": calculate_mean_id_intervals_variance,
+        # "mean_data_bit_count": calculate_mean_data_bit_count,
+        # "variance_data_bit_count": calculate_variance_data_bit_count,
+        # "mean_variance_data_bit_count_id": calculate_mean_variance_data_bit_count_id,
+        # "mean_probability_bits": calculate_mean_probability_bits,
+        "req_to_res_time_variance": calculate_req_to_res_time_variance,
+        "kurtosis_id_frequency": calculate_kurtosis_id_frequency
+    }
+
+    # Blank idpoint
+    idpoint = idp.IDPoint(*[0 for attr in idp.idpoint_attributes])
+
+    # Update blank idpoint from attribute functions
+    for attr in idp.idpoint_attributes:
+        feature_func = attribute_function_mappings.get(attr, None)
+
+        if feature_func is not None:
+            setattr(idpoint, attr, feature_func(messages))
+        else:
+            print(f"Missing feature-function mapping for attribute: {attr}. Defaulted to 0.")
+
+    return idpoint
 
 
 # Converts a list of messages to a list of IDPoints,
@@ -241,7 +270,7 @@ def write_idpoints_csv(idpoints, period_ms, name):
         datafile_writer = csv.writer(datafile, delimiter=",")
 
         # Writing the header.
-        datafile_writer.writerow(idp.csv_header_row)
+        datafile_writer.writerow(idp.idpoint_attributes)
 
         for idpoint in idpoints:
             datafile_writer.writerow(idp.get_csv_row(idpoint))

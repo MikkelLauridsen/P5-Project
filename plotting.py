@@ -52,12 +52,19 @@ variance_data_bit_counts = [idpoint.variance_data_bit_count for idpoint in idpoi
 mean_variance_data_bit_count_ids = [idpoint.mean_variance_data_bit_count_id for idpoint in idpoints]
 mean_probability_bits = [idpoint.mean_probability_bits for idpoint in idpoints]
 req_to_res_time_variances = [idpoint.req_to_res_time_variance for idpoint in idpoints]
-injected_colors = [class_to_color(cls) for cls in is_injected]
+kurtosis_id_frequencis = [idpoint.kurtosis_id_frequency for idpoint in idpoints]
+
+
+scatter_default_colors = [class_to_color(cls) for cls in is_injected]
+scatter_default_legends = [(class_to_color("normal"), "attack free state"),
+                           (class_to_color("dos"), "DoS attack state"),
+                           (class_to_color("fuzzy"), "Fuzzy attack state"),
+                           (class_to_color("impersonation"), "Impersonation attack state")]
 
 
 # Helper function for setting up a scatter plot.
 # The function does not call plt.show() in order to allow further configuration afterwards.
-def setup_scatter(xaxis, yaxis, xlabel, ylabel, colors=injected_colors, legends=[(class_to_color("normal"), "attack free state"), (class_to_color("dos"), "DoS attack state"), (class_to_color("fuzzy"), "Fuzzy attack state"), (class_to_color("impersonation"), "Impersonation attack state")]):
+def setup_scatter(xaxis, yaxis, xlabel, ylabel, show=True, colors=scatter_default_colors, legends=scatter_default_legends):
     patches = []
 
     for legend in legends:
@@ -69,38 +76,25 @@ def setup_scatter(xaxis, yaxis, xlabel, ylabel, colors=injected_colors, legends=
     plt.ylabel(ylabel)
     plt.legend(handles=patches)
 
+    if show:
+        plt.show()
+
 
 setup_scatter(time_ms, mean_id_interval, "Time", "Mean id interval")
-plt.show()
-
 setup_scatter(time_ms, variance_id_frequency, "Time", "Variance id frequency")
-plt.show()
-
 setup_scatter(time_ms, num_id_transitions, "Time", "# id transitions")
-plt.show()
-
 setup_scatter(time_ms, num_ids, "Time", "# ids")
-plt.show()
-
 setup_scatter(time_ms, num_msgs, "Time", "# messages")
-plt.show()
+setup_scatter(time_ms, mean_data_bit_counts, "Time", "Mean data bit-counts")
+setup_scatter(time_ms, variance_data_bit_counts, "Time", "Variance data bit-counts")
+setup_scatter(time_ms, mean_variance_data_bit_count_ids, "Time", "Mean variance data bit-count ids")
+setup_scatter(time_ms, mean_probability_bits, "Time", "Mean probability bits")
+setup_scatter(time_ms, kurtosis_id_frequencis, "Time", "kurtosis_id_frequencis")
 
-setup_scatter(time_ms, mean_id_intervals_variances, "Time", "mean_id_intervals_variances")
+setup_scatter(time_ms, mean_id_intervals_variances, "Time", "mean_id_intervals_variances", False)
 plt.ylim(top=0.0005, bottom=-0.00025)  # Manually set axis limits
 plt.show()
 
-setup_scatter(time_ms, mean_data_bit_counts, "Time", "Mean data bit-counts")
-plt.show()
-
-setup_scatter(time_ms, variance_data_bit_counts, "Time", "Variance data bit-counts")
-plt.show()
-
-setup_scatter(time_ms, mean_variance_data_bit_count_ids, "Time", "Mean variance data bit-count ids")
-plt.show()
-
-setup_scatter(time_ms, mean_probability_bits, "Time", "Mean probability bits")
-plt.show()
-
-setup_scatter(time_ms, req_to_res_time_variances, "Time", "req_to_res_time_variances")
+setup_scatter(time_ms, req_to_res_time_variances, "Time", "req_to_res_time_variances", False)
 plt.ylim(top=0.0005, bottom=-0.00025)  # Manually set axis limits
 plt.show()
