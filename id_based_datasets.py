@@ -7,7 +7,7 @@ import functools as ft
 
 
 def __calculate_kurtosis(values):
-    if len(values) <= 1:
+    if len(values) == 0:
         return 3
 
     n = len(values)
@@ -16,6 +16,9 @@ def __calculate_kurtosis(values):
     s4 = ft.reduce(lambda y, x: (x - avg) ** 4 + y, values, 0)
     m2 = s2 / n
     m4 = s4 / n
+
+    if m2 == 0:
+        return 3
 
     return m4 / (m2 ** 2)
 
@@ -231,6 +234,20 @@ def calculate_kurtosis_mean_id_intervals(messages):
     return __calculate_kurtosis(interval_means)
 
 
+def calculate_kurtosis_req_to_res_time(messages):
+    intervals = []
+    latest_remote_frame_timestamp = {}
+
+    for message in messages:
+        if message.add == 0b100:
+            latest_remote_frame_timestamp[message.id] = message.timestamp
+        elif message.add == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
+            intervals.append(message.timestamp - latest_remote_frame_timestamp[message.id])
+            latest_remote_frame_timestamp[message.id] = None
+
+    return __calculate_kurtosis(intervals)
+
+
 # Converts input 'messages' to an IDPoint object.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 def messages_to_idpoint(messages, is_injected):
@@ -254,7 +271,8 @@ def messages_to_idpoint(messages, is_injected):
         "req_to_res_time_variance": calculate_req_to_res_time_variance,
         "kurtosis_id_interval": calculate_kurtosis_id_interval,
         "kurtosis_id_frequency": calculate_kurtosis_id_frequency,
-        "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals
+        "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals,
+        "kurtosis_req_to_res_time": calculate_kurtosis_req_to_res_time
     }
 
     # Blank idpoint

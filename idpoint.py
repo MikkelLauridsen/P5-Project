@@ -18,6 +18,7 @@ class IDPoint(dataobject):
     kurtosis_id_interval: float
     kurtosis_id_frequency: float
     kurtosis_mean_id_intervals: float
+    kurtosis_req_to_res_time: float
 
     def __str__(self):
         str = ""
