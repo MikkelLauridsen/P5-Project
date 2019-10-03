@@ -231,8 +231,6 @@ def messages_to_idpoint(messages, is_injected):
 
         if feature_func is not None:
             setattr(idpoint, attr, feature_func(messages))
-        else:
-            print(f"Missing feature-function mapping for attribute: {attr}. Defaulted to 0.")
 
     return idpoint
 
