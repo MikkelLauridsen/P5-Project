@@ -7,6 +7,9 @@ import functools as ft
 
 
 def __calculate_kurtosis(values):
+    if len(values) <= 1:
+        return 3
+
     n = len(values)
     avg = math.fsum(values) / n
     s2 = ft.reduce(lambda y, x: (x - avg) ** 2 + y, values, 0)
@@ -42,6 +45,22 @@ def __calculate_bit_count(message):
     return count
 
 
+# Returns a dictionary where keys are ids and values are the intervals between messages of the same id
+def __find_id_intervals(messages):
+    id_timestamp_intervals = {}
+    last_seen_timestamps = {}
+
+    for message in messages:
+        if message.id in last_seen_timestamps:
+            interval = message.timestamp - last_seen_timestamps[message.id]
+            id_timestamp_intervals.setdefault(message.id, [])
+            id_timestamp_intervals[message.id].append(interval)
+
+        last_seen_timestamps[message.id] = message.timestamp
+
+    return id_timestamp_intervals
+
+
 def calculate_mean_probability_bits(messages):
     bits = [0 for i in range(64)]
 
@@ -59,16 +78,7 @@ def calculate_mean_probability_bits(messages):
 
 
 def calculate_mean_id_intervals_variance(messages):
-    id_timestamp_intervals = {}
-    last_seen_timestamps = {}
-
-    for message in messages:
-        if message.id in last_seen_timestamps:
-            interval = message.timestamp - last_seen_timestamps[message.id]
-            id_timestamp_intervals.setdefault(message.id, [])
-            id_timestamp_intervals[message.id].append(interval)
-
-        last_seen_timestamps[message.id] = message.timestamp
+    id_timestamp_intervals = __find_id_intervals(messages)
 
     intervals_variances = []
     for intervals in id_timestamp_intervals.values():
@@ -185,6 +195,19 @@ def calculate_req_to_res_time_variance(messages):
     return __calculate_variance(intervals)
 
 
+def calculate_kurtosis_id_interval(messages):
+    intervals = []
+    last_seen_timestamps = {}
+
+    for message in messages:
+        if message.id in last_seen_timestamps:
+            intervals.append(message.timestamp - last_seen_timestamps[message.id])
+
+        last_seen_timestamps[message.id] = message.timestamp
+
+    return __calculate_kurtosis(intervals)
+
+
 def calculate_kurtosis_id_frequency(messages):
     frequencies = {}
 
@@ -196,6 +219,16 @@ def calculate_kurtosis_id_frequency(messages):
 
     values = frequencies.values()
     return __calculate_kurtosis(values)
+
+
+def calculate_kurtosis_mean_id_intervals(messages):
+    id_timestamp_intervals = __find_id_intervals(messages)
+
+    interval_means = []
+    for intervals in id_timestamp_intervals.values():
+        interval_means.append(sum(intervals) / len(intervals))
+
+    return __calculate_kurtosis(interval_means)
 
 
 # Converts input 'messages' to an IDPoint object.
@@ -214,12 +247,14 @@ def messages_to_idpoint(messages, is_injected):
         "num_ids": calculate_num_ids,
         "num_msgs": len,
         "mean_id_intervals_variance": calculate_mean_id_intervals_variance,
-        # "mean_data_bit_count": calculate_mean_data_bit_count,
-        # "variance_data_bit_count": calculate_variance_data_bit_count,
-        # "mean_variance_data_bit_count_id": calculate_mean_variance_data_bit_count_id,
-        # "mean_probability_bits": calculate_mean_probability_bits,
+        "mean_data_bit_count": calculate_mean_data_bit_count,
+        "variance_data_bit_count": calculate_variance_data_bit_count,
+        "mean_variance_data_bit_count_id": calculate_mean_variance_data_bit_count_id,
+        "mean_probability_bits": calculate_mean_probability_bits,
         "req_to_res_time_variance": calculate_req_to_res_time_variance,
-        "kurtosis_id_frequency": calculate_kurtosis_id_frequency
+        "kurtosis_id_interval": calculate_kurtosis_id_interval,
+        "kurtosis_id_frequency": calculate_kurtosis_id_frequency,
+        "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals
     }
 
     # Blank idpoint

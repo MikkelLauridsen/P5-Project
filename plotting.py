@@ -2,6 +2,7 @@ import datareader_csv
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import id_based_datasets
+import idpoint
 
 #training_set, validation_set, test_set = id_based_datasets.get_mixed_datasets(100)
 #idpoints = training_set
@@ -39,21 +40,7 @@ def class_to_color(cls):
 
 
 # Extract features from idpoints
-time_ms = [idpoint.time_ms for idpoint in idpoints]
 is_injected = [idpoint.is_injected for idpoint in idpoints]
-mean_id_interval = [idpoint.mean_id_interval for idpoint in idpoints]
-variance_id_frequency = [idpoint.variance_id_frequency for idpoint in idpoints]
-num_id_transitions = [idpoint.num_id_transitions for idpoint in idpoints]
-num_ids = [idpoint.num_ids for idpoint in idpoints]
-num_msgs = [idpoint.num_msgs for idpoint in idpoints]
-mean_id_intervals_variances = [idpoint.mean_id_intervals_variance for idpoint in idpoints]
-mean_data_bit_counts = [idpoint.mean_data_bit_count for idpoint in idpoints]
-variance_data_bit_counts = [idpoint.variance_data_bit_count for idpoint in idpoints]
-mean_variance_data_bit_count_ids = [idpoint.mean_variance_data_bit_count_id for idpoint in idpoints]
-mean_probability_bits = [idpoint.mean_probability_bits for idpoint in idpoints]
-req_to_res_time_variances = [idpoint.req_to_res_time_variance for idpoint in idpoints]
-kurtosis_id_frequencis = [idpoint.kurtosis_id_frequency for idpoint in idpoints]
-
 
 scatter_default_colors = [class_to_color(cls) for cls in is_injected]
 scatter_default_legends = [(class_to_color("normal"), "attack free state"),
@@ -80,21 +67,24 @@ def setup_scatter(xaxis, yaxis, xlabel, ylabel, show=True, colors=scatter_defaul
         plt.show()
 
 
-setup_scatter(time_ms, mean_id_interval, "Time", "Mean id interval")
-setup_scatter(time_ms, variance_id_frequency, "Time", "Variance id frequency")
-setup_scatter(time_ms, num_id_transitions, "Time", "# id transitions")
-setup_scatter(time_ms, num_ids, "Time", "# ids")
-setup_scatter(time_ms, num_msgs, "Time", "# messages")
-setup_scatter(time_ms, mean_data_bit_counts, "Time", "Mean data bit-counts")
-setup_scatter(time_ms, variance_data_bit_counts, "Time", "Variance data bit-counts")
-setup_scatter(time_ms, mean_variance_data_bit_count_ids, "Time", "Mean variance data bit-count ids")
-setup_scatter(time_ms, mean_probability_bits, "Time", "Mean probability bits")
-setup_scatter(time_ms, kurtosis_id_frequencis, "Time", "kurtosis_id_frequencis")
+# Takes all the features defined in IDPoint and plots them
+def plot_all_features(idpoints):
+    time_ms = [point.time_ms for point in idpoints]
 
-setup_scatter(time_ms, mean_id_intervals_variances, "Time", "mean_id_intervals_variances", False)
-plt.ylim(top=0.0005, bottom=-0.00025)  # Manually set axis limits
-plt.show()
+    for attr in idpoint.idpoint_attributes:
+        feature_list = [getattr(idp, attr) for idp in idpoints]
+        feature_description = idpoint.idpoint_attribute_descriptions.get(attr, attr)  # Get attribute desciption if available
 
-setup_scatter(time_ms, req_to_res_time_variances, "Time", "req_to_res_time_variances", False)
-plt.ylim(top=0.0005, bottom=-0.00025)  # Manually set axis limits
-plt.show()
+        if attr == "time_ms" or attr == "is_injected":
+            pass
+
+        # Special case for mean_id_intervals_variance and req_to_res_time_variance, to manually set axis limits
+        elif attr == "mean_id_intervals_variance" or attr == "req_to_res_time_variance":
+            setup_scatter(time_ms, feature_list, "Time", feature_description, False)
+            plt.ylim(top=0.0005, bottom=-0.00025)  # Manually set axis limits
+            plt.show()
+        else:
+            setup_scatter(time_ms, feature_list, "Time", feature_description)
+
+
+plot_all_features(idpoints)

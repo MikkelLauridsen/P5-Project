@@ -10,12 +10,14 @@ class IDPoint(dataobject):
     num_ids: int
     num_msgs: int
     mean_id_intervals_variance: float
-    mean_data_bit_count: float
-    variance_data_bit_count: float
-    mean_variance_data_bit_count_id: float
-    mean_probability_bits: float
+    # mean_data_bit_count: float
+    # variance_data_bit_count: float
+    # mean_variance_data_bit_count_id: float
+    # mean_probability_bits: float
     req_to_res_time_variance: float
+    kurtosis_id_interval: float
     kurtosis_id_frequency: float
+    kurtosis_mean_id_intervals: float
 
     def __str__(self):
         str = ""
@@ -25,12 +27,22 @@ class IDPoint(dataobject):
 
         return str
 
-# Must be same length and order as attributes in IDPoint
-idpoint_attributes = ["time_ms", "is_injected", "mean_id_interval", "variance_id_frequency",
-                  "num_id_transitions", "num_ids", "num_msgs", "mean_id_intervals_variance",
-                  "mean_data_bit_count", "variance_data_bit_count",
-                  "mean_variance_data_bit_count_id", "mean_probability_bits",
-                  "req_to_res_time_variance", "kurtosis_id_frequency"]
+
+# List of the attributes of IDPoint
+idpoint_attributes = IDPoint.__annotations__.keys()
+
+# Descriptions of features. These are displayed on the plots.
+idpoint_attribute_descriptions = {
+    "mean_id_interval": "Mean id interval",
+    "variance_id_frequency": "Variance id frequency",
+    "num_id_transitions": "# id transitions",
+    "num_ids": "# ids",
+    "num_msgs": "# messages",
+    "mean_data_bit_count": "Mean data bit-counts",
+    "variance_data_bit_count": "Variance data bit-counts",
+    "mean_variance_data_bit_count_id": "Mean variance data bit-count ids",
+    "mean_probability_bits": "Mean probability bits",
+}
 
 
 def parse_csv_row(row):
