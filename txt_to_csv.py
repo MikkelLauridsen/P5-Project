@@ -45,35 +45,27 @@ pattern1 = r"Timestamp:( )*(?P<timestamp>.*)        ID: (?P<id>[0-9a-f]*)    (?P
 pattern2 = r"(?P<id>[0-9a-f]*)	(?P<dlc>[0-8])	(?P<data>(([0-9a-f]*)( )?)*)		( )*(?P<timestamp>.*)"
 
 
-# Returning a list containing all the different txt file paths in no particular order.
-def __get_paths():
-    return ["data/raw_data/Attack_free_dataset.txt", "data/raw_data/Attack_free_dataset2.txt",
-            "data/raw_data/Impersonation_attack_dataset.txt", "data/raw_data/170907_impersonation.txt",
-            "data/raw_data/170907_impersonation_2.txt", "data/raw_data/DoS_attack_dataset.txt",
-            "data/raw_data/Fuzzy_attack_dataset.txt"]
-
-
 def txt_to_csv():
     # Creating the directory if it does not exist
-    if not os.path.exists("data\data_csv"):
+    if not os.path.exists("data/data_csv"):
         os.makedirs("data/data_csv")
 
-    # Getting a list of links between each txt file function and their equivalent csv file.
-    txt_file_paths = __get_paths()
-
-    # Going through each link between txt file functions and csv files.
-    for i in range(len(txt_file_paths)):
-        # The attack free 2 raw_data set needs to be called with special conditions because of its format.
-        if txt_file_paths[i] == "data/raw_data/Attack_free_dataset2.txt":
-            text_file = __load_data(txt_file_paths[i], pattern2, start=1)
+    # Creating a list containing all file paths to raw data and going through it.
+    for path in ["data/raw_data/" + i for i in os.listdir("data/raw_data/")]:
+        # The Attack_free_dataset2 file needs to be called with special conditions because of its format.
+        if path == "data/raw_data/Attack_free_dataset2.txt":
+            text_file = __load_data(path, pattern2, start=1)
         else:
-            text_file = __load_data(txt_file_paths[i], pattern1)
+            text_file = __load_data(path, pattern1)
 
-        with open("data/data_csv/" + txt_file_paths[i][14:-3] + "csv", "w", newline="") as csv_file:
+        # Creating a corresponding csv file and opening it in write mode.
+        with open("data/data_csv/" + path[14:-3] + "csv", "w", newline="") as csv_file:
             csv_writer = csv.writer(csv_file, quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
+            # Adding a header to the csv file.
             csv_writer.writerow(["timestamp", "id", "add", "dlc", "data"])
 
+            # Adding all the txt file data to the csv file.
             for j in range(len(text_file)):
                 if text_file[j].data is None:
                     data = ""
