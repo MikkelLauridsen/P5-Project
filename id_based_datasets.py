@@ -6,6 +6,16 @@ import math
 import functools as ft
 
 
+def __calculate_skewness(values):
+    values.sort()
+
+    mean = math.fsum(values) / len(values)
+    median = values[math.floor(len(values) / 2)]
+    variance = __calculate_variance(values)
+
+    return (3 * (mean - median)) / math.sqrt(variance)
+
+
 def __calculate_kurtosis(values):
     if len(values) == 0:
         return 3
@@ -32,6 +42,22 @@ def __calculate_variance(values):
         variance += deviation * deviation
 
     return (1.0 / len(values)) * variance
+
+
+def __calculate_probability_bits(messages):
+    bits = [0 for i in range(64)]
+
+    for message in messages:
+        if message.dlc != 0:
+            for i in range(len(message.data)):
+                for j in range(8):
+                    if message.data[i] & (0b10000000 >> j):
+                        bits[i * 8 + j] += 1
+
+    for i in range(64):
+        bits[i] = bits[i] / len(messages)
+
+    return  bits
 
 
 def __calculate_bit_count(message):
@@ -64,18 +90,35 @@ def __find_id_intervals(messages):
     return id_timestamp_intervals
 
 
-def calculate_mean_probability_bits(messages):
-    bits = [0 for i in range(64)]
+def calculate_skewness_id_interval_variances(messages):
+    id_timestamp_intervals = __find_id_intervals(messages)
+
+    intervals_variances = []
+    for intervals in id_timestamp_intervals.values():
+        intervals_variances.append(__calculate_variance(intervals))
+
+    return __calculate_skewness(intervals_variances)
+
+
+def calculate_kurtosis_variance_data_bit_count_id(messages):
+    id_counts = {}
 
     for message in messages:
-        if message.dlc != 0:
-            for i in range(len(message.data)):
-                for j in range(8):
-                    if message.data[i] & (0b10000000 >> j):
-                        bits[i*8+j] += 1
+        if message.id in id_counts:
+            id_counts[message.id] += [__calculate_bit_count(message)]
+        else:
+            id_counts[message.id] = [__calculate_bit_count(message)]
 
-    for i in range(64):
-        bits[i] = bits[i] / len(messages)
+    variances = []
+
+    for counts in id_counts.values():
+        variances += [__calculate_variance(counts)]
+
+    return __calculate_kurtosis(variances)
+
+
+def calculate_mean_probability_bits(messages):
+    bits = __calculate_probability_bits(messages)
 
     return math.fsum(bits) / 64.0
 
@@ -211,6 +254,20 @@ def calculate_kurtosis_id_interval(messages):
     return __calculate_kurtosis(intervals)
 
 
+def calculate_skewness_id_frequency(messages):
+    frequencies = {}
+
+    for message in messages:
+        if message.id not in frequencies:
+            frequencies[message.id] = 1
+        else:
+            frequencies[message.id] += 1
+
+    values = list(frequencies.values())
+
+    return __calculate_skewness(values)
+
+
 def calculate_kurtosis_id_frequency(messages):
     frequencies = {}
 
@@ -221,6 +278,7 @@ def calculate_kurtosis_id_frequency(messages):
             frequencies[message.id] += 1
 
     values = frequencies.values()
+
     return __calculate_kurtosis(values)
 
 
@@ -271,6 +329,10 @@ def messages_to_idpoint(messages, is_injected):
         "req_to_res_time_variance": calculate_req_to_res_time_variance,
         "kurtosis_id_interval": calculate_kurtosis_id_interval,
         "kurtosis_id_frequency": calculate_kurtosis_id_frequency,
+        "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals,
+        "kurtosis_variance_data_bit_count_id": calculate_kurtosis_variance_data_bit_count_id,
+        "skewness_id_interval_variances": calculate_skewness_id_interval_variances,
+        "skewness_id_frequency": calculate_skewness_id_frequency,
         "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals,
         "kurtosis_req_to_res_time": calculate_kurtosis_req_to_res_time
     }
