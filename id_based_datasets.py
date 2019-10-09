@@ -384,7 +384,7 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_n):
         progress = math.ceil((i / length) * 100)
 
         if progress % 5 == 0 and progress > old_progress:
-            print(f"creating idpoints: {progress}/100%")
+            print(f"Creating idpoints: {progress}/100%")
             old_progress = progress
 
         if (i - lowest_index) % overlap_n == 0:
@@ -394,7 +394,7 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_n):
                 low = working_set.popleft()
 
             working_set.appendleft(low)
-            idpoints.append(messages_to_idpoint(working_set, is_injected))
+            idpoints.append(messages_to_idpoint(list(working_set), is_injected))
 
     return idpoints
 
