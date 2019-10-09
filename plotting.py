@@ -7,7 +7,7 @@ import idpoint
 #training_set, validation_set, test_set = id_based_datasets.get_mixed_datasets(100)
 #idpoints = training_set
 
-idpoints = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_32888_100ms.csv", 0)
+idpoints = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_135520_100ms.csv", 0)
 #idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_validation_7046_100ms.csv", 0)
 #idpoints = datareader_csv.load_idpoints("idpoint_dataset/mixed_test_7053_100ms.csv", 0)
 
