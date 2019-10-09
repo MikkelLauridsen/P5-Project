@@ -1,7 +1,9 @@
 import idpoint
 import datareader_csv
+from sklearn.preprocessing import StandardScaler
 
 
+# Splitting the training data into feature and label lists. This function also scales the features.
 def split_feature_label():
     idpoints = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_32888_100ms.csv")
 
@@ -23,4 +25,6 @@ def split_feature_label():
 
         X.append(features)
 
-    return X, y
+    scaler = StandardScaler()
+
+    return scaler.transform(X), y
