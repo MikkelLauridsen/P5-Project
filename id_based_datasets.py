@@ -113,14 +113,14 @@ def calculate_kurtosis_variance_data_bit_count_id(messages):
 
     for message in messages:
         if message.id in id_counts:
-            id_counts[message.id] += [__calculate_bit_count(message)]
+            id_counts[message.id].append(__calculate_bit_count(message))
         else:
             id_counts[message.id] = [__calculate_bit_count(message)]
 
     variances = []
 
     for counts in id_counts.values():
-        variances += [__calculate_variance(counts)]
+        variances.append(__calculate_variance(counts))
 
     return __calculate_kurtosis(variances)
 
@@ -148,7 +148,7 @@ def calculate_mean_data_bit_count(messages):
     counts = []
 
     for message in messages:
-        counts += [__calculate_bit_count(message)]
+        counts.append(__calculate_bit_count(message))
 
     return math.fsum(counts) / len(counts)
 
@@ -157,7 +157,7 @@ def calculate_variance_data_bit_count(messages):
     counts = []
 
     for message in messages:
-        counts += [__calculate_bit_count(message)]
+        counts.append(__calculate_bit_count(message))
 
     return __calculate_variance(counts)
 
@@ -167,14 +167,14 @@ def calculate_mean_variance_data_bit_count_id(messages):
 
     for message in messages:
         if message.id in id_counts:
-            id_counts[message.id] += [__calculate_bit_count(message)]
+            id_counts[message.id].append(__calculate_bit_count(message))
         else:
             id_counts[message.id] = [__calculate_bit_count(message)]
 
     variances = []
 
     for counts in id_counts.values():
-        variances += [__calculate_variance(counts)]
+        variances.append(__calculate_variance(counts))
 
     if len(variances) == 0:
         return 0
