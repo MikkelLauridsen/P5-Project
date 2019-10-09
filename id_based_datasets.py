@@ -65,7 +65,7 @@ def __calculate_probability_bits(messages):
     for i in range(64):
         bits[i] = bits[i] / len(messages)
 
-    return  bits
+    return bits
 
 
 def __calculate_bit_count(message):
@@ -138,6 +138,9 @@ def calculate_mean_id_intervals_variance(messages):
     for intervals in id_timestamp_intervals.values():
         intervals_variances.append(__calculate_variance(intervals))
 
+    if len(intervals_variances) == 0:
+        return 0
+
     return math.fsum(intervals_variances) / len(intervals_variances)
 
 
@@ -173,6 +176,9 @@ def calculate_mean_variance_data_bit_count_id(messages):
     for counts in id_counts.values():
         variances += [__calculate_variance(counts)]
 
+    if len(variances) == 0:
+        return 0
+
     return math.fsum(variances) / len(variances)
 
 
@@ -187,6 +193,9 @@ def calculate_mean_id_interval(messages):
             intervals.append(message.timestamp - last_seen_timestamps[message.id])
 
         last_seen_timestamps[message.id] = message.timestamp
+
+    if len(intervals) == 0:
+        return 0
 
     return math.fsum(intervals) / len(intervals)
 
@@ -341,7 +350,6 @@ def messages_to_idpoint(messages, is_injected):
         "kurtosis_variance_data_bit_count_id": calculate_kurtosis_variance_data_bit_count_id,
         "skewness_id_interval_variances": calculate_skewness_id_interval_variances,
         "skewness_id_frequency": calculate_skewness_id_frequency,
-        "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals,
         "kurtosis_req_to_res_time": calculate_kurtosis_req_to_res_time
     }
 
