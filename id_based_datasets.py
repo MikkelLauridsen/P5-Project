@@ -4,6 +4,24 @@ import os
 import csv
 import math
 import functools as ft
+from collections import deque
+from sklearn.model_selection import train_test_split
+
+
+def __calculate_skewness(values):
+    if len(values) == 0:
+        return 0
+
+    values.sort()
+
+    mean = math.fsum(values) / len(values)
+    median = values[math.floor(len(values) / 2)]
+    variance = __calculate_variance(values)
+
+    if variance == 0:
+        return 0
+
+    return (3 * (mean - median)) / math.sqrt(variance)
 
 
 def __calculate_kurtosis(values):
@@ -32,6 +50,22 @@ def __calculate_variance(values):
         variance += deviation * deviation
 
     return (1.0 / len(values)) * variance
+
+
+def __calculate_probability_bits(messages):
+    bits = [0 for i in range(64)]
+
+    for message in messages:
+        if message.dlc != 0:
+            for i in range(len(message.data)):
+                for j in range(8):
+                    if message.data[i] & (0b10000000 >> j):
+                        bits[i * 8 + j] += 1
+
+    for i in range(64):
+        bits[i] = bits[i] / len(messages)
+
+    return  bits
 
 
 def __calculate_bit_count(message):
@@ -64,18 +98,35 @@ def __find_id_intervals(messages):
     return id_timestamp_intervals
 
 
-def calculate_mean_probability_bits(messages):
-    bits = [0 for i in range(64)]
+def calculate_skewness_id_interval_variances(messages):
+    id_timestamp_intervals = __find_id_intervals(messages)
+
+    intervals_variances = []
+    for intervals in id_timestamp_intervals.values():
+        intervals_variances.append(__calculate_variance(intervals))
+
+    return __calculate_skewness(intervals_variances)
+
+
+def calculate_kurtosis_variance_data_bit_count_id(messages):
+    id_counts = {}
 
     for message in messages:
-        if message.dlc != 0:
-            for i in range(len(message.data)):
-                for j in range(8):
-                    if message.data[i] & (0b10000000 >> j):
-                        bits[i*8+j] += 1
+        if message.id in id_counts:
+            id_counts[message.id] += [__calculate_bit_count(message)]
+        else:
+            id_counts[message.id] = [__calculate_bit_count(message)]
 
-    for i in range(64):
-        bits[i] = bits[i] / len(messages)
+    variances = []
+
+    for counts in id_counts.values():
+        variances += [__calculate_variance(counts)]
+
+    return __calculate_kurtosis(variances)
+
+
+def calculate_mean_probability_bits(messages):
+    bits = __calculate_probability_bits(messages)
 
     return math.fsum(bits) / 64.0
 
@@ -211,6 +262,20 @@ def calculate_kurtosis_id_interval(messages):
     return __calculate_kurtosis(intervals)
 
 
+def calculate_skewness_id_frequency(messages):
+    frequencies = {}
+
+    for message in messages:
+        if message.id not in frequencies:
+            frequencies[message.id] = 1
+        else:
+            frequencies[message.id] += 1
+
+    values = list(frequencies.values())
+
+    return __calculate_skewness(values)
+
+
 def calculate_kurtosis_id_frequency(messages):
     frequencies = {}
 
@@ -221,6 +286,7 @@ def calculate_kurtosis_id_frequency(messages):
             frequencies[message.id] += 1
 
     values = frequencies.values()
+
     return __calculate_kurtosis(values)
 
 
@@ -272,6 +338,10 @@ def messages_to_idpoint(messages, is_injected):
         "kurtosis_id_interval": calculate_kurtosis_id_interval,
         "kurtosis_id_frequency": calculate_kurtosis_id_frequency,
         "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals,
+        "kurtosis_variance_data_bit_count_id": calculate_kurtosis_variance_data_bit_count_id,
+        "skewness_id_interval_variances": calculate_skewness_id_interval_variances,
+        "skewness_id_frequency": calculate_skewness_id_frequency,
+        "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals,
         "kurtosis_req_to_res_time": calculate_kurtosis_req_to_res_time
     }
 
@@ -291,19 +361,40 @@ def messages_to_idpoint(messages, is_injected):
 # Converts a list of messages to a list of IDPoints,
 # where each point is comprised of 'messages' in 'period_ms' time interval.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
-def messages_to_idpoints(messages, period_ms, is_injected):
+def messages_to_idpoints(messages, period_ms, is_injected, overlap_n):
     if len(messages) == 0:
         return []
 
-    period_low = messages[0].timestamp
-    id_low = 0
     idpoints = []
+    working_set = deque()
 
-    for i in range(len(messages)):
-        if (messages[i].timestamp - period_low) * 1000.0 > period_ms:
-            idpoints.append(messages_to_idpoint(messages[id_low:i], is_injected))
-            period_low = messages[i].timestamp
-            id_low = i
+    working_set.append(messages[0])
+    lowest_index = 1
+    length = len(messages)
+
+    while lowest_index < length and (messages[lowest_index].timestamp - working_set[0].timestamp) * 1000.0 <= period_ms:
+        working_set.append(messages[lowest_index])
+        lowest_index += 1
+
+    lowest_index -= 1
+    old_progress = -5
+
+    for i in range(lowest_index, length):
+        working_set.append(messages[i])
+        progress = math.ceil((i / length) * 100)
+
+        if progress % 5 == 0 and progress > old_progress:
+            print(f"creating idpoints: {progress}/100%")
+            old_progress = progress
+
+        if (i - lowest_index) % overlap_n == 0:
+            low = working_set.popleft()
+
+            while (messages[i].timestamp - low.timestamp) * 1000.0 > period_ms:
+                low = working_set.popleft()
+
+            working_set.appendleft(low)
+            idpoints.append(messages_to_idpoint(working_set, is_injected))
 
     return idpoints
 
@@ -363,9 +454,7 @@ def concat_idpoints(idpoints1, idpoints2):
 #   - a training set comprised of 70% of the data
 #   - a validation set comprised of 15% of the data
 #   - a test set comprised of 15% of the data
-def get_mixed_datasets(period_ms):
-    training, validation, test = [], [], []
-
+def get_mixed_datasets(period_ms, shuffle=True, overlap_n=50):
     attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
     attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
     dos_messages = neutralize_offset(datareader_csv.load_dos())
@@ -375,34 +464,27 @@ def get_mixed_datasets(period_ms):
     imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
 
     datasets = [
-        messages_to_idpoints(attack_free_messages1, period_ms, "normal"),
-        messages_to_idpoints(attack_free_messages2, period_ms, "normal"),
-        messages_to_idpoints(dos_messages, period_ms, "dos"),
-        messages_to_idpoints(fuzzy_messages, period_ms, "fuzzy"),
-        messages_to_idpoints(imp_messages1[0:517000], period_ms, "normal"),
-        messages_to_idpoints(imp_messages1[517000:], period_ms, "impersonation"),
-        messages_to_idpoints(imp_messages2[0:330000], period_ms, "normal"),
-        messages_to_idpoints(imp_messages2[330000:], period_ms, "impersonation"),
-        messages_to_idpoints(imp_messages3[0:534000], period_ms, "normal"),
-        messages_to_idpoints(imp_messages3[534000:], period_ms, "impersonation")]
+        messages_to_idpoints(attack_free_messages1, period_ms, "normal", overlap_n),
+        messages_to_idpoints(attack_free_messages2, period_ms, "normal", overlap_n),
+        messages_to_idpoints(dos_messages, period_ms, "dos", overlap_n),
+        messages_to_idpoints(fuzzy_messages, period_ms, "fuzzy", overlap_n),
+        messages_to_idpoints(imp_messages1[0:517000], period_ms, "normal", overlap_n),
+        messages_to_idpoints(imp_messages1[517000:], period_ms, "impersonation", overlap_n),
+        messages_to_idpoints(imp_messages2[0:330000], period_ms, "normal", overlap_n),
+        messages_to_idpoints(imp_messages2[330000:], period_ms, "impersonation", overlap_n),
+        messages_to_idpoints(imp_messages3[0:534000], period_ms, "normal", overlap_n),
+        messages_to_idpoints(imp_messages3[534000:], period_ms, "impersonation", overlap_n)]
 
-    offset_training, offset_validation, offset_test = 0, 0, 0
+    offset = 0
+    points = []
 
     for set in datasets:
-        training_high = math.floor(len(set) * 0.70)
-        validation_high = math.floor(len(set) * 0.85)
+        time_low = set[0].time_ms
+        points += [offset_idpoint(idp, offset - time_low) for idp in set]
+        offset = points[len(points) - 1].time_ms
 
-        training_low = set[0].time_ms
-        validation_low = set[training_high].time_ms
-        test_low = set[validation_high].time_ms
-
-        training += [offset_idpoint(idp, offset_training - training_low) for idp in set[0:training_high]]
-        validation += [offset_idpoint(idp, offset_validation - validation_low) for idp in set[training_high:validation_high]]
-        test += [offset_idpoint(idp, offset_test - test_low) for idp in set[validation_high:]]
-
-        offset_training = training[len(training) - 1].time_ms
-        offset_validation = validation[len(validation) - 1].time_ms
-        offset_test = test[len(test) - 1].time_ms
+    training, temp = train_test_split(points, shuffle=shuffle, train_size=0.7, test_size=0.3, random_state=2019)
+    validation, test = train_test_split(temp, shuffle=shuffle, train_size=0.5, test_size=0.5, random_state=2019)
 
     return training, validation, test
 
@@ -414,7 +496,7 @@ def offset_idpoint(idp, offset):
 
 
 if __name__ == "__main__":
-    training_set, validation_set, test_set = get_mixed_datasets(100)
+    training_set, validation_set, test_set = get_mixed_datasets(100, True)
 
     write_idpoints_csv(training_set, 100, "mixed_training")
     write_idpoints_csv(validation_set, 100, "mixed_validation")
