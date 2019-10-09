@@ -5,6 +5,8 @@ import message
 
 
 def __load_data(filepath, parse_func, start, limit):
+    print("Started reading from " + filepath)
+
     data = []
 
     try:
@@ -18,9 +20,10 @@ def __load_data(filepath, parse_func, start, limit):
 
     for count, row in enumerate(df_list):
         if count % 50000 == 0:
-            print(count)
+            print("Reading message: " + str(count))
         data.append(parse_func(row))
 
+    print("Completed")
     return data
 
 
