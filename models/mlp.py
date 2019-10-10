@@ -1,9 +1,13 @@
-from models.model_utility import split_feature_label
-from models.model_utility import scale_features
-from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import classification_report
+import os
+
 import datareader_csv
+from models.model_utility import find_best_hyperparameters
+from models.model_utility import scale_features
+from models.model_utility import split_feature_label
+
+# Going up one directory so we have access to the below specified files.
+os.chdir("..")
 
 # load training idpoints
 training_points = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_135520_100ms.csv", 0)
@@ -18,14 +22,4 @@ parameter_space = [{'solver': ['lbfgs'],
                     'hidden_layer_sizes': [(16, 2), (12, 3)],
                     'random_state': [1]}]
 
-grid_s = GridSearchCV(MLPClassifier(), parameter_space, cv=5, n_jobs=-1, scoring='accuracy', verbose=10)
-grid_s.fit(X_train, y_train)
-
-print(f"parameters found: {grid_s.best_params_}")
-
-y_predict = grid_s.predict(X_test)
-
-print(classification_report(y_test, y_predict))
-
-
-
+find_best_hyperparameters(MLPClassifier(), parameter_space, X_train, y_train, X_test, y_test)
