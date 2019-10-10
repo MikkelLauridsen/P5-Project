@@ -9,8 +9,8 @@ from models.model_utility import find_best_hyperparameters
 # Going up one directory so we have access to the below specified files.
 os.chdir("..")
 
-training_filepath = "data/idpoint_dataset/mixed_training_135520_100ms.csv"
-test_filepath = "data/idpoint_dataset/mixed_test_29041_100ms.csv"
+training_filepath = "data/idpoint_dataset/mixed_training_67761_100ms.csv"
+test_filepath = "data/idpoint_dataset/mixed_test_14521_100ms.csv"
 
 X_train, y_train = split_feature_label(datareader_csv.load_idpoints(training_filepath))
 X_test, y_test = split_feature_label(datareader_csv.load_idpoints(test_filepath))

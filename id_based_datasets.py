@@ -4,6 +4,7 @@ import os
 import csv
 import math
 import functools as ft
+import concurrent.futures as conf
 from collections import deque
 from sklearn.model_selection import train_test_split
 
@@ -369,7 +370,7 @@ def messages_to_idpoint(messages, is_injected):
 # Converts a list of messages to a list of IDPoints,
 # where each point is comprised of 'messages' in 'period_ms' time interval.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
-def messages_to_idpoints(messages, period_ms, is_injected, overlap_n):
+def messages_to_idpoints(messages, period_ms, is_injected, overlap_n, name=""):
     if len(messages) == 0:
         return []
 
@@ -392,7 +393,7 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_n):
         progress = math.ceil((i / length) * 100)
 
         if progress % 5 == 0 and progress > old_progress:
-            print(f"Creating idpoints: {progress}/100%")
+            print(f"{name} Creating idpoints: {progress}/100%")
             old_progress = progress
 
         if (i - lowest_index) % overlap_n == 0:
@@ -462,7 +463,7 @@ def concat_idpoints(idpoints1, idpoints2):
 #   - a training set comprised of 70% of the data
 #   - a validation set comprised of 15% of the data
 #   - a test set comprised of 15% of the data
-def get_mixed_datasets(period_ms, shuffle=True, overlap_n=50):
+def get_mixed_datasets(period_ms, shuffle=True, overlap_n=100):
     attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
     attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
     dos_messages = neutralize_offset(datareader_csv.load_dos())
@@ -471,17 +472,26 @@ def get_mixed_datasets(period_ms, shuffle=True, overlap_n=50):
     imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2())
     imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
 
-    datasets = [
-        messages_to_idpoints(attack_free_messages1, period_ms, "normal", overlap_n),
-        messages_to_idpoints(attack_free_messages2, period_ms, "normal", overlap_n),
-        messages_to_idpoints(dos_messages, period_ms, "dos", overlap_n),
-        messages_to_idpoints(fuzzy_messages, period_ms, "fuzzy", overlap_n),
-        messages_to_idpoints(imp_messages1[0:517000], period_ms, "normal", overlap_n),
-        messages_to_idpoints(imp_messages1[517000:], period_ms, "impersonation", overlap_n),
-        messages_to_idpoints(imp_messages2[0:330000], period_ms, "normal", overlap_n),
-        messages_to_idpoints(imp_messages2[330000:], period_ms, "impersonation", overlap_n),
-        messages_to_idpoints(imp_messages3[0:534000], period_ms, "normal", overlap_n),
-        messages_to_idpoints(imp_messages3[534000:], period_ms, "impersonation", overlap_n)]
+    raw_msgs = [
+        (attack_free_messages1, "normal", "attack_free_1"),
+        (attack_free_messages2, "normal", "attack_free_2"),
+        (dos_messages, "dos", "dos"),
+        (fuzzy_messages, "fuzzy", "fuzzy"),
+        (imp_messages1[0:517000], "normal", "impersonation_normal_1"),
+        (imp_messages1[517000:], "impersonation", "impersonation_attack_1"),
+        (imp_messages2[0:330000], "normal", "impersonation_normal_2"),
+        (imp_messages2[330000:], "impersonation", "impersonation_attack_2"),
+        (imp_messages3[0:534000], "normal", "impersonation_normal_3"),
+        (imp_messages3[534000:], "impersonation", "impersonation_attack_3")
+    ]
+
+    datasets = []
+
+    with conf.ProcessPoolExecutor() as executor:
+        futures = {executor.submit(messages_to_idpoints, tup[0], period_ms, tup[1], overlap_n, tup[2]) for tup in raw_msgs}
+
+        for future in conf.as_completed(futures):
+            datasets.append(future.result())
 
     offset = 0
     points = []
@@ -491,10 +501,9 @@ def get_mixed_datasets(period_ms, shuffle=True, overlap_n=50):
         points += [offset_idpoint(idp, offset - time_low) for idp in set]
         offset = points[len(points) - 1].time_ms
 
-    training, temp = train_test_split(points, shuffle=shuffle, train_size=0.7, test_size=0.3, random_state=2019)
-    validation, test = train_test_split(temp, shuffle=shuffle, train_size=0.5, test_size=0.5, random_state=2019)
+    training, test = train_test_split(points, shuffle=shuffle, train_size=0.8, test_size=0.2, random_state=2019)
 
-    return training, validation, test
+    return training, test
 
 
 def offset_idpoint(idp, offset):
@@ -503,18 +512,11 @@ def offset_idpoint(idp, offset):
     return idp
 
 
-if __name__ == "__main__":
-    training_set, validation_set, test_set = get_mixed_datasets(100, True)
-
+def save_datasets():
+    training_set, test_set = get_mixed_datasets(100, True)
     write_idpoints_csv(training_set, 100, "mixed_training")
-    write_idpoints_csv(validation_set, 100, "mixed_validation")
     write_idpoints_csv(test_set, 100, "mixed_test")
 
-    #imp_messages1 = neutralize_offset(datareader_csv.load_impersonation_1())
-    #imp_idpoints1 = messages_to_idpoints(imp_messages1[0:517000], 100, False) + messages_to_idpoints(imp_messages1[517000:], 100, True)
-    #imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2())
-    #imp_idpoints2 = messages_to_idpoints(imp_messages2[0:330000], 100, False) + messages_to_idpoints(imp_messages2[330000:], 100, True)
-    #imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
-    #imp_idpoints3 = messages_to_idpoints(imp_messages3[0:534000], 100, False) + messages_to_idpoints(imp_messages3[534000:], 100, True)
-    #imp_idpoints = concat_idpoints(concat_idpoints(imp_idpoints1, imp_idpoints2), imp_idpoints3)
-    #write_idpoints_csv(imp_idpoints, 100, "impersonation_full")
+
+if __name__ == "__main__":
+    save_datasets()
