@@ -20,8 +20,8 @@ X_train, X_test = scale_features(X_train, X_test)
 
 # Setting up a parameter grid to define the different hyperparameters and their ranges.
 param_grid = [
-  {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-  {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
+  {'C': [1, 10, 50], 'kernel': ['linear']},
+  {'C': [1, 10, 50], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
  ]
 
 # Creating the grid search that uses the parameter grid to find the best hyperparameters.
