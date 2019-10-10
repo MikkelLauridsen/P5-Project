@@ -10,8 +10,8 @@ from models.model_utility import split_feature_label
 os.chdir("..")
 
 # Single Decision Tree
-training_data = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_135520_100ms.csv", 0)
-test_data = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_test_29041_100ms.csv", 0)
+training_data = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_77441_100ms.csv", 0)
+test_data = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_test_19361_100ms.csv", 0)
 
 X_train, y_train = split_feature_label(training_data)
 X_test, y_test = split_feature_label(test_data)
