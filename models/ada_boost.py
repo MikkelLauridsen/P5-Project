@@ -20,8 +20,7 @@ X_train, X_test = scale_features(X_train, X_test)
 
 # Max-Depth of tree, minimum amount of samples per node, max amount of features to consider, and impurity measurement
 parameter_grid = [{'n_estimators': [3, 5, 8],
-                    'learning_rate': [0.1, 0.5, 1.0],
-                    'max_features': [None, 2, 3],
-                    'criterion': ['gini']}]
+                   'algorithm': ['SAMME.R'],
+                   'learning_rate': [0.1, 0.5, 1.0]}]
 
 find_best_hyperparameters(AdaBoostClassifier(), parameter_grid, X_train, y_train, X_test, y_test)
