@@ -1,4 +1,4 @@
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 import os
 
 import datareader_csv
@@ -19,8 +19,12 @@ X_train, X_test = scale_features(X_train, X_test)
 
 
 # Max-Depth of tree, minimum amount of samples per node, max amount of features to consider, and impurity measurement
-parameter_grid = [{'n_estimators': [3, 5, 8, 9, 10, 11, 12, 13],
-                   'algorithm': ['SAMME.R', 'SAMME'],
-                   'learning_rate': [0.1, 0.5, 1.0]}]
+parameter_grid = [{'n_estimators': [3, 5, 8, 9],
+                   'max_depth': [2, 3, 5, 9],
+                   'learning_rate': [0.1, 0.5, 1.0],
+                   'min_samples_split': [2, 5, 8],
+                   'max_features': [None, 3],
+                   'loss': ['deviance', 'exponential'],
+                   }]
 
-find_best_hyperparameters(AdaBoostClassifier(), parameter_grid, X_train, y_train, X_test, y_test)
+find_best_hyperparameters(GradientBoostingClassifier(), parameter_grid, X_train, y_train, X_test, y_test)
