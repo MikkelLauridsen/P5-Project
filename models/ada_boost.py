@@ -1,5 +1,6 @@
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import AdaBoostClassifier
 import os
+
 import datareader_csv
 from models.model_utility import find_best_hyperparameters
 from models.model_utility import scale_features
@@ -18,9 +19,9 @@ X_train, X_test = scale_features(X_train, X_test)
 
 
 # Max-Depth of tree, minimum amount of samples per node, max amount of features to consider, and impurity measurement
-parameter_grid = [{'max_depth': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                    'min_samples_split': [2, 3, 5, 8],
-                    'max_features': [None, 1, 2, 3, 4, 5],
-                    'criterion': ['gini', 'entropy']}]
+parameter_grid = [{'n_estimators': [3, 5, 8],
+                    'learning_rate': [0.1, 0.5, 1.0],
+                    'max_features': [None, 2, 3],
+                    'criterion': ['gini']}]
 
-find_best_hyperparameters(DecisionTreeClassifier(), parameter_grid, X_train, y_train, X_test, y_test)
+find_best_hyperparameters(AdaBoostClassifier(), parameter_grid, X_train, y_train, X_test, y_test)
