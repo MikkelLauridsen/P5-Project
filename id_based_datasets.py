@@ -139,10 +139,7 @@ def calculate_mean_id_intervals_variance(messages):
     for intervals in id_timestamp_intervals.values():
         intervals_variances.append(__calculate_variance(intervals))
 
-    if len(intervals_variances) == 0:
-        return 0
-
-    return math.fsum(intervals_variances) / len(intervals_variances)
+    return 0 if len(intervals_variances) == 0 else math.fsum(intervals_variances) / len(intervals_variances)
 
 
 def calculate_mean_data_bit_count(messages):
@@ -177,10 +174,7 @@ def calculate_mean_variance_data_bit_count_id(messages):
     for counts in id_counts.values():
         variances.append(__calculate_variance(counts))
 
-    if len(variances) == 0:
-        return 0
-
-    return math.fsum(variances) / len(variances)
+    return 0 if len(variances) == 0 else math.fsum(variances) / len(variances)
 
 
 # Finds and returns the mean ID interval,
@@ -195,10 +189,7 @@ def calculate_mean_id_interval(messages):
 
         last_seen_timestamps[message.id] = message.timestamp
 
-    if len(intervals) == 0:
-        return 0
-
-    return math.fsum(intervals) / len(intervals)
+    return 0 if len(intervals) == 0 else math.fsum(intervals) / len(intervals)
 
 
 # Finds and returns the variance of ID frequencies in 'messages',
@@ -253,10 +244,7 @@ def calculate_req_to_res_time_variance(messages):
             intervals.append(message.timestamp - latest_remote_frame_timestamp[message.id])
             latest_remote_frame_timestamp[message.id] = None
 
-    if len(intervals) == 0:
-        return 0
-
-    return __calculate_variance(intervals)
+    return 0 if len(intervals) == 0 else __calculate_variance(intervals)
 
 
 def calculate_kurtosis_id_interval(messages):
