@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
@@ -52,3 +54,5 @@ def find_best_hyperparameters(estimator, parameter_grid, X_train, y_train, X_tes
     y_predict = grid_s.predict(X_test)
 
     print(classification_report(y_test, y_predict))
+
+    return y_predict

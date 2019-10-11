@@ -20,9 +20,9 @@ X_train, y_train = split_feature_label(training_points)
 X_test, y_test = split_feature_label(test_points)
 X_train, X_test = scale_features(X_train, X_test)
 
-parameter_space = [{'solver': ['lbfgs'],
+parameter_space = [{'solver': ["lbfgs", "sgd", "adam"],
                     'alpha': [1.e-01, 1.e-02, 1.e-03, 1.e-04, 1.e-05, 1.e-06],
-                    'hidden_layer_sizes': [(16, 2), (12, 3)],
+                    'hidden_layer_sizes': [(8, 4), (10, 4), (12, 4), (14, 4), (16, 4)],
                     'random_state': [1]}]
 
 find_best_hyperparameters(MLPClassifier(), parameter_space, X_train, y_train, X_test, y_test)

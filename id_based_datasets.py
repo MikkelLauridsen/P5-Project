@@ -370,7 +370,7 @@ def messages_to_idpoint(messages, is_injected):
 # Converts a list of messages to a list of IDPoints,
 # where each point is comprised of 'messages' in 'period_ms' time interval.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
-def messages_to_idpoints(messages, period_ms, is_injected, overlap_n, name=""):
+def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
     if len(messages) == 0:
         return []
 
@@ -387,16 +387,18 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_n, name=""):
 
     lowest_index -= 1
     old_progress = -5
+    time_expended = 0
 
     for i in range(lowest_index, length):
         working_set.append(messages[i])
         progress = math.ceil((i / length) * 100)
+        time_expended += (messages[i].timestamp - messages[i - 1].timestamp) * 1000.0
 
         if progress % 5 == 0 and progress > old_progress:
             print(f"{name} Creating idpoints: {progress}/100%")
             old_progress = progress
 
-        if (i - lowest_index) % overlap_n == 0:
+        if time_expended >= overlap_ms:
             low = working_set.popleft()
 
             while (messages[i].timestamp - low.timestamp) * 1000.0 > period_ms:
@@ -404,6 +406,7 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_n, name=""):
 
             working_set.appendleft(low)
             idpoints.append(messages_to_idpoint(list(working_set), is_injected))
+            time_expended = 0
 
     return idpoints
 
@@ -463,7 +466,7 @@ def concat_idpoints(idpoints1, idpoints2):
 #   - a training set comprised of 70% of the data
 #   - a validation set comprised of 15% of the data
 #   - a test set comprised of 15% of the data
-def get_mixed_datasets(period_ms, shuffle=True, overlap_n=100):
+def get_mixed_datasets(period_ms, shuffle=True, overlap_ms=100):
     attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
     attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
     dos_messages = neutralize_offset(datareader_csv.load_dos())
@@ -488,7 +491,7 @@ def get_mixed_datasets(period_ms, shuffle=True, overlap_n=100):
     datasets = []
 
     with conf.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(messages_to_idpoints, tup[0], period_ms, tup[1], overlap_n, tup[2]) for tup in raw_msgs}
+        futures = {executor.submit(messages_to_idpoints, tup[0], period_ms, tup[1], overlap_ms, tup[2]) for tup in raw_msgs}
 
         for future in conf.as_completed(futures):
             datasets.append(future.result())
