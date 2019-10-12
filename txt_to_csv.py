@@ -4,7 +4,7 @@ import csv
 
 import message
 
-
+# This function uses regular expression to match
 def __parse_message(message_str, pattern):
     m = re.match(pattern, message_str)
     timestamp = float(m.group("timestamp"))
