@@ -3,8 +3,7 @@ import message
 from message import Message
 from message import parse_csv_row
 
-class TestMessage_parse_csv_row(TestCase):
-
+class TestMessage(TestCase):
     def test_parse_csv_row(self):
         # Assume
         message_test = [0.000224, 809, 0, 8, "07 a7 7f 8c 11 2f 00 10"]
