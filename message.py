@@ -1,5 +1,6 @@
 from recordclass import dataobject
 
+
 # Class representing the messages in the .csv file(s)
 class Message(dataobject):
     timestamp: float
