@@ -11,6 +11,7 @@ class Message(dataobject):
     def __str__(self):
         return f"{{{self.timestamp}, {self.id}, {self.add}, {self.dlc}, {self.data}}}"
 
+
 # Function to read single line FROM .csv file(s) and return a Message dataobject.
 def parse_csv_row(row):
     timestamp = float(row[0])
