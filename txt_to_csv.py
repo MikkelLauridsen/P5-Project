@@ -4,6 +4,7 @@ import csv
 
 import message
 
+
 # This function uses regular expression to match
 def __parse_message(message_str, pattern):
     m = re.match(pattern, message_str)
@@ -45,21 +46,21 @@ pattern1 = r"Timestamp:( )*(?P<timestamp>.*)        ID: (?P<id>[0-9a-f]*)    (?P
 pattern2 = r"(?P<id>[0-9a-f]*)	(?P<dlc>[0-8])	(?P<data>(([0-9a-f]*)( )?)*)		( )*(?P<timestamp>.*)"
 
 
-def txt_to_csv():
+def txt_to_csv(start_dir, target_dir):
     # Creating the directory if it does not exist
-    if not os.path.exists("data/data_csv"):
-        os.makedirs("data/data_csv")
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
 
     # Creating a list containing all file paths to raw data and going through it.
-    for path in ["data/raw_data/" + i for i in os.listdir("data/raw_data/")]:
+    for path in [start_dir + i for i in os.listdir(start_dir)]:
         # The Attack_free_dataset2 file needs to be called with special conditions because of its format.
-        if path == "data/raw_data/Attack_free_dataset2.txt":
+        if path == f"{start_dir}Attack_free_dataset2.txt":
             text_file = __load_data(path, pattern2, start=1)
         else:
             text_file = __load_data(path, pattern1)
 
         # Creating a corresponding csv file and opening it in write mode.
-        with open("data/data_csv/" + path[14:-3] + "csv", "w", newline="") as csv_file:
+        with open(f"{path.replace(start_dir, target_dir)[:-3]}" + "csv", "w", newline="") as csv_file:
             csv_writer = csv.writer(csv_file, quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
             # Adding a header to the csv file.
@@ -78,4 +79,4 @@ def txt_to_csv():
 
 
 if __name__ == "__main__":
-    txt_to_csv()
+    txt_to_csv("data/raw_data/", "data/data_csv/")
