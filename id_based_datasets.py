@@ -366,21 +366,22 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
     working_set = deque()
 
     working_set.append(messages[0])
-    lowest_index = 1
+    lowest_index = 0
     length = len(messages)
 
-    while lowest_index < length and (messages[lowest_index].timestamp - working_set[0].timestamp) * 1000.0 <= period_ms:
-        working_set.append(messages[lowest_index])
+    while lowest_index < length and (messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
         lowest_index += 1
+        working_set.append(messages[lowest_index])
 
-    lowest_index -= 1
     old_progress = -5
-    time_expended = 0
+    lowest_index += 1
+    highest_index = lowest_index
 
     for i in range(lowest_index, length):
         working_set.append(messages[i])
-        progress = math.ceil((i / length) * 100)
-        time_expended += (messages[i].timestamp - messages[i - 1].timestamp) * 1000.0
+        progress = math.ceil((i / length) * 100.0)
+        time_expended = (working_set[highest_index].timestamp - working_set[0].timestamp) * 1000.0
+        highest_index += 1
 
         if progress % 5 == 0 and progress > old_progress:
             print(f"{name} Creating idpoints: {progress}/100%")
@@ -389,12 +390,12 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
         if time_expended >= overlap_ms:
             low = working_set.popleft()
 
-            while (messages[i].timestamp - low.timestamp) * 1000.0 > period_ms:
+            while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
                 low = working_set.popleft()
+                highest_index -= 1
 
             working_set.appendleft(low)
             idpoints.append(messages_to_idpoint(list(working_set), is_injected))
-            time_expended = 0
 
     return idpoints
 
@@ -454,7 +455,7 @@ def concat_idpoints(idpoints1, idpoints2):
 #   - a training set comprised of 70% of the data
 #   - a validation set comprised of 15% of the data
 #   - a test set comprised of 15% of the data
-def get_mixed_datasets(period_ms, shuffle=True, overlap_ms=100):
+def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100):
     attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
     attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
     dos_messages = neutralize_offset(datareader_csv.load_dos())
