@@ -4,7 +4,7 @@ import id_based_datasets
 from message import Message
 
 
-class TestId_based_datasets(TestCase):
+class TestIdBasedDatasets(TestCase):
     def setUp(self) -> None:
         # Assume
         message_1 = Message(0.000224, 809, 0, 8, bytearray(b'\x07\xa7\x7f\x8c\x11/\x00\x10'))
