@@ -47,6 +47,7 @@ pattern2 = r"(?P<id>[0-9a-f]*)	(?P<dlc>[0-8])	(?P<data>(([0-9a-f]*)( )?)*)		( )*
 
 
 def txt_to_csv(start_dir, target_dir):
+    """Taking all txt files in the start dir, converting them to csv files and putting them in the target dir."""
     # Creating the directory if it does not exist
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
