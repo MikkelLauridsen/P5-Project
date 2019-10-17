@@ -518,7 +518,6 @@ class TestIdBasedDatasets(TestCase):
         no_kurtosis_variance = 1 / no_kurtosis_n * (no_kurtosis_values[0] - no_kurtosis_mean) ** 2 + \
                    1 / no_kurtosis_n * (no_kurtosis_values[1] - no_kurtosis_mean) ** 2 + \
                    1 / no_kurtosis_n * (no_kurtosis_values[2] - no_kurtosis_mean) ** 2
-        print(no_kurtosis_variance)
         no_kurtosis_deviation = 0
         for elem in no_kurtosis_values:
             no_kurtosis_deviation += (elem - no_kurtosis_mean) ** 4
@@ -536,22 +535,106 @@ class TestIdBasedDatasets(TestCase):
         self.assertEqual(expected_kurtosis_frequency_result, actual_kurtosis_frequency_result)
         self.assertEqual(expected_no_kurtosis_frequency_result, actual_no_kurtosis_frequency_result)
 
-"""
     def test_calculate_kurtosis_variance_data_bit_count_id(self):
 
+        message_1 = Message(0.000000, 128, 0, 8, bytearray(b'\x01\x01\x01\x01\x01\x01\x01\x01'))
+        message_2 = Message(2.000000, 129, 0, 8, bytearray(b'\x00\x00\x00\x01\x01\x00\x00\x00'))
+        message_3 = Message(8.000000, 130, 0, 8, bytearray(b'\x00\x00\x11\x01\x01\x01\x01\x01'))
+        message_4 = Message(0.000000, 128, 0, 8, bytearray(b'\x00\x00\x00\x01\x01\x01\x01\x01'))
+        message_5 = Message(2.000000, 129, 0, 8, bytearray(b'\x01\x01\x00\x00\x01\x00\x01\x01'))
+        message_6 = Message(8.000000, 130, 0, 8, bytearray(b'\x00\x00\x11\x01\x00\x00\x00\x00'))
+        messages = [message_1, message_2, message_3, message_4, message_5, message_6]
+
+        id_counts = {}
+        for message in messages:
+            if message.id in id_counts:
+                count = 0
+                for byte in message.data:
+                    for i in range(8):
+                        if byte & (0b10000000 >> i):
+                            count += 1
+                id_counts[message.id].append(count)
+            else:
+                count = 0
+                for byte in message.data:
+                    for i in range(8):
+                        if byte & (0b10000000 >> i):
+                            count += 1
+                id_counts[message.id] = [count]
+        n_1 = len(id_counts.get(128))
+        mean_1 = (id_counts.get(128)[0] + id_counts.get(128)[1]) / n_1
+        variance_1 = (1 / n_1) * (id_counts.get(128)[0] - mean_1) ** 2 + (1 / n_1) * (
+                id_counts.get(128)[1] - mean_1) ** 2
+
+        n_2 = len(id_counts.get(129))
+        mean_2 = (id_counts.get(129)[0] + id_counts.get(129)[1]) / n_2
+        variance_2 = (1 / n_2) * (id_counts.get(129)[0] - mean_2) ** 2 + (1 / n_2) * (
+                id_counts.get(129)[1] - mean_2) ** 2
+
+        n_3 = len(id_counts.get(130))
+        mean_3 = (id_counts.get(130)[0] + id_counts.get(130)[1]) / n_3
+        variance_3 = (1 / n_3) * (id_counts.get(130)[0] - mean_3) ** 2 + (1 / n_3) * (
+                id_counts.get(130)[1] - mean_3) ** 2
+
+        variance_values = [variance_1, variance_2, variance_3]
+
+        n = len(variance_values)
+        mean = math.fsum(variance_values) / n
+        variance = 1 / n * (variance_values[0] - mean) ** 2 + 1 / n * (variance_values[1] - mean) ** 2 + \
+                   1 / n * (variance_values[2] - mean) ** 2
+
+        deviation = 0
+        for elem in variance_values:
+            deviation += (elem - mean) ** 4
+
+        if variance != 0:
+            actual_kurtosis_variance_bit_result = 1 / len(variance_values) * deviation / variance ** 2
+        else:
+            actual_kurtosis_variance_bit_result = 3
+
         # Action
-        result = id_based_datasets.calculate_kurtosis_variance_data_bit_count_id(self.messages)
+        expected_kurtosis_result = id_based_datasets.calculate_kurtosis_variance_data_bit_count_id(messages)
 
         # Assert
-        self.assertAlmostEqual(result, 1.49, places=0)
+        self.assertAlmostEqual(expected_kurtosis_result, actual_kurtosis_variance_bit_result)
 
     def test_calculate_num_id_transitions(self):
+
+        # Assume
+        message_1 = Message(0.000000, 128, 0, 8, bytearray(b'\x01\x01\x01\x01\x01\x01\x01\x01'))
+        message_2 = Message(2.000000, 129, 0, 8, bytearray(b'\x00\x00\x00\x01\x01\x00\x00\x00'))
+        messages = [message_1, message_2]
+        messages_no_transition = []
+
+        transitions = set()
+        previous_id = messages[0].id
+
+        if not messages:
+            return 0
+        else:
+            for message in messages[1:]:
+                transitions.add((previous_id, message.id))
+                previous_id = message.id
+            actual_transition_id_result = len(transitions)
+
+        if not messages_no_transition:
+            return 0
+        else:
+            for message in messages_no_transition[1:]:
+                transitions.add((previous_id, message.id))
+                previous_id = message.id
+            actual_no_transition_id_result = len(transitions)
+
         # Action
-        result = id_based_datasets.calculate_num_id_transitions(self.messages)
+        expected_transition_id_result = id_based_datasets.calculate_num_id_transitions(messages)
+        expected_no_transition_id_result = id_based_datasets.calculate_num_id_transitions(messages_no_transition)
 
         # Assert
-        self.assertEqual(result, 4)
+        self.assertEqual(expected_transition_id_result, actual_transition_id_result)
+        self.assertEqual(expected_no_transition_id_result, actual_no_transition_id_result)
 
+
+"""
     def test_calculate_req_to_res_time_variance(self):
         # Action
         result = id_based_datasets.calculate_req_to_res_time_variance(self.messages)
@@ -565,4 +648,173 @@ class TestIdBasedDatasets(TestCase):
 
         # Assert
         self.assertAlmostEqual(result, 3, places=0)
+
+    def calculate_req_to_res_time_variance(messages):
+        intervals = []
+        latest_remote_frame_timestamp = {}
+
+        for message in messages:
+            if message.add == 0b100:
+                latest_remote_frame_timestamp[message.id] = message.timestamp
+            elif message.add == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
+                intervals.append(message.timestamp - latest_remote_frame_timestamp[message.id])
+                latest_remote_frame_timestamp[message.id] = None
+
+        return 0 if len(intervals) == 0 else __calculate_variance(intervals)
+
+    def calculate_mean_probability_bits(messages):
+        bits = __calculate_probability_bits(messages)
+
+        return math.fsum(bits) / 64.0
+
+    def neutralize_offset(messages):
+        offset = messages[0].timestamp
+
+        for message in messages:
+            message.timestamp -= offset
+
+        return messages
+
+    def concat_idpoints(idpoints1, idpoints2):
+        offset = idpoints1[len(idpoints1) - 1].time_ms
+
+        for idpoint in idpoints2:
+            idpoint.time_ms += offset
+
+        return idpoints1 + idpoints2
+
+    def offset_idpoint(idp, offset):
+        idp.time_ms += offset
+
+        return idp
+
+    def save_datasets():
+        training_set, test_set = get_mixed_datasets(100, True)
+        write_idpoints_csv(training_set, 100, "mixed_training")
+        write_idpoints_csv(test_set, 100, "mixed_test")
+
+    def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100):
+        attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
+        attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
+        dos_messages = neutralize_offset(datareader_csv.load_dos())
+        fuzzy_messages = neutralize_offset(datareader_csv.load_fuzzy())
+        imp_messages1 = neutralize_offset(datareader_csv.load_impersonation_1())
+        imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2())
+        imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
+
+        raw_msgs = [
+            (attack_free_messages1, "normal", "attack_free_1"),
+            (attack_free_messages2, "normal", "attack_free_2"),
+            (dos_messages, "dos", "dos"),
+            (fuzzy_messages, "fuzzy", "fuzzy"),
+            (imp_messages1[0:517000], "normal", "impersonation_normal_1"),
+            (imp_messages1[517000:], "impersonation", "impersonation_attack_1"),
+            (imp_messages2[0:330000], "normal", "impersonation_normal_2"),
+            (imp_messages2[330000:], "impersonation", "impersonation_attack_2"),
+            (imp_messages3[0:534000], "normal", "impersonation_normal_3"),
+            (imp_messages3[534000:], "impersonation", "impersonation_attack_3")
+        ]
+
+        datasets = []
+
+        with conf.ProcessPoolExecutor() as executor:
+            futures = {executor.submit(messages_to_idpoints, tup[0], period_ms, tup[1], overlap_ms, tup[2]) for tup in
+                       raw_msgs}
+
+            for future in conf.as_completed(futures):
+                datasets.append(future.result())
+
+        offset = 0
+        points = []
+
+        for set in datasets:
+            time_low = set[0].time_ms
+            points += [offset_idpoint(idp, offset - time_low) for idp in set]
+            offset = points[len(points) - 1].time_ms
+
+        training, test = train_test_split(points, shuffle=shuffle, train_size=0.8, test_size=0.2, random_state=2019)
+
+        return training, test
+
+    def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
+        if len(messages) == 0:
+            return []
+
+        idpoints = []
+        working_set = deque()
+
+        working_set.append(messages[0])
+        lowest_index = 0
+        length = len(messages)
+
+        while lowest_index < length and (
+                messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
+            lowest_index += 1
+            working_set.append(messages[lowest_index])
+
+        old_progress = -5
+        lowest_index += 1
+        highest_index = lowest_index
+
+        for i in range(lowest_index, length):
+            working_set.append(messages[i])
+            progress = math.ceil((i / length) * 100.0)
+            time_expended = (working_set[highest_index].timestamp - working_set[0].timestamp) * 1000.0
+            highest_index += 1
+
+            if progress % 5 == 0 and progress > old_progress:
+                print(f"{name} Creating idpoints: {progress}/100%")
+                old_progress = progress
+
+            if time_expended >= overlap_ms:
+                low = working_set.popleft()
+
+                while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
+                    low = working_set.popleft()
+                    highest_index -= 1
+
+                working_set.appendleft(low)
+                idpoints.append(messages_to_idpoint(list(working_set), is_injected))
+
+        return idpoints
+
+    def messages_to_idpoint(messages, is_injected):
+        # this function may never be called with an empty list
+
+        # maps a function to an attribute. The function must accept a list of messages.
+        # missing mappings are allowed, and will give the feature a value of 0
+        attribute_function_mappings = {
+            "time_ms": lambda msgs: msgs[0].timestamp * 1000,
+            "is_injected": lambda msgs: is_injected,
+            "mean_id_interval": calculate_mean_id_interval,
+            "variance_id_frequency": calculate_variance_id_frequency,
+            "num_id_transitions": calculate_num_id_transitions,
+            "num_ids": calculate_num_ids,
+            "num_msgs": len,
+            "mean_id_intervals_variance": calculate_mean_id_intervals_variance,
+            "mean_data_bit_count": calculate_mean_data_bit_count,
+            "variance_data_bit_count": calculate_variance_data_bit_count,
+            "mean_variance_data_bit_count_id": calculate_mean_variance_data_bit_count_id,
+            "mean_probability_bits": calculate_mean_probability_bits,
+            "req_to_res_time_variance": calculate_req_to_res_time_variance,
+            "kurtosis_id_interval": calculate_kurtosis_id_interval,
+            "kurtosis_id_frequency": calculate_kurtosis_id_frequency,
+            "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals,
+            "kurtosis_variance_data_bit_count_id": calculate_kurtosis_variance_data_bit_count_id,
+            "skewness_id_interval_variances": calculate_skewness_id_interval_variances,
+            "skewness_id_frequency": calculate_skewness_id_frequency,
+            "kurtosis_req_to_res_time": calculate_kurtosis_req_to_res_time
+        }
+
+        # Blank idpoint
+        idpoint = idp.IDPoint(*[0 for attr in idp.idpoint_attributes])
+
+        # Update blank idpoint from attribute functions
+        for attr in idp.idpoint_attributes:
+            feature_func = attribute_function_mappings.get(attr, None)
+
+            if feature_func is not None:
+                setattr(idpoint, attr, feature_func(messages))
+
+        return idpoint
 """
