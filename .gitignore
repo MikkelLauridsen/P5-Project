@@ -110,3 +110,4 @@ venv.bak/
 data/raw_data/
 data/data_csv/
 data/idpoint_dataset/
+data/manipulated_data/
