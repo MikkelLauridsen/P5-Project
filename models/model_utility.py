@@ -32,8 +32,8 @@ def split_feature_label(idpoints):
 
 # Fitting a transformation on the training features and scaling both the training features and test features to it.
 def scale_features(X_training, X_test):
+    #fit the scaler
     scaler = StandardScaler()
-
     scaler.fit(X_training)
 
     # Transforming the training and test features with the fitted scaler.
@@ -56,6 +56,7 @@ def find_best_hyperparameters(estimator, parameter_grid, X_train, y_train, X_tes
     print(classification_report(y_test, y_predict))
 
     return y_predict
+
 
 def find_best_hyperparameters2(estimator, parameter_grid, X_train, y_train):
     # Creating the grid search that uses the parameter grid to find the best hyperparameters.

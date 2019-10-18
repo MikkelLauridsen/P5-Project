@@ -1,25 +1,30 @@
 import os
 import datareader_csv
-
 from functools import partial
 from pip._vendor.distlib.compat import raw_input
 from sklearn.metrics import classification_report
-from models.all_models import knn, mlp, logistic_regression, svm, decision_trees, ada_boost, nbc, random_forest, \
-    all_models_run
+from models.mlp import mlp
+from models.ada_boost import ada_boost
+from models.all_models import all_models_run
+from models.decision_trees import decision_trees
+from models.knn import knn
+from models.logistic_regression import logistic_regression
+from models.nbc import nbc
+from models.random_forest import random_forest
+from models.svm import svm
 from models.model_utility import split_feature_label, scale_features
 
 # Creates a list of all the models
 differentModels = ["knn", "random forest", "ada boost", "decision trees", "logistic regression", "mlp", "nbc", "svm", "all"]
+
 # Reads in the data from the original file
 os.chdir("..")
-training = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_37582_100ms.csv", 0)
-test = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_test_9396_100ms.csv", 0)
-
+training = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_77441_100ms.csv", 0)
+test = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_test_19361_100ms.csv", 0)
 # Splits it into training and test, then scales it
 X_train, y_train = split_feature_label(training)
 X_test, y_test = split_feature_label(test)
 X_train, X_test = scale_features(X_train, X_test)
-
 # Directory for the different models
 cmd = {'knn': partial(knn, X_train, y_train, len(training)),
        'logistic regression': partial(logistic_regression, X_train, y_train),
