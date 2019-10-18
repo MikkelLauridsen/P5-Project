@@ -1,6 +1,7 @@
 import math
 from unittest import TestCase
 import id_based_datasets
+from idpoint import IDPoint
 from message import Message
 
 
@@ -59,6 +60,74 @@ class TestIdBasedDatasets(TestCase):
         # Assert
         self.assertEqual(expected_result, len(actual_ids_seen))
 
+    def test_neutralize_offset(self):
+        # Assume
+        message_1 = Message(4.000000, 128, 0, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
+        message_2 = Message(8.000000, 128, 0, 8, bytearray(b'\x00\x17\xea\x0a\x20\x1a\x20\x43'))
+        message_3 = Message(12.000000, 130, 0, 8, bytearray(b'\x7f\x84\x60\x00\x00\x00\x00\x53'))
+        messages = [message_1, message_2, message_3]
+
+        # Offset is calculated as
+        offset = messages[0].timestamp  # which is the first and only element, with timestamp 12.0
+
+        # Messages in messages_2 will be offset with the timestamp in message_1. Thus, 4 + 12, 6 + 12, 8 + 12.
+        actual_offset_message_1 = messages[0].timestamp - offset
+        actual_offset_message_2 = messages[1].timestamp - offset
+        actual_offset_message_3 = messages[2].timestamp - offset
+
+        # Action
+        expected_offset_result = id_based_datasets.neutralize_offset(messages)
+
+        # Assert
+        self.assertEqual(expected_offset_result, messages)
+        self.assertEqual(expected_offset_result[0].timestamp, actual_offset_message_1)
+        self.assertEqual(expected_offset_result[1].timestamp, actual_offset_message_2)
+        self.assertEqual(expected_offset_result[2].timestamp, actual_offset_message_3)
+
+    def test_offset_idpoint(self):
+
+        # Assume
+        time_ms = 1881258.816042923
+        is_injected = "normal"
+        mean_id_interval = 0.011034680628272332,
+        variance_id_frequency = 17.72437499999999
+        num_id_transitions = 101
+        num_ids = 40
+        num_msgs = 231
+        mean_id_intervals_variance = 8.354867823557838e-05
+        mean_data_bit_count = 14.913419913419913
+        variance_data_bit_count = 74.46869436479822
+        mean_variance_data_bit_count_id = 4.239600442036318
+        mean_probability_bits = 0.23302218614718614
+        req_to_res_time_variance = 9.750100002858036e-10
+        kurtosis_id_interval = 74.39655141184994
+        kurtosis_id_frequency = 1.323601387295182
+        skewness_id_frequency = 0.5522522478213545
+        kurtosis_mean_id_intervals = 5.511232560404617
+        kurtosis_variance_data_bit_count_id = 15.457159141707956
+        skewness_id_interval_variances = 0.694951701467612
+        kurtosis_req_to_res_time = 6.3109383892063535
+
+        id_point_object = IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency,
+                                   num_id_transitions,
+                                   num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
+                                   variance_data_bit_count,
+                                   mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance,
+                                   kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
+                                   kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
+                                   skewness_id_interval_variances, kurtosis_req_to_res_time)
+
+        offset = 4
+        id_point_object.time_ms += offset
+
+        actual_id_point_offset = id_point_object
+
+        # Action
+        expected_result = id_based_datasets.offset_idpoint(id_point_object, offset)
+
+        # Assert
+        self.assertEqual(expected_result, actual_id_point_offset)
+
     def test_concat_messages(self):
 
         # Assume
@@ -70,10 +139,11 @@ class TestIdBasedDatasets(TestCase):
         message_4 = Message(8.000000, 128, 0, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
         messages_2 = [message_2, message_3, message_4]
 
-        # Duplicate used to concatenate
         message_2_duplicate = Message(4.000000, 128, 0, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
         message_3_duplicate = Message(6.000000, 129, 0, 8, bytearray(b'\x00\x17\xea\x0a\x20\x1a\x20\x43'))
         message_4_duplicate = Message(8.000000, 128, 0, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
+
+        # Duplicate used to concatenate
         messages_2_duplicate = [message_2_duplicate, message_3_duplicate, message_4_duplicate]
 
         # Offset is calculated as
@@ -97,6 +167,102 @@ class TestIdBasedDatasets(TestCase):
         self.assertEqual(expected_result[1].timestamp, actual_offset_message_2)
         self.assertEqual(expected_result[2].timestamp, actual_offset_message_3)
         self.assertEqual(expected_result[3].timestamp, actual_offset_message_4)
+
+    def test_concat_idpoints(self):
+        time_ms = 1881258.816042923
+        time_ms_2 = 2011258.112002223
+        time_ms_3 = 2704818.516082299
+        is_injected = "normal"
+        mean_id_interval = 0.011034680628272332,
+        variance_id_frequency = 17.72437499999999
+        num_id_transitions = 101
+        num_ids = 40
+        num_msgs = 231
+        mean_id_intervals_variance = 8.354867823557838e-05
+        mean_data_bit_count = 14.913419913419913
+        variance_data_bit_count = 74.46869436479822
+        mean_variance_data_bit_count_id = 4.239600442036318
+        mean_probability_bits = 0.23302218614718614
+        req_to_res_time_variance = 9.750100002858036e-10
+        kurtosis_id_interval = 74.39655141184994
+        kurtosis_id_frequency = 1.323601387295182
+        skewness_id_frequency = 0.5522522478213545
+        kurtosis_mean_id_intervals = 5.511232560404617
+        kurtosis_variance_data_bit_count_id = 15.457159141707956
+        skewness_id_interval_variances = 0.694951701467612
+        kurtosis_req_to_res_time = 6.3109383892063535
+
+        id_point_object1 = IDPoint(time_ms_2, is_injected, mean_id_interval, variance_id_frequency,
+                                   num_id_transitions,
+                                   num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
+                                   variance_data_bit_count,
+                                   mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance,
+                                   kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
+                                   kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
+                                   skewness_id_interval_variances, kurtosis_req_to_res_time)
+        id_points = [id_point_object1]
+
+        id_point_object_2 = IDPoint(time_ms_2, is_injected, mean_id_interval, variance_id_frequency,
+                                    num_id_transitions,
+                                    num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
+                                    variance_data_bit_count,
+                                    mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance,
+                                    kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
+                                    kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
+                                    skewness_id_interval_variances, kurtosis_req_to_res_time)
+
+        id_point_object_3 = IDPoint(time_ms_3, is_injected, mean_id_interval, variance_id_frequency,
+                                    num_id_transitions,
+                                    num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
+                                    variance_data_bit_count,
+                                    mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance,
+                                    kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
+                                    kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
+                                    skewness_id_interval_variances, kurtosis_req_to_res_time)
+
+        id_points_2 = [id_point_object_2, id_point_object_3]
+
+        id_point_object_2_dup = IDPoint(time_ms_2, is_injected, mean_id_interval, variance_id_frequency,
+                                        num_id_transitions,
+                                        num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
+                                        variance_data_bit_count,
+                                        mean_variance_data_bit_count_id, mean_probability_bits,
+                                        req_to_res_time_variance,
+                                        kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
+                                        kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
+                                        skewness_id_interval_variances, kurtosis_req_to_res_time)
+
+        id_point_object_3_dup = IDPoint(time_ms_3, is_injected, mean_id_interval, variance_id_frequency,
+                                        num_id_transitions,
+                                        num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
+                                        variance_data_bit_count,
+                                        mean_variance_data_bit_count_id, mean_probability_bits,
+                                        req_to_res_time_variance,
+                                        kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
+                                        kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
+                                        skewness_id_interval_variances, kurtosis_req_to_res_time)
+
+        id_points_2_dup = [id_point_object_2_dup, id_point_object_3_dup]
+
+        # Offset is calculated as
+        offset = id_points[len(id_points) - 1].time_ms
+
+        # Messages in messages_2 will be offset with the timestamp in message_1. Thus, 4 + 12, 6 + 12, 8 + 12.
+        actual_offset_idpoint_2 = id_points_2[0].time_ms + offset
+        actual_offset_idpoint_3 = id_points_2[1].time_ms + offset
+
+        # Concatenate the messages in messages_1 onto messages_2_duplicate (which is the same as messages_2)
+        for idp in id_points_2_dup:
+            idp.time_ms += offset
+        actual_concat_point_result = id_points + id_points_2_dup
+
+        # Action
+        expected_result = id_based_datasets.concat_idpoints(id_points, id_points_2)
+
+        # Assert
+        self.assertEqual(expected_result, actual_concat_point_result)
+        self.assertEqual(expected_result[1].time_ms, actual_offset_idpoint_2)
+        self.assertEqual(expected_result[2].time_ms, actual_offset_idpoint_3)
 
     def test_calculate_skewness_id_interval_variances(self):
 
@@ -633,188 +799,151 @@ class TestIdBasedDatasets(TestCase):
         self.assertEqual(expected_transition_id_result, actual_transition_id_result)
         self.assertEqual(expected_no_transition_id_result, actual_no_transition_id_result)
 
-
-"""
     def test_calculate_req_to_res_time_variance(self):
-        # Action
-        result = id_based_datasets.calculate_req_to_res_time_variance(self.messages)
 
-        # Assert
-        self.assertEqual(result, 0)
+        # Assume
+        message_1 = Message(0.000000, 128, 4, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
+        message_2 = Message(2.000000, 129, 4, 8, bytearray(b'\x00\x17\xea\x0a\x20\x1a\x20\x43'))
+        message_3 = Message(6.000000, 128, 0, 8, bytearray(b'\x7f\x84\x60\x00\x00\x00\x00\x53'))
+        message_4 = Message(10.000000, 129, 0, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
+        message_5 = Message(11.000000, 130, 4, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
+        message_6 = Message(20.000000, 130, 0, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
+        messages = [message_1, message_2, message_3, message_4, message_5, message_6]
 
-    def test_calculate_kurtosis_req_to_res_time(self):
-        # Action
-        result = id_based_datasets.calculate_kurtosis_req_to_res_time(self.messages)
-
-        # Assert
-        self.assertAlmostEqual(result, 3, places=0)
-
-    def calculate_req_to_res_time_variance(messages):
         intervals = []
-        latest_remote_frame_timestamp = {}
+        recent_remote_frame_timestamp = {}
 
         for message in messages:
             if message.add == 0b100:
-                latest_remote_frame_timestamp[message.id] = message.timestamp
-            elif message.add == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
-                intervals.append(message.timestamp - latest_remote_frame_timestamp[message.id])
-                latest_remote_frame_timestamp[message.id] = None
+                recent_remote_frame_timestamp[message.id] = message.timestamp
+            elif message.add == 0b000 and recent_remote_frame_timestamp.get(message.id, None) is not None:
+                intervals.append(message.timestamp - recent_remote_frame_timestamp[message.id])
+                recent_remote_frame_timestamp[message.id] = None
 
-        return 0 if len(intervals) == 0 else __calculate_variance(intervals)
+        if len(intervals) == 0:
+            actual_req_to_res_variance_result = 0
+        else:
+            n = len(intervals)
+            mean = (intervals[0] + intervals[1] + intervals[2]) / n
+            variance = 1 / n * (intervals[0] - mean) ** 2 + 1 / n * (intervals[1] - mean) ** 2 + 1 / n * (
+                    intervals[2] - mean) ** 2
+            actual_req_to_res_variance_result = variance
 
-    def calculate_mean_probability_bits(messages):
-        bits = __calculate_probability_bits(messages)
 
-        return math.fsum(bits) / 64.0
+        # Action
+        expected_req_to_res_variance_result = id_based_datasets.calculate_req_to_res_time_variance(messages)
 
-    def neutralize_offset(messages):
-        offset = messages[0].timestamp
+        # Assert
+        self.assertEqual(expected_req_to_res_variance_result, actual_req_to_res_variance_result)
+
+    def test_calculate_kurtosis_req_to_res_time(self):
+
+        # Assume
+        message_1 = Message(0.000000, 128, 4, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
+        message_2 = Message(2.000000, 129, 4, 8, bytearray(b'\x00\x17\xea\x0a\x20\x1a\x20\x43'))
+        message_3 = Message(6.000000, 128, 0, 8, bytearray(b'\x7f\x84\x60\x00\x00\x00\x00\x53'))
+        message_4 = Message(10.000000, 129, 0, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
+        message_5 = Message(10.000000, 130, 4, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
+        message_6 = Message(20.000000, 130, 0, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
+        messages = [message_1, message_2, message_3, message_4, message_5, message_6]
+
+        intervals = []
+        recent_remote_frame_timestamp = {}
 
         for message in messages:
-            message.timestamp -= offset
+            if message.add == 0b100:
+                recent_remote_frame_timestamp[message.id] = message.timestamp
+            elif message.add == 0b000 and recent_remote_frame_timestamp.get(message.id, None) is not None:
+                intervals.append(message.timestamp - recent_remote_frame_timestamp[message.id])
+                recent_remote_frame_timestamp[message.id] = None
+        n = len(intervals)
+        mean = (intervals[0] + intervals[1] + intervals[2]) / n
+        variance = 1 / n * (intervals[0] - mean) ** 2 + 1 / n * (intervals[1] - mean) ** 2 + 1 / n * (
+                    intervals[2] - mean) ** 2
 
-        return messages
+        deviation = 0
+        for elem in intervals:
+            deviation += (elem - mean) ** 4
 
-    def concat_idpoints(idpoints1, idpoints2):
-        offset = idpoints1[len(idpoints1) - 1].time_ms
+        if variance != 0:
+            actual_req_to_res_kurtosis_result = 1 / len(intervals) * deviation / variance ** 2
+        else:
+            actual_req_to_res_kurtosis_result = 3
 
-        for idpoint in idpoints2:
-            idpoint.time_ms += offset
+        # Action
+        expected_req_to_res_kurtosis_result = id_based_datasets.calculate_kurtosis_req_to_res_time(messages)
 
-        return idpoints1 + idpoints2
+        # Assert
+        self.assertEqual(expected_req_to_res_kurtosis_result, actual_req_to_res_kurtosis_result)
 
-    def offset_idpoint(idp, offset):
-        idp.time_ms += offset
+    def messages_to_idpoint(self):
 
-        return idp
+        # Assume
+        time_ms = 0.0
+        is_injected = "normal"
+        mean_id_interval = id_based_datasets.calculate_mean_id_interval(self.messages)
+        variance_id_frequency = id_based_datasets.calculate_variance_id_frequency(self.messages)
+        num_id_transitions = id_based_datasets.calculate_num_id_transitions(self.messages)
+        num_ids = id_based_datasets.calculate_num_ids(self.messages)
+        num_msgs = len(self.messages)
+        mean_id_interval_variance = id_based_datasets.calculate_mean_id_intervals_variance(self.messages)
+        mean_data_bit_count = id_based_datasets.calculate_mean_data_bit_count(self.messages)
+        variance_data_bit_count = id_based_datasets.calculate_variance_data_bit_count(self.messages)
+        mean_variance_data_bit_count = id_based_datasets.calculate_mean_variance_data_bit_count_id(self.messages)
+        mean_probability_bits = id_based_datasets.calculate_mean_probability_bits(self.messages)
+        req_to_res_time_variance = id_based_datasets.calculate_req_to_res_time_variance(self.messages)
+        kurtosis_id_interval = id_based_datasets.calculate_kurtosis_id_interval(self.messages)
+        kurtosis_id_frequency = id_based_datasets.calculate_kurtosis_id_frequency(self.messages)
+        kurtosis_mean_id_intervals = id_based_datasets.calculate_kurtosis_mean_id_intervals(self.messages)
+        kurtosis_variance_data_bit_count_id = id_based_datasets.calculate_kurtosis_variance_data_bit_count_id(self.messages)
+        skewness_id_interval_variances = id_based_datasets.calculate_skewness_id_interval_variances(self.messages)
+        skewness_id_frequency = id_based_datasets.calculate_skewness_id_frequency(self.messages)
+        kurtosis_req_to_res_time = id_based_datasets.calculate_kurtosis_req_to_res_time(self.messages)
 
-    def save_datasets():
-        training_set, test_set = get_mixed_datasets(100, True)
-        write_idpoints_csv(training_set, 100, "mixed_training")
-        write_idpoints_csv(test_set, 100, "mixed_test")
+        actual_datapoint = IDPoint(time_ms,
+                                   is_injected,
+                                   mean_id_interval,
+                                   variance_id_frequency,
+                                   num_id_transitions,
+                                   num_ids,
+                                   num_msgs,
+                                   mean_id_interval_variance,
+                                   mean_data_bit_count,
+                                   variance_data_bit_count,
+                                   mean_variance_data_bit_count,
+                                   mean_probability_bits,
+                                   req_to_res_time_variance,
+                                   kurtosis_id_interval,
+                                   kurtosis_id_frequency,
+                                   skewness_id_frequency,
+                                   kurtosis_mean_id_intervals,
+                                   kurtosis_variance_data_bit_count_id,
+                                   skewness_id_interval_variances,
+                                   kurtosis_req_to_res_time)
 
-    def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100):
-        attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
-        attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
-        dos_messages = neutralize_offset(datareader_csv.load_dos())
-        fuzzy_messages = neutralize_offset(datareader_csv.load_fuzzy())
-        imp_messages1 = neutralize_offset(datareader_csv.load_impersonation_1())
-        imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2())
-        imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
+        # Action
+        expected_value = id_based_datasets.messages_to_idpoint(self.messages, "normal")
+        #expected_exception_raise = id_based_datasets.messages_to_idpoint([], "normal")
 
-        raw_msgs = [
-            (attack_free_messages1, "normal", "attack_free_1"),
-            (attack_free_messages2, "normal", "attack_free_2"),
-            (dos_messages, "dos", "dos"),
-            (fuzzy_messages, "fuzzy", "fuzzy"),
-            (imp_messages1[0:517000], "normal", "impersonation_normal_1"),
-            (imp_messages1[517000:], "impersonation", "impersonation_attack_1"),
-            (imp_messages2[0:330000], "normal", "impersonation_normal_2"),
-            (imp_messages2[330000:], "impersonation", "impersonation_attack_2"),
-            (imp_messages3[0:534000], "normal", "impersonation_normal_3"),
-            (imp_messages3[534000:], "impersonation", "impersonation_attack_3")
-        ]
-
-        datasets = []
-
-        with conf.ProcessPoolExecutor() as executor:
-            futures = {executor.submit(messages_to_idpoints, tup[0], period_ms, tup[1], overlap_ms, tup[2]) for tup in
-                       raw_msgs}
-
-            for future in conf.as_completed(futures):
-                datasets.append(future.result())
-
-        offset = 0
-        points = []
-
-        for set in datasets:
-            time_low = set[0].time_ms
-            points += [offset_idpoint(idp, offset - time_low) for idp in set]
-            offset = points[len(points) - 1].time_ms
-
-        training, test = train_test_split(points, shuffle=shuffle, train_size=0.8, test_size=0.2, random_state=2019)
-
-        return training, test
-
-    def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
-        if len(messages) == 0:
-            return []
-
-        idpoints = []
-        working_set = deque()
-
-        working_set.append(messages[0])
-        lowest_index = 0
-        length = len(messages)
-
-        while lowest_index < length and (
-                messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
-            lowest_index += 1
-            working_set.append(messages[lowest_index])
-
-        old_progress = -5
-        lowest_index += 1
-        highest_index = lowest_index
-
-        for i in range(lowest_index, length):
-            working_set.append(messages[i])
-            progress = math.ceil((i / length) * 100.0)
-            time_expended = (working_set[highest_index].timestamp - working_set[0].timestamp) * 1000.0
-            highest_index += 1
-
-            if progress % 5 == 0 and progress > old_progress:
-                print(f"{name} Creating idpoints: {progress}/100%")
-                old_progress = progress
-
-            if time_expended >= overlap_ms:
-                low = working_set.popleft()
-
-                while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
-                    low = working_set.popleft()
-                    highest_index -= 1
-
-                working_set.appendleft(low)
-                idpoints.append(messages_to_idpoint(list(working_set), is_injected))
-
-        return idpoints
-
-    def messages_to_idpoint(messages, is_injected):
-        # this function may never be called with an empty list
-
-        # maps a function to an attribute. The function must accept a list of messages.
-        # missing mappings are allowed, and will give the feature a value of 0
-        attribute_function_mappings = {
-            "time_ms": lambda msgs: msgs[0].timestamp * 1000,
-            "is_injected": lambda msgs: is_injected,
-            "mean_id_interval": calculate_mean_id_interval,
-            "variance_id_frequency": calculate_variance_id_frequency,
-            "num_id_transitions": calculate_num_id_transitions,
-            "num_ids": calculate_num_ids,
-            "num_msgs": len,
-            "mean_id_intervals_variance": calculate_mean_id_intervals_variance,
-            "mean_data_bit_count": calculate_mean_data_bit_count,
-            "variance_data_bit_count": calculate_variance_data_bit_count,
-            "mean_variance_data_bit_count_id": calculate_mean_variance_data_bit_count_id,
-            "mean_probability_bits": calculate_mean_probability_bits,
-            "req_to_res_time_variance": calculate_req_to_res_time_variance,
-            "kurtosis_id_interval": calculate_kurtosis_id_interval,
-            "kurtosis_id_frequency": calculate_kurtosis_id_frequency,
-            "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals,
-            "kurtosis_variance_data_bit_count_id": calculate_kurtosis_variance_data_bit_count_id,
-            "skewness_id_interval_variances": calculate_skewness_id_interval_variances,
-            "skewness_id_frequency": calculate_skewness_id_frequency,
-            "kurtosis_req_to_res_time": calculate_kurtosis_req_to_res_time
-        }
-
-        # Blank idpoint
-        idpoint = idp.IDPoint(*[0 for attr in idp.idpoint_attributes])
-
-        # Update blank idpoint from attribute functions
-        for attr in idp.idpoint_attributes:
-            feature_func = attribute_function_mappings.get(attr, None)
-
-            if feature_func is not None:
-                setattr(idpoint, attr, feature_func(messages))
-
-        return idpoint
-"""
+        # Assume
+        self.assertAlmostEqual(expected_value.time_ms, actual_datapoint.time_ms)
+        self.assertAlmostEqual(expected_value.is_injected, actual_datapoint.is_injected)
+        self.assertAlmostEqual(expected_value.mean_id_interval, actual_datapoint.mean_id_interval)
+        self.assertAlmostEqual(expected_value.variance_id_frequency, actual_datapoint.variance_id_frequency)
+        self.assertAlmostEqual(expected_value.num_id_transitions, actual_datapoint.num_id_transitions)
+        self.assertAlmostEqual(expected_value.num_ids, actual_datapoint.num_ids)
+        self.assertAlmostEqual(expected_value.num_msgs, actual_datapoint.num_msgs)
+        self.assertAlmostEqual(expected_value.mean_id_intervals_variance, actual_datapoint.mean_id_intervals_variance)
+        self.assertAlmostEqual(expected_value.mean_data_bit_count, actual_datapoint.mean_data_bit_count)
+        self.assertAlmostEqual(expected_value.variance_data_bit_count, actual_datapoint.variance_data_bit_count)
+        self.assertAlmostEqual(expected_value.mean_variance_data_bit_count_id, actual_datapoint.mean_variance_data_bit_count_id)
+        self.assertAlmostEqual(expected_value.mean_probability_bits, actual_datapoint.mean_probability_bits)
+        self.assertAlmostEqual(expected_value.req_to_res_time_variance, actual_datapoint.req_to_res_time_variance)
+        self.assertAlmostEqual(expected_value.kurtosis_id_interval, actual_datapoint.kurtosis_id_interval)
+        self.assertAlmostEqual(expected_value.kurtosis_id_frequency, actual_datapoint.kurtosis_id_frequency)
+        self.assertAlmostEqual(expected_value.kurtosis_mean_id_intervals, actual_datapoint.kurtosis_mean_id_intervals)
+        self.assertAlmostEqual(expected_value.kurtosis_variance_data_bit_count_id, actual_datapoint.kurtosis_variance_data_bit_count_id)
+        self.assertAlmostEqual(expected_value.skewness_id_interval_variances, actual_datapoint.skewness_id_interval_variances)
+        self.assertAlmostEqual(expected_value.skewness_id_frequency, actual_datapoint.skewness_id_frequency)
+        self.assertAlmostEqual(expected_value.kurtosis_req_to_res_time, actual_datapoint.kurtosis_req_to_res_time)
+        #self.assertRaises(ValueError, expected_exception_raise)
