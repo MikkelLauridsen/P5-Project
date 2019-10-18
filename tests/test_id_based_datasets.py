@@ -46,6 +46,91 @@ class TestIdBasedDatasets(TestCase):
         self.values.sort()
         self.median = self.values[math.floor(len(self.values) / 2)]
 
+        # Assum for message_to_idpoint
+        time_ms = 0.0
+        is_injected = "normal"
+        mean_id_interval = id_based_datasets.calculate_mean_id_interval(self.messages)
+        variance_id_frequency = id_based_datasets.calculate_variance_id_frequency(self.messages)
+        num_id_transitions = id_based_datasets.calculate_num_id_transitions(self.messages)
+        num_ids = id_based_datasets.calculate_num_ids(self.messages)
+        num_msgs = len(self.messages)
+        mean_id_interval_variance = id_based_datasets.calculate_mean_id_intervals_variance(self.messages)
+        mean_data_bit_count = id_based_datasets.calculate_mean_data_bit_count(self.messages)
+        variance_data_bit_count = id_based_datasets.calculate_variance_data_bit_count(self.messages)
+        mean_variance_data_bit_count = id_based_datasets.calculate_mean_variance_data_bit_count_id(self.messages)
+        mean_probability_bits = id_based_datasets.calculate_mean_probability_bits(self.messages)
+        req_to_res_time_variance = id_based_datasets.calculate_req_to_res_time_variance(self.messages)
+        kurtosis_id_interval = id_based_datasets.calculate_kurtosis_id_interval(self.messages)
+        kurtosis_id_frequency = id_based_datasets.calculate_kurtosis_id_frequency(self.messages)
+        kurtosis_mean_id_intervals = id_based_datasets.calculate_kurtosis_mean_id_intervals(self.messages)
+        kurtosis_variance_data_bit_count_id = id_based_datasets.calculate_kurtosis_variance_data_bit_count_id(
+            self.messages)
+        skewness_id_interval_variances = id_based_datasets.calculate_skewness_id_interval_variances(self.messages)
+        skewness_id_frequency = id_based_datasets.calculate_skewness_id_frequency(self.messages)
+        kurtosis_req_to_res_time = id_based_datasets.calculate_kurtosis_req_to_res_time(self.messages)
+
+        self.actual_datapoint = IDPoint(time_ms,
+                                   is_injected,
+                                   mean_id_interval,
+                                   variance_id_frequency,
+                                   num_id_transitions,
+                                   num_ids,
+                                   num_msgs,
+                                   mean_id_interval_variance,
+                                   mean_data_bit_count,
+                                   variance_data_bit_count,
+                                   mean_variance_data_bit_count,
+                                   mean_probability_bits,
+                                   req_to_res_time_variance,
+                                   kurtosis_id_interval,
+                                   kurtosis_id_frequency,
+                                   skewness_id_frequency,
+                                   kurtosis_mean_id_intervals,
+                                   kurtosis_variance_data_bit_count_id,
+                                   skewness_id_interval_variances,
+                                   kurtosis_req_to_res_time)
+
+        # Assume for test_offset_idpoint,
+        self.time_ms = 1881258.816042923
+        self.is_injected = "normal"
+        self.mean_id_interval = 0.011034680628272332,
+        self.variance_id_frequency = 17.72437499999999
+        self.num_id_transitions = 101
+        self.num_ids = 40
+        self.num_msgs = 231
+        self.mean_id_intervals_variance = 8.354867823557838e-05
+        self.mean_data_bit_count = 14.913419913419913
+        self.variance_data_bit_count = 74.46869436479822
+        self.mean_variance_data_bit_count_id = 4.239600442036318
+        self.mean_probability_bits = 0.23302218614718614
+        self.req_to_res_time_variance = 9.750100002858036e-10
+        self.kurtosis_id_interval = 74.39655141184994
+        self.kurtosis_id_frequency = 1.323601387295182
+        self.skewness_id_frequency = 0.5522522478213545
+        self.kurtosis_mean_id_intervals = 5.511232560404617
+        self.kurtosis_variance_data_bit_count_id = 15.457159141707956
+        self.skewness_id_interval_variances = 0.694951701467612
+        self.kurtosis_req_to_res_time = 6.3109383892063535
+
+        self.id_point_object = IDPoint(self.time_ms, self.is_injected,
+                                       self.mean_id_interval,
+                                       self.variance_id_frequency,
+                                       self.num_id_transitions,
+                                       self.num_ids, self.num_msgs,
+                                       self.mean_id_intervals_variance,
+                                       self.mean_data_bit_count,
+                                       self.variance_data_bit_count,
+                                       self.mean_variance_data_bit_count_id,
+                                       self.mean_probability_bits,
+                                       self.req_to_res_time_variance,
+                                       self.kurtosis_id_interval,
+                                       self.kurtosis_id_frequency,
+                                       self.skewness_id_frequency,
+                                       self.kurtosis_mean_id_intervals,
+                                       self.kurtosis_variance_data_bit_count_id,
+                                       self.skewness_id_interval_variances,
+                                       self.kurtosis_req_to_res_time)
+
     def test_calculate_num_ids(self):
 
         # Assume
@@ -86,44 +171,14 @@ class TestIdBasedDatasets(TestCase):
 
     def test_offset_idpoint(self):
 
-        # Assume
-        time_ms = 1881258.816042923
-        is_injected = "normal"
-        mean_id_interval = 0.011034680628272332,
-        variance_id_frequency = 17.72437499999999
-        num_id_transitions = 101
-        num_ids = 40
-        num_msgs = 231
-        mean_id_intervals_variance = 8.354867823557838e-05
-        mean_data_bit_count = 14.913419913419913
-        variance_data_bit_count = 74.46869436479822
-        mean_variance_data_bit_count_id = 4.239600442036318
-        mean_probability_bits = 0.23302218614718614
-        req_to_res_time_variance = 9.750100002858036e-10
-        kurtosis_id_interval = 74.39655141184994
-        kurtosis_id_frequency = 1.323601387295182
-        skewness_id_frequency = 0.5522522478213545
-        kurtosis_mean_id_intervals = 5.511232560404617
-        kurtosis_variance_data_bit_count_id = 15.457159141707956
-        skewness_id_interval_variances = 0.694951701467612
-        kurtosis_req_to_res_time = 6.3109383892063535
-
-        id_point_object = IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency,
-                                   num_id_transitions,
-                                   num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
-                                   variance_data_bit_count,
-                                   mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance,
-                                   kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
-                                   kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
-                                   skewness_id_interval_variances, kurtosis_req_to_res_time)
-
+        # Arbitrary offset
         offset = 4
-        id_point_object.time_ms += offset
+        self.id_point_object.time_ms += offset
 
-        actual_id_point_offset = id_point_object
+        actual_id_point_offset = self.id_point_object
 
         # Action
-        expected_result = id_based_datasets.offset_idpoint(id_point_object, offset)
+        expected_result = id_based_datasets.offset_idpoint(self.id_point_object, offset)
 
         # Assert
         self.assertEqual(expected_result, actual_id_point_offset)
@@ -169,78 +224,95 @@ class TestIdBasedDatasets(TestCase):
         self.assertEqual(expected_result[3].timestamp, actual_offset_message_4)
 
     def test_concat_idpoints(self):
-        time_ms = 1881258.816042923
+        #Two separate timestamps used when concatenating by offestting them from the first list of idpoints
         time_ms_2 = 2011258.112002223
         time_ms_3 = 2704818.516082299
-        is_injected = "normal"
-        mean_id_interval = 0.011034680628272332,
-        variance_id_frequency = 17.72437499999999
-        num_id_transitions = 101
-        num_ids = 40
-        num_msgs = 231
-        mean_id_intervals_variance = 8.354867823557838e-05
-        mean_data_bit_count = 14.913419913419913
-        variance_data_bit_count = 74.46869436479822
-        mean_variance_data_bit_count_id = 4.239600442036318
-        mean_probability_bits = 0.23302218614718614
-        req_to_res_time_variance = 9.750100002858036e-10
-        kurtosis_id_interval = 74.39655141184994
-        kurtosis_id_frequency = 1.323601387295182
-        skewness_id_frequency = 0.5522522478213545
-        kurtosis_mean_id_intervals = 5.511232560404617
-        kurtosis_variance_data_bit_count_id = 15.457159141707956
-        skewness_id_interval_variances = 0.694951701467612
-        kurtosis_req_to_res_time = 6.3109383892063535
 
-        id_point_object1 = IDPoint(time_ms_2, is_injected, mean_id_interval, variance_id_frequency,
-                                   num_id_transitions,
-                                   num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
-                                   variance_data_bit_count,
-                                   mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance,
-                                   kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
-                                   kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
-                                   skewness_id_interval_variances, kurtosis_req_to_res_time)
-        id_points = [id_point_object1]
+        id_points = [self.id_point_object]
 
-        id_point_object_2 = IDPoint(time_ms_2, is_injected, mean_id_interval, variance_id_frequency,
-                                    num_id_transitions,
-                                    num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
-                                    variance_data_bit_count,
-                                    mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance,
-                                    kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
-                                    kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
-                                    skewness_id_interval_variances, kurtosis_req_to_res_time)
+        id_point_object_2 = IDPoint(time_ms_2,
+                                    self.is_injected,
+                                    self.mean_id_interval,
+                                    self.variance_id_frequency,
+                                    self.num_id_transitions,
+                                    self.num_ids,
+                                    self.num_msgs,
+                                    self.mean_id_intervals_variance,
+                                    self.mean_data_bit_count,
+                                    self.variance_data_bit_count,
+                                    self.mean_variance_data_bit_count_id,
+                                    self.mean_probability_bits,
+                                    self.req_to_res_time_variance,
+                                    self.kurtosis_id_interval,
+                                    self.kurtosis_id_frequency,
+                                    self.skewness_id_frequency,
+                                    self.kurtosis_mean_id_intervals,
+                                    self.kurtosis_variance_data_bit_count_id,
+                                    self.skewness_id_interval_variances,
+                                    self.kurtosis_req_to_res_time)
 
-        id_point_object_3 = IDPoint(time_ms_3, is_injected, mean_id_interval, variance_id_frequency,
-                                    num_id_transitions,
-                                    num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
-                                    variance_data_bit_count,
-                                    mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance,
-                                    kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
-                                    kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
-                                    skewness_id_interval_variances, kurtosis_req_to_res_time)
+        id_point_object_3 = IDPoint(time_ms_3,
+                                    self.is_injected,
+                                    self.mean_id_interval,
+                                    self.variance_id_frequency,
+                                    self.num_id_transitions,
+                                    self.num_ids, self.num_msgs,
+                                    self.mean_id_intervals_variance,
+                                    self.mean_data_bit_count,
+                                    self.variance_data_bit_count,
+                                    self.mean_variance_data_bit_count_id,
+                                    self.mean_probability_bits,
+                                    self.req_to_res_time_variance,
+                                    self.kurtosis_id_interval,
+                                    self.kurtosis_id_frequency,
+                                    self.skewness_id_frequency,
+                                    self.kurtosis_mean_id_intervals,
+                                    self.kurtosis_variance_data_bit_count_id,
+                                    self.skewness_id_interval_variances,
+                                    self.kurtosis_req_to_res_time)
 
         id_points_2 = [id_point_object_2, id_point_object_3]
 
-        id_point_object_2_dup = IDPoint(time_ms_2, is_injected, mean_id_interval, variance_id_frequency,
-                                        num_id_transitions,
-                                        num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
-                                        variance_data_bit_count,
-                                        mean_variance_data_bit_count_id, mean_probability_bits,
-                                        req_to_res_time_variance,
-                                        kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
-                                        kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
-                                        skewness_id_interval_variances, kurtosis_req_to_res_time)
+        id_point_object_2_dup = IDPoint(time_ms_2,
+                                    self.is_injected,
+                                    self.mean_id_interval,
+                                    self.variance_id_frequency,
+                                    self.num_id_transitions,
+                                    self.num_ids,
+                                    self.num_msgs,
+                                    self.mean_id_intervals_variance,
+                                    self.mean_data_bit_count,
+                                    self.variance_data_bit_count,
+                                    self.mean_variance_data_bit_count_id,
+                                    self.mean_probability_bits,
+                                    self.req_to_res_time_variance,
+                                    self.kurtosis_id_interval,
+                                    self.kurtosis_id_frequency,
+                                    self.skewness_id_frequency,
+                                    self.kurtosis_mean_id_intervals,
+                                    self.kurtosis_variance_data_bit_count_id,
+                                    self.skewness_id_interval_variances,
+                                    self.kurtosis_req_to_res_time)
 
-        id_point_object_3_dup = IDPoint(time_ms_3, is_injected, mean_id_interval, variance_id_frequency,
-                                        num_id_transitions,
-                                        num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
-                                        variance_data_bit_count,
-                                        mean_variance_data_bit_count_id, mean_probability_bits,
-                                        req_to_res_time_variance,
-                                        kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
-                                        kurtosis_mean_id_intervals, kurtosis_variance_data_bit_count_id,
-                                        skewness_id_interval_variances, kurtosis_req_to_res_time)
+        id_point_object_3_dup = IDPoint(time_ms_3,
+                                    self.is_injected,
+                                    self.mean_id_interval,
+                                    self.variance_id_frequency,
+                                    self.num_id_transitions,
+                                    self.num_ids, self.num_msgs,
+                                    self.mean_id_intervals_variance,
+                                    self.mean_data_bit_count,
+                                    self.variance_data_bit_count,
+                                    self.mean_variance_data_bit_count_id,
+                                    self.mean_probability_bits,
+                                    self.req_to_res_time_variance,
+                                    self.kurtosis_id_interval,
+                                    self.kurtosis_id_frequency,
+                                    self.skewness_id_frequency,
+                                    self.kurtosis_mean_id_intervals,
+                                    self.kurtosis_variance_data_bit_count_id,
+                                    self.skewness_id_interval_variances,
+                                    self.kurtosis_req_to_res_time)
 
         id_points_2_dup = [id_point_object_2_dup, id_point_object_3_dup]
 
@@ -876,74 +948,31 @@ class TestIdBasedDatasets(TestCase):
         # Assert
         self.assertEqual(expected_req_to_res_kurtosis_result, actual_req_to_res_kurtosis_result)
 
-    def messages_to_idpoint(self):
-
-        # Assume
-        time_ms = 0.0
-        is_injected = "normal"
-        mean_id_interval = id_based_datasets.calculate_mean_id_interval(self.messages)
-        variance_id_frequency = id_based_datasets.calculate_variance_id_frequency(self.messages)
-        num_id_transitions = id_based_datasets.calculate_num_id_transitions(self.messages)
-        num_ids = id_based_datasets.calculate_num_ids(self.messages)
-        num_msgs = len(self.messages)
-        mean_id_interval_variance = id_based_datasets.calculate_mean_id_intervals_variance(self.messages)
-        mean_data_bit_count = id_based_datasets.calculate_mean_data_bit_count(self.messages)
-        variance_data_bit_count = id_based_datasets.calculate_variance_data_bit_count(self.messages)
-        mean_variance_data_bit_count = id_based_datasets.calculate_mean_variance_data_bit_count_id(self.messages)
-        mean_probability_bits = id_based_datasets.calculate_mean_probability_bits(self.messages)
-        req_to_res_time_variance = id_based_datasets.calculate_req_to_res_time_variance(self.messages)
-        kurtosis_id_interval = id_based_datasets.calculate_kurtosis_id_interval(self.messages)
-        kurtosis_id_frequency = id_based_datasets.calculate_kurtosis_id_frequency(self.messages)
-        kurtosis_mean_id_intervals = id_based_datasets.calculate_kurtosis_mean_id_intervals(self.messages)
-        kurtosis_variance_data_bit_count_id = id_based_datasets.calculate_kurtosis_variance_data_bit_count_id(self.messages)
-        skewness_id_interval_variances = id_based_datasets.calculate_skewness_id_interval_variances(self.messages)
-        skewness_id_frequency = id_based_datasets.calculate_skewness_id_frequency(self.messages)
-        kurtosis_req_to_res_time = id_based_datasets.calculate_kurtosis_req_to_res_time(self.messages)
-
-        actual_datapoint = IDPoint(time_ms,
-                                   is_injected,
-                                   mean_id_interval,
-                                   variance_id_frequency,
-                                   num_id_transitions,
-                                   num_ids,
-                                   num_msgs,
-                                   mean_id_interval_variance,
-                                   mean_data_bit_count,
-                                   variance_data_bit_count,
-                                   mean_variance_data_bit_count,
-                                   mean_probability_bits,
-                                   req_to_res_time_variance,
-                                   kurtosis_id_interval,
-                                   kurtosis_id_frequency,
-                                   skewness_id_frequency,
-                                   kurtosis_mean_id_intervals,
-                                   kurtosis_variance_data_bit_count_id,
-                                   skewness_id_interval_variances,
-                                   kurtosis_req_to_res_time)
+    def test_messages_to_idpoint(self):
 
         # Action
         expected_value = id_based_datasets.messages_to_idpoint(self.messages, "normal")
         #expected_exception_raise = id_based_datasets.messages_to_idpoint([], "normal")
 
-        # Assume
-        self.assertAlmostEqual(expected_value.time_ms, actual_datapoint.time_ms)
-        self.assertAlmostEqual(expected_value.is_injected, actual_datapoint.is_injected)
-        self.assertAlmostEqual(expected_value.mean_id_interval, actual_datapoint.mean_id_interval)
-        self.assertAlmostEqual(expected_value.variance_id_frequency, actual_datapoint.variance_id_frequency)
-        self.assertAlmostEqual(expected_value.num_id_transitions, actual_datapoint.num_id_transitions)
-        self.assertAlmostEqual(expected_value.num_ids, actual_datapoint.num_ids)
-        self.assertAlmostEqual(expected_value.num_msgs, actual_datapoint.num_msgs)
-        self.assertAlmostEqual(expected_value.mean_id_intervals_variance, actual_datapoint.mean_id_intervals_variance)
-        self.assertAlmostEqual(expected_value.mean_data_bit_count, actual_datapoint.mean_data_bit_count)
-        self.assertAlmostEqual(expected_value.variance_data_bit_count, actual_datapoint.variance_data_bit_count)
-        self.assertAlmostEqual(expected_value.mean_variance_data_bit_count_id, actual_datapoint.mean_variance_data_bit_count_id)
-        self.assertAlmostEqual(expected_value.mean_probability_bits, actual_datapoint.mean_probability_bits)
-        self.assertAlmostEqual(expected_value.req_to_res_time_variance, actual_datapoint.req_to_res_time_variance)
-        self.assertAlmostEqual(expected_value.kurtosis_id_interval, actual_datapoint.kurtosis_id_interval)
-        self.assertAlmostEqual(expected_value.kurtosis_id_frequency, actual_datapoint.kurtosis_id_frequency)
-        self.assertAlmostEqual(expected_value.kurtosis_mean_id_intervals, actual_datapoint.kurtosis_mean_id_intervals)
-        self.assertAlmostEqual(expected_value.kurtosis_variance_data_bit_count_id, actual_datapoint.kurtosis_variance_data_bit_count_id)
-        self.assertAlmostEqual(expected_value.skewness_id_interval_variances, actual_datapoint.skewness_id_interval_variances)
-        self.assertAlmostEqual(expected_value.skewness_id_frequency, actual_datapoint.skewness_id_frequency)
-        self.assertAlmostEqual(expected_value.kurtosis_req_to_res_time, actual_datapoint.kurtosis_req_to_res_time)
+        # Assert
+        self.assertAlmostEqual(expected_value.time_ms, self.actual_datapoint.time_ms)
+        self.assertAlmostEqual(expected_value.is_injected, self.actual_datapoint.is_injected)
+        self.assertAlmostEqual(expected_value.mean_id_interval, self.actual_datapoint.mean_id_interval)
+        self.assertAlmostEqual(expected_value.variance_id_frequency, self.actual_datapoint.variance_id_frequency)
+        self.assertAlmostEqual(expected_value.num_id_transitions, self.actual_datapoint.num_id_transitions)
+        self.assertAlmostEqual(expected_value.num_ids, self.actual_datapoint.num_ids)
+        self.assertAlmostEqual(expected_value.num_msgs, self.actual_datapoint.num_msgs)
+        self.assertAlmostEqual(expected_value.mean_id_intervals_variance, self.actual_datapoint.mean_id_intervals_variance)
+        self.assertAlmostEqual(expected_value.mean_data_bit_count, self.actual_datapoint.mean_data_bit_count)
+        self.assertAlmostEqual(expected_value.variance_data_bit_count, self.actual_datapoint.variance_data_bit_count)
+        self.assertAlmostEqual(expected_value.mean_variance_data_bit_count_id, self.actual_datapoint.mean_variance_data_bit_count_id)
+        self.assertAlmostEqual(expected_value.mean_probability_bits, self.actual_datapoint.mean_probability_bits)
+        self.assertAlmostEqual(expected_value.req_to_res_time_variance, self.actual_datapoint.req_to_res_time_variance)
+        self.assertAlmostEqual(expected_value.kurtosis_id_interval, self.actual_datapoint.kurtosis_id_interval)
+        self.assertAlmostEqual(expected_value.kurtosis_id_frequency, self.actual_datapoint.kurtosis_id_frequency)
+        self.assertAlmostEqual(expected_value.kurtosis_mean_id_intervals, self.actual_datapoint.kurtosis_mean_id_intervals)
+        self.assertAlmostEqual(expected_value.kurtosis_variance_data_bit_count_id, self.actual_datapoint.kurtosis_variance_data_bit_count_id)
+        self.assertAlmostEqual(expected_value.skewness_id_interval_variances, self.actual_datapoint.skewness_id_interval_variances)
+        self.assertAlmostEqual(expected_value.skewness_id_frequency, self.actual_datapoint.skewness_id_frequency)
+        self.assertAlmostEqual(expected_value.kurtosis_req_to_res_time, self.actual_datapoint.kurtosis_req_to_res_time)
         #self.assertRaises(ValueError, expected_exception_raise)
