@@ -9,20 +9,21 @@ import datareader_csv
 from models.model_utility import split_feature_label, scale_features
 
 np.set_printoptions(threshold=sys.maxsize)
-
+#Load data
 os.chdir("..")
 training = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_37582_100ms.csv", 0)
 test = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_test_9396_100ms.csv", 0)
 
+#split and scale data
 X_train, y_train = split_feature_label(training)
 X_test, y_test = split_feature_label(test)
 X_train, X_test = scale_features(X_train, X_test)
 
-
+#create model and fit model
 nbc = GaussianNB()
 nbc.fit(X_train, y_train)
 
-
+#test accuracy of the model
 y_predict = nbc.predict(X_test)
 print(classification_report(y_test, y_predict))
 
