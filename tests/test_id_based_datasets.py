@@ -7,17 +7,18 @@ from message import Message
 
 class TestIdBasedDatasets(TestCase):
     def setUp(self) -> None:
-        # Assume
-        message_1 = Message(0.000000, 128, 0, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
-        message_2 = Message(2.000000, 129, 0, 8, bytearray(b'\x00\x17\xea\x0a\x20\x1a\x20\x43'))
-        message_3 = Message(4.000000, 128, 0, 8, bytearray(b'\x7f\x84\x60\x00\x00\x00\x00\x53'))
-        message_4 = Message(6.000000, 129, 0, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
-        message_5 = Message(8.000000, 130, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
-        message_6 = Message(10.000000, 130, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
+        # Assume for calculate_mean_id_intervals_variance, calculate_skewness_id_interval_variances
+        self.message_1 = Message(0.000000, 128, 0, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
+        self.message_2 = Message(2.000000, 129, 0, 8, bytearray(b'\x00\x17\xea\x0a\x20\x1a\x20\x43'))
+        self.message_3 = Message(4.000000, 128, 0, 8, bytearray(b'\x7f\x84\x60\x00\x00\x00\x00\x53'))
+        self.message_4 = Message(6.000000, 129, 0, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
+        self.message_5 = Message(8.000000, 130, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
+        self.message_6 = Message(10.000000, 130, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
         message_7 = Message(12.000000, 129, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
         message_8 = Message(14.000000, 128, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
         message_9 = Message(16.000000, 130, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
-        self.messages = [message_1, message_2, message_3, message_4, message_5, message_6, message_7, message_8, message_9]
+        self.messages = [self.message_1, self.message_2, self.message_3, self.message_4, self.message_5, self.message_6,
+                         message_7, message_8, message_9]
 
         # Find interval between same ids.
         self.id_timestamp_intervals = {}
@@ -341,17 +342,13 @@ class TestIdBasedDatasets(TestCase):
         # Assumption when skewness can be calculated for a set of messages
         n_final = len(self.values)
         mean_final = (self.values[0] + self.values[1] + self.values[2]) / n_final
-        variance_final = (1 / n_final) * (self.values[0] - mean_final) ** 2 + (1 / n_final) * (self.values[1] - mean_final) ** 2 + (1 / n_final) * (self.values[2] - mean_final) ** 2
+        variance_final = (1 / n_final) * (self.values[0] - mean_final) ** 2 + (1 / n_final) * \
+                         (self.values[1] - mean_final) ** 2 + (1 / n_final) * (self.values[2] - mean_final) ** 2
         actual_skewness_result = (3 * (mean_final - self.median)) / math.sqrt(variance_final)
 
         # Assumption when skewness can NOT be calculated when unique ids is required to appear at least 3 times
-        message_1 = Message(0.000000, 128, 0, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
-        message_2 = Message(2.000000, 129, 0, 8, bytearray(b'\x00\x17\xea\x0a\x20\x1a\x20\x43'))
-        message_3 = Message(4.000000, 128, 0, 8, bytearray(b'\x7f\x84\x60\x00\x00\x00\x00\x53'))
-        message_4 = Message(6.000000, 129, 0, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
-        message_5 = Message(8.000000, 130, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
-        message_6 = Message(10.000000, 130, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
-        no_skewness_messages = [message_1, message_2, message_3, message_4, message_5, message_6]
+        no_skewness_messages = [self.message_1, self.message_2, self.message_3, self.message_4, self.message_5,
+                                self.message_6]
 
         # Action
         expected_result = id_based_datasets.calculate_skewness_id_interval_variances(self.messages)
@@ -368,13 +365,8 @@ class TestIdBasedDatasets(TestCase):
 
         # If length of interval variances is 0, we can't calculate anything
         # Assumption when skewness can NOT be calculated when unique ids is required to appear at least 3 times
-        message_1 = Message(0.000000, 128, 0, 8, bytearray(b'\xd7\xa7\x7f\x8c\x11\x2f\x00\x10'))
-        message_2 = Message(2.000000, 129, 0, 8, bytearray(b'\x00\x17\xea\x0a\x20\x1a\x20\x43'))
-        message_3 = Message(4.000000, 128, 0, 8, bytearray(b'\x7f\x84\x60\x00\x00\x00\x00\x53'))
-        message_4 = Message(6.000000, 129, 0, 8, bytearray(b'\x00\x80\x10\xff\x00\xff\x40\xce'))
-        message_5 = Message(8.000000, 130, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
-        message_6 = Message(10.000000, 130, 0, 8, bytearray(b'\x00\x29\x20\x00\x00\x45\x00\x00'))
-        no_mean_messages = [message_1, message_2, message_3, message_4, message_5, message_6]
+        no_mean_messages = [self.message_1, self.message_2, self.message_3, self.message_4, self.message_5,
+                            self.message_6]
 
         # Action
         expected_result = id_based_datasets.calculate_mean_id_intervals_variance(self.messages)
@@ -513,7 +505,7 @@ class TestIdBasedDatasets(TestCase):
 
     def test_calculate_mean_variance_data_bit_count_id(self):
 
-        # Assume we can calculte the mean variance data bit count
+        # Assume we can calculate the mean variance data bit count
         message_1 = Message(0.000000, 128, 0, 8, bytearray(b'\x01\x01\x01\x01\x01\x01\x01\x01'))
         message_2 = Message(2.000000, 129, 0, 8, bytearray(b'\x00\x00\x00\x01\x01\x00\x00\x00'))
         message_3 = Message(8.000000, 130, 0, 8, bytearray(b'\x00\x00\x11\x01\x01\x01\x01\x01'))
