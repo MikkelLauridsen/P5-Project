@@ -21,7 +21,6 @@ class IDPoint(dataobject):
     kurtosis_mean_id_intervals: float
     # kurtosis_variance_data_bit_count_id: float
     skewness_id_interval_variances: float
-    kurtosis_mean_id_intervals: float
     kurtosis_req_to_res_time: float
 
     def __str__(self):

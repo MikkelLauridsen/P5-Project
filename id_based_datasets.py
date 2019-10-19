@@ -375,13 +375,12 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
 
     old_progress = -5
     lowest_index += 1
-    highest_index = lowest_index
+    old_time = working_set[0].timestamp
 
     for i in range(lowest_index, length):
         working_set.append(messages[i])
         progress = math.ceil((i / length) * 100.0)
-        time_expended = (working_set[highest_index].timestamp - working_set[0].timestamp) * 1000.0
-        highest_index += 1
+        time_expended = (working_set[len(working_set) - 1].timestamp - old_time) * 1000.0
 
         if progress % 5 == 0 and progress > old_progress:
             print(f"{name} Creating idpoints: {progress}/100%")
@@ -392,10 +391,10 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
 
             while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
                 low = working_set.popleft()
-                highest_index -= 1
 
             working_set.appendleft(low)
             idpoints.append(messages_to_idpoint(list(working_set), is_injected))
+            old_time = working_set[len(working_set) - 1].timestamp
 
     return idpoints
 
@@ -505,7 +504,7 @@ def offset_idpoint(idp, offset):
 
 
 def save_datasets():
-    training_set, test_set = get_mixed_datasets(100, True)
+    training_set, test_set = get_mixed_datasets(100, True, overlap_ms=100)
     write_idpoints_csv(training_set, 100, "mixed_training")
     write_idpoints_csv(test_set, 100, "mixed_test")
 
