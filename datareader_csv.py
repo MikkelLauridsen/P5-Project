@@ -5,7 +5,7 @@ import message
 
 
 def __load_data(filepath, parse_func, start, limit):
-    print("Started reading from " + filepath)
+    print(f"Started reading from {filepath}")
 
     data = []
 
@@ -16,11 +16,9 @@ def __load_data(filepath, parse_func, start, limit):
         print("The file does not exist")
         return
 
-    df_list = df.values.tolist()
-
-    for count, row in enumerate(df_list):
+    for count, row in enumerate(df.values.tolist()):
         if count % 50000 == 0:
-            print("Reading message: " + str(count))
+            print(f"Reading message: {str(count)}")
         data.append(parse_func(row))
 
     print("Completed")

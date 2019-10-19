@@ -1,11 +1,10 @@
-import re
 import os
-import csv
+import re
 
-import message
+import pandas as pd
 
 
-# This function uses regular expression to match
+# This function uses regular expressions to match the contents of a message to its specific parts.
 def __parse_message(message_str, pattern):
     m = re.match(pattern, message_str)
     timestamp = float(m.group("timestamp"))
@@ -18,14 +17,16 @@ def __parse_message(message_str, pattern):
     except IndexError:
         pass
 
-    raw_data = None
+    data = ""
     if dlc > 0:
-        raw_data = m.group("data").split(" ")
+        data = m.group("data")
 
-    return message.Message(timestamp, id, add, dlc, raw_data)
+    return [timestamp, id, dlc, add, data]
 
 
+# Takes a filepath and a pattern for parsing rows and returns a pandas dataframe containing the contents of the file.
 def __load_data(filepath, pattern, start=0):
+    print(f"Started reading from {filepath}")
     data = []
     with open(filepath, "r") as fileobject:
         # Skipping the header if necessary
@@ -37,8 +38,10 @@ def __load_data(filepath, pattern, start=0):
                 data.append(__parse_message(row, pattern))
 
             if index % 50000 == 0:
-                print(index)
-    return data
+                print(f"Reading message: {index}")
+    print("Completed")
+
+    return pd.DataFrame(data)
 
 
 pattern1 = r"Timestamp:( )*(?P<timestamp>.*)        ID: (?P<id>[0-9a-f]*)    (?P<add>[01]*)    "\
@@ -47,6 +50,7 @@ pattern2 = r"(?P<id>[0-9a-f]*)	(?P<dlc>[0-8])	(?P<data>(([0-9a-f]*)( )?)*)		( )*
 
 
 def txt_to_csv(start_dir, target_dir):
+    """Taking all txt files in the start dir, converting them to csv files and putting them in the target dir."""
     # Creating the directory if it does not exist
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
@@ -59,23 +63,9 @@ def txt_to_csv(start_dir, target_dir):
         else:
             text_file = __load_data(path, pattern1)
 
-        # Creating a corresponding csv file and opening it in write mode.
-        with open(f"{path.replace(start_dir, target_dir)[:-3]}" + "csv", "w", newline="") as csv_file:
-            csv_writer = csv.writer(csv_file, quotechar='"', quoting=csv.QUOTE_MINIMAL)
-
-            # Adding a header to the csv file.
-            csv_writer.writerow(["timestamp", "id", "add", "dlc", "data"])
-
-            # Adding all the txt file data to the csv file.
-            for j in range(len(text_file)):
-                if text_file[j].data is None:
-                    data = ""
-                else:
-                    data = " ".join(text_file[j].data)
-
-                row = [text_file[j].timestamp, text_file[j].id, text_file[j].add, text_file[j].dlc, data]
-
-                csv_writer.writerow(row)
+        # Converting the dataframe into a csv file and placing it in the target dir.
+        text_file.to_csv(f"{path.replace(start_dir, target_dir)[:-3]}csv",
+                         header=["timestamp", "id", "add", "dlc", "data"], index=False)
 
 
 if __name__ == "__main__":

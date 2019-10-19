@@ -1,8 +1,7 @@
 import os
-import datareader_csv
 from sklearn.neural_network import MLPClassifier
 from id_based_datasets import get_mixed_datasets
-from models.model_utility import find_best_hyperparameters
+from models.model_utility import find_best_hyperparameters, find_best_hyperparameters2
 from models.model_utility import scale_features
 from models.model_utility import split_feature_label
 from sklearn.metrics import classification_report
@@ -24,11 +23,11 @@ if __name__ == "__main__":
         X_train, X_test = scale_features(X_train, X_test)
 
         parameter_space = [{'solver': ["adam"],
-                        'alpha': [1.e-01, 1.e-02, 1.e-03, 1.e-04, 1.e-05, 1.e-06],
-                        'hidden_layer_sizes': [(12, 4), (14, 4), (16, 4)],
-                        'random_state': [1]}]
+                            'alpha': [1.e-01, 1.e-02, 1.e-03, 1.e-04, 1.e-05, 1.e-06],
+                            'hidden_layer_sizes': [(12, 4), (14, 4), (16, 4)],
+                            'random_state': [1]}]
 
-        #parameter_space = [{'solver': ["lbfgs", "sgd", "adam"],
+        # parameter_space = [{'solver': ["lbfgs", "sgd", "adam"],
         #                    'alpha': [1.e-01, 1.e-02, 1.e-03, 1.e-04, 1.e-05, 1.e-06],
         #                    'hidden_layer_sizes': [(8, 4), (10, 4), (12, 4), (14, 4), (16, 4)],
         #                    'random_state': [1]}]
@@ -39,3 +38,20 @@ if __name__ == "__main__":
         print(f"{10 * key}ms window: \n")
         classification_report(pair[0], pair[1])
         print("\n\n")
+
+
+def mlp(X_train, y_train):
+    #The grid gets setup
+    print("Grid for mlp is now being set up")
+    parameter_space = [{'solver': ["adam"],
+                        'alpha': [1.e-01, 1.e-02, 1.e-03, 1.e-04, 1.e-05, 1.e-06],
+                        'hidden_layer_sizes': [(12, 4), (14, 4), (16, 4)],
+                        'random_state': [1]}]
+
+    #Find the best hyperparameters
+    print("Grid for mlp has now been set up, hyper parameters are being found")
+    mlp_model = (find_best_hyperparameters2(MLPClassifier(), parameter_space, X_train, y_train))
+
+    #Model gets send back to have accuracy predicted
+    print("The mlp model has now been created, and prediction of accuracy is now being calculated")
+    return mlp_model
