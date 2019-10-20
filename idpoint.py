@@ -53,6 +53,14 @@ idpoint_attribute_descriptions = {
 }
 
 
+def is_header_matching(header):
+    header_set = set(header)
+    attr_set = set(idpoint_attributes)
+
+    diff = header_set.symmetric_difference(attr_set)
+    return len(diff) == 0, diff
+
+
 def parse_csv_row(row):
     args = []
     for i in range(len(idpoint_attributes)):
