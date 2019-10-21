@@ -178,7 +178,8 @@ def train_and_predict(training_points, test_points):
     __construct_network_nodes(domain, training_set)
     __learn_structure_and_tables(domain, training_set)
 
-    domain.save_as_kb("bayesian_network.hkb")
+    # Save network to view in hugin
+    # domain.save_as_kb("bayesian_network.hkb")
 
     return __get_predictions(domain, test_set)
 
