@@ -238,9 +238,9 @@ def calculate_req_to_res_time_variance(messages):
     latest_remote_frame_timestamp = {}
 
     for message in messages:
-        if message.add == 0b100:
+        if message.rtr == 0b100:
             latest_remote_frame_timestamp[message.id] = message.timestamp
-        elif message.add == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
+        elif message.rtr == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
             intervals.append(message.timestamp - latest_remote_frame_timestamp[message.id])
             latest_remote_frame_timestamp[message.id] = None
 
@@ -303,9 +303,9 @@ def calculate_kurtosis_req_to_res_time(messages):
     latest_remote_frame_timestamp = {}
 
     for message in messages:
-        if message.add == 0b100:
+        if message.rtr == 0b100:
             latest_remote_frame_timestamp[message.id] = message.timestamp
-        elif message.add == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
+        elif message.rtr == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
             intervals.append(message.timestamp - latest_remote_frame_timestamp[message.id])
             latest_remote_frame_timestamp[message.id] = None
 

@@ -878,9 +878,9 @@ class TestIdBasedDatasets(TestCase):
         recent_remote_frame_timestamp = {}
 
         for message in messages:
-            if message.add == 0b100:
+            if message.rtr == 0b100:
                 recent_remote_frame_timestamp[message.id] = message.timestamp
-            elif message.add == 0b000 and recent_remote_frame_timestamp.get(message.id, None) is not None:
+            elif message.rtr == 0b000 and recent_remote_frame_timestamp.get(message.id, None) is not None:
                 intervals.append(message.timestamp - recent_remote_frame_timestamp[message.id])
                 recent_remote_frame_timestamp[message.id] = None
 
@@ -915,9 +915,9 @@ class TestIdBasedDatasets(TestCase):
         recent_remote_frame_timestamp = {}
 
         for message in messages:
-            if message.add == 0b100:
+            if message.rtr == 0b100:
                 recent_remote_frame_timestamp[message.id] = message.timestamp
-            elif message.add == 0b000 and recent_remote_frame_timestamp.get(message.id, None) is not None:
+            elif message.rtr == 0b000 and recent_remote_frame_timestamp.get(message.id, None) is not None:
                 intervals.append(message.timestamp - recent_remote_frame_timestamp[message.id])
                 recent_remote_frame_timestamp[message.id] = None
         n = len(intervals)

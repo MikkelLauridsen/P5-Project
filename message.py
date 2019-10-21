@@ -5,19 +5,19 @@ from recordclass import dataobject
 class Message(dataobject):
     timestamp: float
     id: int
-    add: int
+    rtr: int
     dlc: int
     data: bytearray
 
     def __str__(self):
-        return f"{{{self.timestamp}, {self.id}, {self.add}, {self.dlc}, {self.data}}}"
+        return f"{{{self.timestamp}, {self.id}, {self.rtr}, {self.dlc}, {self.data}}}"
 
 
 # Function to read single line FROM .csv file(s) and return a Message dataobject.
 def parse_csv_row(row):
     timestamp = float(row[0])
     id = int(row[1])
-    add = int(row[2])
+    rtr = int(row[2])
     dlc = int(row[3])
 
     data = None
@@ -27,4 +27,4 @@ def parse_csv_row(row):
             raw_data.pop()
         data = bytearray([int(i, 16) for i in raw_data])
 
-    return Message(timestamp, id, add, dlc, data)
+    return Message(timestamp, id, rtr, dlc, data)
