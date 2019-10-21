@@ -10,16 +10,12 @@ def __parse_message(message_str, pattern):
     timestamp = float(m.group("timestamp"))
     id = int(m.group("id"), 16)
     dlc = int(m.group("dlc"))
+    data = m.group("data")
 
-    add = 0
     try:
         add = int(m.group("add"), 2)
     except IndexError:
-        pass
-
-    data = ""
-    if dlc > 0:
-        data = m.group("data")
+        add = 0
 
     return [timestamp, id, dlc, add, data]
 
