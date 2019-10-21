@@ -17,7 +17,7 @@ def __parse_message(message_str, pattern):
     except IndexError:
         rtr = 0
 
-    return [timestamp, id, dlc, rtr, data]
+    return [timestamp, id, rtr, dlc, data]
 
 
 # Takes a filepath and a pattern for parsing rows and returns a pandas dataframe containing the contents of the file.
