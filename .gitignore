@@ -112,3 +112,5 @@ data/data_csv/
 data/idpoint_dataset/
 data/manipulated_data/
 hugin/
+bayesian_network.hkb
+bayesian_network.hlg
