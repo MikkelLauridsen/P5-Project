@@ -19,7 +19,7 @@ def manipulate_dos(filepath, target_dir):
     data = __replace_dos_messages(data, normal_data_fields)
 
     # Converting the manipulated dataset back into a csv file.
-    data.to_csv(f"{target_dir}DoS_manipulated.csv", columns=["timestamp", "id", "rtr", "dlc", "data"], index=False)
+    data.to_csv(target_dir, columns=["timestamp", "id", "rtr", "dlc", "data"], index=False)
 
 
 # Goes through a dataframe and returns list containing the data fields for normal messages. Only works for DoS.
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    manipulate_dos(source_dir + "DoS_attack_dataset.csv", target_dir)
+    manipulate_dos(source_dir + "DoS_attack_dataset.csv", target_dir + "DoS_attack_dataset.csv")
 
     manipulate_remote_frames(source_dir + "Attack_free_dataset.csv", target_dir + "Attack_free_dataset.csv")
     manipulate_remote_frames(source_dir + "Attack_free_dataset2.csv", target_dir + "Attack_free_dataset2.csv")
