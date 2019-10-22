@@ -13,6 +13,9 @@ class Message(dataobject):
         return f"{{{self.timestamp}, {self.id}, {self.rtr}, {self.dlc}, {self.data}}}"
 
 
+message_attributes = Message.__annotations__.keys()
+
+
 # Function to read single line FROM .csv file(s) and return a Message dataobject.
 def parse_csv_row(row):
     timestamp = float(row[0])
@@ -28,3 +31,19 @@ def parse_csv_row(row):
         data = bytearray([int(i, 16) for i in raw_data])
 
     return Message(timestamp, id, rtr, dlc, data)
+
+
+def get_csv_row(message):
+    row = [
+        "%.6f" % message.timestamp,
+        message.id,
+        message.rtr,
+        message.dlc,
+        ""
+    ]
+
+    br = message.data
+    if br is not None:
+        row[4] = " ".join(["%02x" % b for b in br])
+
+    return row
