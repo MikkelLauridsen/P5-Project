@@ -3,14 +3,13 @@
 import pandas as pd
 import random
 import os
+import datareader_csv
+import csv
+import message as msg
 
 
 def manipulate_dos(filepath, target_dir):
     """Replaces DoS injection messages with more realistic attacks and outputs the changed file in the target dir."""
-    # Creating the target directory if it does not exist.
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-
     # Getting the data from the filepath.
     data = pd.read_csv(filepath)
 
@@ -46,5 +45,66 @@ def __replace_dos_messages(df, normal_data_fields):
     return df
 
 
+def manipulate_remote_frames(source, target):
+    print(f"Removing remote frames and corresponding responses from {source}")
+    messages = datareader_csv.load_messages(source)
+    __remove_remote_frames(messages)
+
+    with open(target, "w", newline="") as datafile:
+        datafile_writer = csv.writer(datafile, delimiter=",")
+
+        # Writing the header.
+        datafile_writer.writerow(msg.message_attributes)
+
+        for message in messages:
+            datafile_writer.writerow(msg.get_csv_row(message))
+
+
+def __remove_remote_frames(messages):
+    """Removes remote frames and their corresponding responses.
+    It is assumed that responses arrive withing 7 messages."""
+    latest_remote_frame = None
+    latest_remote_frame_index = None
+    current_offset = 0
+
+    # Iterate messages
+    i = 0
+    while i < len(messages):
+        message = messages[i]
+
+        # Remove remote frames
+        if message.rtr == 0b100:
+            latest_remote_frame = message
+            latest_remote_frame_index = i
+            current_offset = message.timestamp - messages[i - 1].timestamp
+            del messages[i]
+        # Remove responses to remote frames. We assume responses arrive within 7 messages.
+        elif latest_remote_frame is not None and \
+                message.id == latest_remote_frame.id and i - latest_remote_frame_index < 7:
+            latest_remote_frame = None
+            latest_remote_frame_index = None
+            current_offset = message.timestamp - messages[i - 1].timestamp
+            del messages[i]
+        else:
+            # Continue to next message
+            # message.timestamp -= current_offset  # Removed until after meeting
+            i += 1
+
+
 if __name__ == "__main__":
-    manipulate_dos("data/data_csv/DoS_attack_dataset.csv", "data/manipulated_data/")
+    source_dir = "data/data_csv/"
+    target_dir = "data/manipulated_data/"
+
+    # Creating the target directory if it does not exist.
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
+    manipulate_dos(source_dir + "DoS_attack_dataset.csv", target_dir)
+
+    manipulate_remote_frames(source_dir + "Attack_free_dataset.csv", target_dir + "Attack_free_dataset.csv")
+    manipulate_remote_frames(source_dir + "Attack_free_dataset2.csv", target_dir + "Attack_free_dataset2.csv")
+    manipulate_remote_frames(source_dir + "DoS_attack_dataset.csv", target_dir + "DoS_attack_dataset.csv")
+    manipulate_remote_frames(source_dir + "Fuzzy_attack_dataset.csv", target_dir + "Fuzzy_attack_dataset.csv")
+    manipulate_remote_frames(source_dir + "Impersonation_attack_dataset.csv", target_dir + "Impersonation_attack_dataset.csv")
+    manipulate_remote_frames(source_dir + "170907_impersonation.csv", target_dir + "170907_impersonation.csv")
+    manipulate_remote_frames(source_dir + "170907_impersonation_2.csv", target_dir + "170907_impersonation_2.csv")
