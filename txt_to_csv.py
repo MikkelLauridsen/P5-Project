@@ -10,18 +10,14 @@ def __parse_message(message_str, pattern):
     timestamp = float(m.group("timestamp"))
     id = int(m.group("id"), 16)
     dlc = int(m.group("dlc"))
+    data = m.group("data")
 
-    add = 0
     try:
-        add = int(m.group("add"), 2)
+        rtr = int(m.group("rtr"), 2)
     except IndexError:
-        pass
+        rtr = 0
 
-    data = ""
-    if dlc > 0:
-        data = m.group("data")
-
-    return [timestamp, id, dlc, add, data]
+    return [timestamp, id, rtr, dlc, data]
 
 
 # Takes a filepath and a pattern for parsing rows and returns a pandas dataframe containing the contents of the file.
@@ -44,7 +40,7 @@ def __load_data(filepath, pattern, start=0):
     return pd.DataFrame(data)
 
 
-pattern1 = r"Timestamp:( )*(?P<timestamp>.*)        ID: (?P<id>[0-9a-f]*)    (?P<add>[01]*)    "\
+pattern1 = r"Timestamp:( )*(?P<timestamp>.*)        ID: (?P<id>[0-9a-f]*)    (?P<rtr>[01]*)    "\
            r"DLC: (?P<dlc>[0-8])(    (?P<data>(([0-9a-f]+)( )?)*))?"
 pattern2 = r"(?P<id>[0-9a-f]*)	(?P<dlc>[0-8])	(?P<data>(([0-9a-f]*)( )?)*)		( )*(?P<timestamp>.*)"
 
@@ -65,7 +61,7 @@ def txt_to_csv(start_dir, target_dir):
 
         # Converting the dataframe into a csv file and placing it in the target dir.
         text_file.to_csv(f"{path.replace(start_dir, target_dir)[:-3]}csv",
-                         header=["timestamp", "id", "add", "dlc", "data"], index=False)
+                         header=["timestamp", "id", "rtr", "dlc", "data"], index=False)
 
 
 if __name__ == "__main__":
