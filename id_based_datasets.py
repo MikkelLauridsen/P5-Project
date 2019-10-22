@@ -9,11 +9,14 @@ from collections import deque
 from sklearn.model_selection import train_test_split
 
 
+# Calculates the skewness of the values in input list.
+# Pearson's second skewness coefficient is used as equation.
+# If the list has less than two elements, the skewness will default to 0.
 def __calculate_skewness(values):
     if len(values) == 0:
         return 0
 
-    values.sort()
+    values.sort() # sort values, such that the median can be found
 
     mean = math.fsum(values) / len(values)
     median = values[math.floor(len(values) / 2)]
@@ -25,14 +28,17 @@ def __calculate_skewness(values):
     return (3 * (mean - median)) / math.sqrt(variance)
 
 
+# Calculates the kurtosis of the values in input list.
+# Bock's kurtosis coefficient is used, which means the kurtosis of the normal distribution is 3.
+# The kurtosis also defaults to 3 if input list has less than two elements.
 def __calculate_kurtosis(values):
     if len(values) == 0:
         return 3
 
     n = len(values)
     avg = math.fsum(values) / n
-    s2 = ft.reduce(lambda y, x: (x - avg) ** 2 + y, values, 0)
-    s4 = ft.reduce(lambda y, x: (x - avg) ** 4 + y, values, 0)
+    s2 = ft.reduce(lambda y, x: (x - avg) ** 2 + y, values, 0) # find sum of squared deviations
+    s4 = ft.reduce(lambda y, x: (x - avg) ** 4 + y, values, 0) # fund sum of deviations raised to the fourth power
     m2 = s2 / n
     m4 = s4 / n
 
@@ -42,6 +48,9 @@ def __calculate_kurtosis(values):
     return m4 / (m2 ** 2)
 
 
+# Calculates the variance of elements in input list.
+# The equation for population variance is used.
+# Defaults to 0 if the input list has less than 2 elements.
 def __calculate_variance(values):
     avg_freq = math.fsum(values) / len(values)
     variance = 0
@@ -53,6 +62,11 @@ def __calculate_variance(values):
     return (1.0 / len(values)) * variance
 
 
+# For each bit in the CAN-bus data-field,
+# calculates the probability of the bit having value 1,
+# based on data-fields in input list of messages.
+# If the DLC has value 4, at most 32 bits can have value 1.
+# Returns a list of the resulting probabilities.
 def __calculate_probability_bits(messages):
     bits = [0 for i in range(64)]
 
@@ -69,6 +83,7 @@ def __calculate_probability_bits(messages):
     return bits
 
 
+# Counts the number of 1s in the data-field of input message.
 def __calculate_bit_count(message):
     if message.dlc == 0:
         return 0
@@ -83,7 +98,7 @@ def __calculate_bit_count(message):
     return count
 
 
-# Returns a dictionary where keys are ids and values are the intervals between messages of the same id
+# Returns a dictionary where keys are ids and values are lists of the intervals between messages of the same id
 def __find_id_intervals(messages):
     id_timestamp_intervals = {}
     last_seen_timestamps = {}
@@ -99,6 +114,10 @@ def __find_id_intervals(messages):
     return id_timestamp_intervals
 
 
+# For each unique ID in input list of messages,
+# constructs a list of time periods between two messages with this ID.
+# Afterwards, the variance each list is found.
+# Finally, the skewness of these variances is calculated and returned.
 def calculate_skewness_id_interval_variances(messages):
     id_timestamp_intervals = __find_id_intervals(messages)
 
@@ -109,6 +128,9 @@ def calculate_skewness_id_interval_variances(messages):
     return __calculate_skewness(intervals_variances)
 
 
+# For each unique ID, constructs a list of bit-counts calculated from input list of messages.
+# Afterwards, the variance of each list is found.
+# Finally, the kurtosis of these variances is calculated and returned.
 def calculate_kurtosis_variance_data_bit_count_id(messages):
     id_counts = {}
 
@@ -126,12 +148,20 @@ def calculate_kurtosis_variance_data_bit_count_id(messages):
     return __calculate_kurtosis(variances)
 
 
+# For each bit in the CAN-bus data-field, calculates the probability of it having value 1,
+# based on input list of messages.
+# Finally, calculates and returns the mean of these probabilities.
 def calculate_mean_probability_bits(messages):
     bits = __calculate_probability_bits(messages)
 
     return math.fsum(bits) / 64.0
 
 
+# For each unique ID in input list of messages,
+# constructs a list of time periods between messages of this ID.
+# Afterwards, calculates the variance of elements in each list, separately.
+# Finally, calculates and returns the mean of these variances.
+# Returned value defaults to 0 if no intervals were present in the time window.
 def calculate_mean_id_intervals_variance(messages):
     id_timestamp_intervals = __find_id_intervals(messages)
 
@@ -142,6 +172,8 @@ def calculate_mean_id_intervals_variance(messages):
     return 0 if len(intervals_variances) == 0 else math.fsum(intervals_variances) / len(intervals_variances)
 
 
+# Finds the bit-count of each message in input list, separately.
+# Calculates and returns the mean bit-count.
 def calculate_mean_data_bit_count(messages):
     counts = []
 
@@ -151,6 +183,8 @@ def calculate_mean_data_bit_count(messages):
     return math.fsum(counts) / len(counts)
 
 
+# Finds the bit-count of each message in input list, separately.
+# Calculates and returns the population variance of the bit-counts.
 def calculate_variance_data_bit_count(messages):
     counts = []
 
@@ -160,6 +194,11 @@ def calculate_variance_data_bit_count(messages):
     return __calculate_variance(counts)
 
 
+# For each unique ID in input list of messages,
+# Constructs a list of bit-counts, for messages of this ID.
+# Afterwards, calculates the variance of these bit-counts, separated by ID.
+# Finally, calculates and returns the mean variance.
+# Returned value defaults to 0 if no messages were received in the time window.
 def calculate_mean_variance_data_bit_count_id(messages):
     id_counts = {}
 
@@ -233,6 +272,9 @@ def calculate_num_ids(messages):
     return len(ids_seen)
 
 
+# Constructs a list of time periods between remote frames and responses in input list of messages.
+# Afterwards, the variance of these time periods is calculated and returned.
+# The returned value defaults to 0, if no request frame was present or responded to in the time window.
 def calculate_req_to_res_time_variance(messages):
     intervals = []
     latest_remote_frame_timestamp = {}
@@ -247,6 +289,8 @@ def calculate_req_to_res_time_variance(messages):
     return 0 if len(intervals) == 0 else __calculate_variance(intervals)
 
 
+# Constructs a list of time periods between messages of the same ID.
+# Afterwards, calculates and returns the kurtosis of these time periods.
 def calculate_kurtosis_id_interval(messages):
     intervals = []
     last_seen_timestamps = {}
@@ -260,6 +304,8 @@ def calculate_kurtosis_id_interval(messages):
     return __calculate_kurtosis(intervals)
 
 
+# Calculates the frequency of each ID in input list of messages.
+# Afterwards, calculates and returns the skewness of these frequencies.
 def calculate_skewness_id_frequency(messages):
     frequencies = {}
 
@@ -274,6 +320,8 @@ def calculate_skewness_id_frequency(messages):
     return __calculate_skewness(values)
 
 
+# Calculates the frequency of each ID in input list of messages.
+# Afterwards, calculates and returns the kurtosis of these frequencies.
 def calculate_kurtosis_id_frequency(messages):
     frequencies = {}
 
@@ -288,6 +336,10 @@ def calculate_kurtosis_id_frequency(messages):
     return __calculate_kurtosis(values)
 
 
+# For each unique ID in input list of messages,
+# constructs a list of time periods between messages with this ID.
+# Afterwards, calculates the means of elements of these lists, separately.
+# Finally, calculates and returns the kurtosis of these means.
 def calculate_kurtosis_mean_id_intervals(messages):
     id_timestamp_intervals = __find_id_intervals(messages)
 
@@ -298,6 +350,8 @@ def calculate_kurtosis_mean_id_intervals(messages):
     return __calculate_kurtosis(interval_means)
 
 
+# Constructs a list of time periods between remote frames and responses in input list of messages.
+# Afterwards, calculates and returns the kurtosis of these time periods.
 def calculate_kurtosis_req_to_res_time(messages):
     intervals = []
     latest_remote_frame_timestamp = {}
@@ -314,9 +368,8 @@ def calculate_kurtosis_req_to_res_time(messages):
 
 # Converts input 'messages' to an IDPoint object.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
+# this function may never be called with an empty list
 def messages_to_idpoint(messages, is_injected):
-    # this function may never be called with an empty list
-
     # maps a function to an attribute. The function must accept a list of messages.
     # missing mappings are allowed, and will give the feature a value of 0
     attribute_function_mappings = {
@@ -356,7 +409,10 @@ def messages_to_idpoint(messages, is_injected):
 
 
 # Converts a list of messages to a list of IDPoints,
-# where each point is comprised of 'messages' in 'period_ms' time interval.
+# where each point is comprised of 'messages' in 'period_ms' time window.
+# 'overlap_ms' determines how many milliseconds are to be elapsed between creation of two IDPoints.
+# That is, if 'overlap_ms' is 50 and 'period_ms' is 100,
+# IDPoint 1 and 2 will share messages in half of their time windows.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
     if len(messages) == 0:
@@ -369,6 +425,7 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
     lowest_index = 0
     length = len(messages)
 
+    # construct the initial working set. That is, the deque of messages used to create the next IDPoint.
     while lowest_index < length and (messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
         lowest_index += 1
         working_set.append(messages[lowest_index])
@@ -386,9 +443,14 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
             print(f"{name} Creating idpoints: {progress}/100%")
             old_progress = progress
 
+        # repeatedly right-append to the working set,
+        # until the time period between the last message used for the previous IDPoint,
+        # and the most recently appended message are offset by at least 'overlap_ms' milliseconds.
         if time_expended >= overlap_ms:
             low = working_set.popleft()
 
+            # until the left-most and right-most messages in the working set are offset by at most 'period_ms',
+            # left-pop a message from the working set.
             while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
                 low = working_set.popleft()
 
@@ -399,11 +461,10 @@ def messages_to_idpoints(messages, period_ms, is_injected, overlap_ms, name=""):
     return idpoints
 
 
-# writes a list of IDPoints to file.
-def write_idpoints_csv(idpoints, period_ms, name):
-    # Creating a csv path for the new file using the corresponding csv file currently loaded from.
-    dir = "data/idpoint_dataset/"
-    csv_path = dir + name + "_" + str(len(idpoints)) + "_" + str(period_ms) + "ms.csv"
+# Writes a list of IDPoints to file.
+# The file name and directory depends on the parameters.
+def write_idpoints_csv(idpoints, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, set_type):
+    csv_path, dir = get_idpoint_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, set_type)
 
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -418,7 +479,7 @@ def write_idpoints_csv(idpoints, period_ms, name):
             datafile_writer.writerow(idp.get_csv_row(idpoint))
 
 
-# joins two lists of messages,
+# Joins two lists of messages,
 # by offsetting the timestamps of messages in the second list.
 def concat_messages(msgs1, msgs2):
     offset = msgs1[len(msgs1) - 1].timestamp
@@ -429,7 +490,7 @@ def concat_messages(msgs1, msgs2):
     return msgs1 + msgs2
 
 
-# modifies input list of messages,
+# Modifies input list of messages,
 # such that the first message starts at time 0.
 # returns the changed input list.
 def neutralize_offset(messages):
@@ -441,43 +502,55 @@ def neutralize_offset(messages):
     return messages
 
 
-def concat_idpoints(idpoints1, idpoints2):
-    offset = idpoints1[len(idpoints1) - 1].time_ms
-
-    for idpoint in idpoints2:
-        idpoint.time_ms += offset
-
-    return idpoints1 + idpoints2
-
-
-# returns a tuple containing:
-#   - a training set comprised of 70% of the data
-#   - a validation set comprised of 15% of the data
-#   - a test set comprised of 15% of the data
-def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100):
+# Constructs a list of IDPoints based on parameters.
+# 'period_ms' determines the duration of the time window used to create each IDPoint.
+# 'overlap_ms' determines how little of the previous time window may be used to create the next IDPoint.
+# 'shuffle' dictates whether the list of IDPoints is to be randomized.
+# 'impersonation_split' dictates whether the raw impersonation datasets,
+# should be separated in attack free and attack affected data.
+# 'dos_type' determines which DoS dataset should be used: 'original', 'modified'.
+#
+# Splits the list of IDPoints into two lists:
+#   - a training set containing 80% of points.
+#   - a test set contaning 20% of points.
+#
+# If this function is to be used from another file,
+# all code must be wrapped in an __name__ == '__main__' check if used on a Windows system.
+def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonation_split=True, dos_type='original'):
+    # load messages and remove time offsets
     attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
     attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
-    dos_messages = neutralize_offset(datareader_csv.load_dos())
     fuzzy_messages = neutralize_offset(datareader_csv.load_fuzzy())
     imp_messages1 = neutralize_offset(datareader_csv.load_impersonation_1())
     imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2())
     imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
+    dos_messages = neutralize_offset(datareader_csv.load_dos() if dos_type == 'original' else datareader_csv.load_modified_dos())
 
+    # label raw datasets
     raw_msgs = [
         (attack_free_messages1, "normal", "attack_free_1"),
         (attack_free_messages2, "normal", "attack_free_2"),
         (dos_messages, "dos", "dos"),
-        (fuzzy_messages, "fuzzy", "fuzzy"),
-        (imp_messages1[0:517000], "normal", "impersonation_normal_1"),
-        (imp_messages1[517000:], "impersonation", "impersonation_attack_1"),
-        (imp_messages2[0:330000], "normal", "impersonation_normal_2"),
-        (imp_messages2[330000:], "impersonation", "impersonation_attack_2"),
-        (imp_messages3[0:534000], "normal", "impersonation_normal_3"),
-        (imp_messages3[534000:], "impersonation", "impersonation_attack_3")
-    ]
+        (fuzzy_messages, "fuzzy", "fuzzy")]
+
+    if impersonation_split:
+        raw_msgs += [
+            (imp_messages1[0:517000], "normal", "impersonation_normal_1"),
+            (imp_messages1[517000:], "impersonation", "impersonation_attack_1"),
+            (imp_messages2[0:330000], "normal", "impersonation_normal_2"),
+            (imp_messages2[330000:], "impersonation", "impersonation_attack_2"),
+            (imp_messages3[0:534000], "normal", "impersonation_normal_3"),
+            (imp_messages3[534000:], "impersonation", "impersonation_attack_3")]
+    else:
+        raw_msgs += [
+            (imp_messages1, "impersonation", "impersonation_1"),
+            (imp_messages2, "impersonation", "impersonation_2"),
+            (imp_messages3, "impersonation", "impersonation_3")
+        ]
 
     datasets = []
 
+    # create IDPoints in parallel.
     with conf.ProcessPoolExecutor() as executor:
         futures = {executor.submit(messages_to_idpoints, tup[0], period_ms, tup[1], overlap_ms, tup[2]) for tup in raw_msgs}
 
@@ -487,27 +560,50 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100):
     offset = 0
     points = []
 
+    # collapse resulting lists of IDPoints into a single list of continuous timestamps
     for set in datasets:
         time_low = set[0].time_ms
         points += [offset_idpoint(idp, offset - time_low) for idp in set]
         offset = points[len(points) - 1].time_ms
 
+    # split the list of IDPoints into training (80%) and test (20%) sets
     training, test = train_test_split(points, shuffle=shuffle, train_size=0.8, test_size=0.2, random_state=2019)
 
     return training, test
 
 
+# Increments the timestamp of input IDPoint by the input offset and returns the IDPoint
 def offset_idpoint(idp, offset):
     idp.time_ms += offset
 
     return idp
 
 
-def save_datasets():
-    training_set, test_set = get_mixed_datasets(100, True, overlap_ms=100)
-    write_idpoints_csv(training_set, 100, "mixed_training")
-    write_idpoints_csv(test_set, 100, "mixed_test")
+# Returns the file and directory paths associated with input argument combination.
+def get_idpoint_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, set_type):
+    imp_name = "imp_split" if impersonation_split else "imp_full"
+    shuffle_name = "shuffled" if shuffle else "normal"
+    name = f"mixed_{set_type}_{period_ms}ms_{overlap_ms}ms_{shuffle_name}"
+    dir = f"data/idpoint_dataset/{imp_name}/{dos_type}/"
+
+    return dir + name + ".csv", dir
 
 
-if __name__ == "__main__":
-    save_datasets()
+# Returns the training and test sets associated with input argument combination.
+# If the datasets do not exist, they are created and saved in the process.
+def load_or_create_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonation_split=True, dos_type='original'):
+    training_name, _ = get_idpoint_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
+    test_name, _ = get_idpoint_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
+
+    # load the datasets if they exist.
+    if os.path.exists(training_name) and os.path.exists(test_name):
+        training_set = datareader_csv.load_idpoints(training_name)
+        test_set = datareader_csv.load_idpoints(test_name)
+    else:
+        # create and save the datasets otherwise.
+        training_set, test_set = get_mixed_datasets(period_ms, shuffle, overlap_ms, impersonation_split, dos_type)
+        write_idpoints_csv(training_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
+        write_idpoints_csv(test_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
+
+    return training_set, test_set
+
