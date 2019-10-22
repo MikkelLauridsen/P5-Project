@@ -35,11 +35,13 @@ def __get_normal_data_fields(df):
 
 
 # Going through all DoS injected messages and replacing the data field with a random normal data field.
+# Also updates the data length control column for the message.
 def __replace_dos_messages(df, normal_data_fields):
     for row in df.itertuples():
         if row.id == 0:
             # Setting the seed with "Random(row.Index)" so it is consistent across multiple program executions.
             df.at[row.Index, "data"] = random.Random(row.Index).choice(normal_data_fields)
+            df.at[row.Index, "dlc"] = len(df.at[row.Index, "data"].split(" "))
 
     return df
 
