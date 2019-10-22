@@ -16,13 +16,6 @@ def __load_data(filepath, parse_func, start, limit):
         print("The file does not exist")
         return
 
-    matching_header, diff = idpoint.is_header_matching(df.columns)
-    if not matching_header:
-        print("Found mismatching datapoint and csv file structure")
-        print(f"idpoint: {list(idpoint.idpoint_attributes)}")
-        print(f"csv    : {list(df.columns)}")
-        print(f"diff   : {diff}")
-
     for count, row in enumerate(df.values.tolist()):
         if count % 50000 == 0:
             print(f"Reading message: {str(count)}")
@@ -37,6 +30,15 @@ def load_messages(filepath, start=0, limit=None):
 
 
 def load_idpoints(filepath, start=0, limit=None):
+    # Check if csv format matches IDPoint structure
+    df = pd.read_csv(filepath, header=0, nrows=0)
+    matching_header, diff = idpoint.is_header_matching(df.columns)
+    if not matching_header:
+        print("Found mismatching datapoint and csv file structure")
+        print(f"idpoint: {list(idpoint.idpoint_attributes)}")
+        print(f"csv    : {list(df.columns)}")
+        print(f"diff   : {diff}")
+
     return __load_data(filepath, idpoint.parse_csv_row, start, limit)
 
 
