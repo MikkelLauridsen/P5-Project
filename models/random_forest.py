@@ -2,7 +2,7 @@ from sklearn.ensemble import RandomForestClassifier
 import os
 
 import datareader_csv
-from models.model_utility import find_best_hyperparameters, find_best_hyperparameters2
+from models.model_utility import find_best_hyperparameters, best_hyper_parameters_for_all_model
 from models.model_utility import scale_features
 from models.model_utility import split_feature_label
 
@@ -42,7 +42,7 @@ def random_forest(X_train, y_train):
     print("Grid for Random forest has been set up, hyper parameters are being found")
 
     # Finds the hyper parameters
-    random_forest_model = find_best_hyperparameters2(RandomForestClassifier(), parameter_grid, X_train, y_train)
+    random_forest_model = best_hyper_parameters_for_all_model(RandomForestClassifier(), parameter_grid, X_train, y_train)
     print("The Random forest model has now been created, and prediction of accuracy is now being calculated")
 
     # Returns the model to use prediction on

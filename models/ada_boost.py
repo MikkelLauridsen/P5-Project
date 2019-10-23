@@ -2,7 +2,7 @@ from sklearn.ensemble import AdaBoostClassifier
 import os
 
 import datareader_csv
-from models.model_utility import find_best_hyperparameters, find_best_hyperparameters2
+from models.model_utility import find_best_hyperparameters, best_hyper_parameters_for_all_model
 from models.model_utility import scale_features
 from models.model_utility import split_feature_label
 
@@ -35,7 +35,7 @@ def ada_boost(X_train, y_train):
 
     # Hyper parameters found
     print("Grid for ada boost has now been set up, hyper parameters are being found")
-    ada_boost_model = find_best_hyperparameters2(AdaBoostClassifier(), parameter_grid, X_train, y_train)
+    ada_boost_model = best_hyper_parameters_for_all_model(AdaBoostClassifier(), parameter_grid, X_train, y_train)
 
     # Model is send back to have accuracy predicted
     print("The ada boost model has now been created, and prediction of accuracy is now being calculated")

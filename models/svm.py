@@ -2,7 +2,7 @@ import os
 from sklearn.svm import SVC
 
 import datareader_csv
-from models.model_utility import scale_features, find_best_hyperparameters2
+from models.model_utility import scale_features, best_hyper_parameters_for_all_model
 from models.model_utility import split_feature_label
 from models.model_utility import find_best_hyperparameters
 
@@ -36,7 +36,7 @@ def svm(X_train, y_train):
     print("Grid for SVM has now been set up, hyper parameters are being found")
 
     #Find hyperparameters
-    svm_model = find_best_hyperparameters2(SVC(), param_grid, X_train, y_train)
+    svm_model = best_hyper_parameters_for_all_model(SVC(), param_grid, X_train, y_train)
 
     # Model gets send back to get accuracy taken
     print("The SVM model has now been created, and prediction of accuracy is now being calculated")

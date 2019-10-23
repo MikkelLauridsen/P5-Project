@@ -1,7 +1,7 @@
 from sklearn.tree import DecisionTreeClassifier
 import os
 import datareader_csv
-from models.model_utility import find_best_hyperparameters, find_best_hyperparameters2
+from models.model_utility import find_best_hyperparameters, best_hyper_parameters_for_all_model
 from models.model_utility import scale_features
 from models.model_utility import split_feature_label
 
@@ -36,7 +36,7 @@ def decision_trees(X_train, y_train):
     print("Grid for decision trees has now been set up, hyper parameters are being found")
 
     #Find hyper parameters
-    decision_trees_model = find_best_hyperparameters2(DecisionTreeClassifier(), parameter_grid, X_train, y_train)
+    decision_trees_model = best_hyper_parameters_for_all_model(DecisionTreeClassifier(), parameter_grid, X_train, y_train)
 
     # returns the model to calculate the accuracy
     print("The decision tree model has now been created, and prediction of accuracy is now being calculated")

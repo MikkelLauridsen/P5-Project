@@ -1,5 +1,5 @@
 from sklearn.neural_network import MLPClassifier
-from models.model_utility import find_best_hyperparameters, find_best_hyperparameters2
+from models.model_utility import find_best_hyperparameters, best_hyper_parameters_for_all_model
 
 
 def mlp(X_train, y_train):
@@ -12,7 +12,7 @@ def mlp(X_train, y_train):
 
     # Find the best hyperparameters
     print("Grid for mlp has now been set up, hyper parameters are being found")
-    mlp_model = (find_best_hyperparameters2(MLPClassifier(), parameter_space, X_train, y_train))
+    mlp_model = (best_hyper_parameters_for_all_model(MLPClassifier(), parameter_space, X_train, y_train))
     
     # Model gets send back to have accuracy predicted
     print("The mlp model has now been created, and prediction of accuracy is now being calculated")
