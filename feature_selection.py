@@ -38,11 +38,10 @@ if __name__ == '__main__':
     # get correlations of each features in dataset
     data = pd.DataFrame(X, columns=column_labels)
     corrmat = data.corr(method='spearman')
-    top_corr_features = corrmat.index
     plt.figure(figsize=(20, 20))
 
     # plot heat map
-    g = sns.heatmap(data[top_corr_features].corr(), annot=True, cmap="RdYlGn")
+    g = sns.heatmap(corrmat, annot=True, cmap="RdYlGn")
     plt.show()
 
 
