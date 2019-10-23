@@ -92,8 +92,8 @@ def __remove_remote_frames(messages):
 
 
 if __name__ == "__main__":
-    source_dir = "data/data_csv/"
-    target_dir = "data/manipulated_data/"
+    source_dir = "data/csv/"
+    target_dir = "data/manipulated/"
 
     # Creating the target directory if it does not exist.
     if not os.path.exists(target_dir):

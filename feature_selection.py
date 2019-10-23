@@ -23,8 +23,11 @@ def add_labels(X, y):
 
 
 if __name__ == '__main__':
-    datapoints1, datapoints2 = load_or_create_datasets(period_ms=100,
-                                                       overlap_ms=100,
+    period_ms = 100
+    overlap_ms = 100
+
+    datapoints1, datapoints2 = load_or_create_datasets(period_ms=period_ms,
+                                                       overlap_ms=overlap_ms,
                                                        impersonation_split=False,
                                                        dos_type='modified')
 
@@ -40,8 +43,10 @@ if __name__ == '__main__':
     # get correlations of each features in dataset
     data = pd.DataFrame(X, columns=column_labels)
     corrmat = data.corr(method='spearman')
-    plt.figure(figsize=(20, 20))
-
-    # plot heat map
-    g = sns.heatmap(corrmat, annot=True, cmap="RdYlGn")
+    figure = plt.figure(figsize=(20, 20))
+    plt.matshow(corrmat, fignum=figure.number)
+    plt.colorbar()
+    plt.title(f"Correlation at {period_ms}ms windows and {overlap_ms}ms overlaps", fontsize=20)
+    #plt.xticks(range(20), list(range(20)), fontsize=14, rotation=45)
+    #plt.yticks(range(20), list(range(20)), fontsize=14)
     plt.show()
