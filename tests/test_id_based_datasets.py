@@ -1,7 +1,7 @@
 import math
 from unittest import TestCase
-import id_based_datasets
-from idpoint import IDPoint
+import datasets
+from datapoint import IDPoint
 from message import Message
 
 
@@ -50,25 +50,25 @@ class TestIdBasedDatasets(TestCase):
         # Assum for message_to_idpoint
         time_ms = 0.0
         is_injected = "normal"
-        mean_id_interval = id_based_datasets.calculate_mean_id_interval(self.messages)
-        variance_id_frequency = id_based_datasets.calculate_variance_id_frequency(self.messages)
-        num_id_transitions = id_based_datasets.calculate_num_id_transitions(self.messages)
-        num_ids = id_based_datasets.calculate_num_ids(self.messages)
+        mean_id_interval = datasets.calculate_mean_id_interval(self.messages)
+        variance_id_frequency = datasets.calculate_variance_id_frequency(self.messages)
+        num_id_transitions = datasets.calculate_num_id_transitions(self.messages)
+        num_ids = datasets.calculate_num_ids(self.messages)
         num_msgs = len(self.messages)
-        mean_id_interval_variance = id_based_datasets.calculate_mean_id_intervals_variance(self.messages)
-        mean_data_bit_count = id_based_datasets.calculate_mean_data_bit_count(self.messages)
-        variance_data_bit_count = id_based_datasets.calculate_variance_data_bit_count(self.messages)
-        mean_variance_data_bit_count = id_based_datasets.calculate_mean_variance_data_bit_count_id(self.messages)
-        mean_probability_bits = id_based_datasets.calculate_mean_probability_bits(self.messages)
-        req_to_res_time_variance = id_based_datasets.calculate_req_to_res_time_variance(self.messages)
-        kurtosis_id_interval = id_based_datasets.calculate_kurtosis_id_interval(self.messages)
-        kurtosis_id_frequency = id_based_datasets.calculate_kurtosis_id_frequency(self.messages)
-        kurtosis_mean_id_intervals = id_based_datasets.calculate_kurtosis_mean_id_intervals(self.messages)
-        kurtosis_variance_data_bit_count_id = id_based_datasets.calculate_kurtosis_variance_data_bit_count_id(
+        mean_id_interval_variance = datasets.calculate_mean_id_intervals_variance(self.messages)
+        mean_data_bit_count = datasets.calculate_mean_data_bit_count(self.messages)
+        variance_data_bit_count = datasets.calculate_variance_data_bit_count(self.messages)
+        mean_variance_data_bit_count = datasets.calculate_mean_variance_data_bit_count_id(self.messages)
+        mean_probability_bits = datasets.calculate_mean_probability_bits(self.messages)
+        req_to_res_time_variance = datasets.calculate_req_to_res_time_variance(self.messages)
+        kurtosis_id_interval = datasets.calculate_kurtosis_id_interval(self.messages)
+        kurtosis_id_frequency = datasets.calculate_kurtosis_id_frequency(self.messages)
+        kurtosis_mean_id_intervals = datasets.calculate_kurtosis_mean_id_intervals(self.messages)
+        kurtosis_variance_data_bit_count_id = datasets.calculate_kurtosis_variance_data_bit_count_id(
             self.messages)
-        skewness_id_interval_variances = id_based_datasets.calculate_skewness_id_interval_variances(self.messages)
-        skewness_id_frequency = id_based_datasets.calculate_skewness_id_frequency(self.messages)
-        kurtosis_req_to_res_time = id_based_datasets.calculate_kurtosis_req_to_res_time(self.messages)
+        skewness_id_interval_variances = datasets.calculate_skewness_id_interval_variances(self.messages)
+        skewness_id_frequency = datasets.calculate_skewness_id_frequency(self.messages)
+        kurtosis_req_to_res_time = datasets.calculate_kurtosis_req_to_res_time(self.messages)
 
         self.actual_datapoint = IDPoint(time_ms,
                                    is_injected,
@@ -141,7 +141,7 @@ class TestIdBasedDatasets(TestCase):
             actual_ids_seen.add(message.id)
 
         # Action
-        expected_result = id_based_datasets.calculate_num_ids(self.messages)
+        expected_result = datasets.calculate_num_ids(self.messages)
 
         # Assert
         self.assertEqual(expected_result, len(actual_ids_seen))
@@ -162,7 +162,7 @@ class TestIdBasedDatasets(TestCase):
         actual_offset_message_3 = messages[2].timestamp - offset
 
         # Action
-        expected_offset_result = id_based_datasets.neutralize_offset(messages)
+        expected_offset_result = datasets.neutralize_offset(messages)
 
         # Assert
         self.assertEqual(expected_offset_result, messages)
@@ -179,7 +179,7 @@ class TestIdBasedDatasets(TestCase):
         actual_id_point_offset = self.id_point_object
 
         # Action
-        expected_result = id_based_datasets.offset_idpoint(self.id_point_object, offset)
+        expected_result = datasets.offset_idpoint(self.id_point_object, offset)
 
         # Assert
         self.assertEqual(expected_result, actual_id_point_offset)
@@ -216,7 +216,7 @@ class TestIdBasedDatasets(TestCase):
         actual_concat_messages_result = messages_1 + messages_2_duplicate
 
         # Action
-        expected_result = id_based_datasets.concat_messages(messages_1, messages_2)
+        expected_result = datasets.concat_messages(messages_1, messages_2)
 
         # Assert
         self.assertEqual(expected_result, actual_concat_messages_result)
@@ -330,7 +330,7 @@ class TestIdBasedDatasets(TestCase):
         actual_concat_point_result = id_points + id_points_2_dup
 
         # Action
-        expected_result = id_based_datasets.concat_idpoints(id_points, id_points_2)
+        expected_result = datasets.concat_idpoints(id_points, id_points_2)
 
         # Assert
         self.assertEqual(expected_result, actual_concat_point_result)
@@ -351,8 +351,8 @@ class TestIdBasedDatasets(TestCase):
                                 self.message_6]
 
         # Action
-        expected_result = id_based_datasets.calculate_skewness_id_interval_variances(self.messages)
-        expected_no_skewness_result = id_based_datasets.calculate_skewness_id_interval_variances(no_skewness_messages)
+        expected_result = datasets.calculate_skewness_id_interval_variances(self.messages)
+        expected_no_skewness_result = datasets.calculate_skewness_id_interval_variances(no_skewness_messages)
 
         # Assert
         self.assertEqual(expected_result, actual_skewness_result)
@@ -369,8 +369,8 @@ class TestIdBasedDatasets(TestCase):
                             self.message_6]
 
         # Action
-        expected_result = id_based_datasets.calculate_mean_id_intervals_variance(self.messages)
-        expected_no_mean_result = id_based_datasets.calculate_skewness_id_interval_variances(no_mean_messages)
+        expected_result = datasets.calculate_mean_id_intervals_variance(self.messages)
+        expected_no_mean_result = datasets.calculate_skewness_id_interval_variances(no_mean_messages)
 
         # Assert
         self.assertEqual(expected_result, actual_result)
@@ -399,8 +399,8 @@ class TestIdBasedDatasets(TestCase):
         no_mean_id_interval_messages = [message_4, message_5, message_6]
 
         # Action
-        expected_result = id_based_datasets.calculate_mean_id_interval(messages)
-        expected_no_mean_id_interval_messages = id_based_datasets.calculate_mean_id_interval(no_mean_id_interval_messages)
+        expected_result = datasets.calculate_mean_id_interval(messages)
+        expected_no_mean_id_interval_messages = datasets.calculate_mean_id_interval(no_mean_id_interval_messages)
 
         # Assert
         self.assertEqual(expected_result, actual_result)
@@ -429,7 +429,7 @@ class TestIdBasedDatasets(TestCase):
         actual_kurtosis_result = 1 / len(intervals) * deviation / variance ** 2
 
         # Action
-        expected_kurtosis_result = id_based_datasets.calculate_kurtosis_id_interval(self.messages)
+        expected_kurtosis_result = datasets.calculate_kurtosis_id_interval(self.messages)
 
         # Assert
         self.assertAlmostEqual(expected_kurtosis_result, actual_kurtosis_result)
@@ -453,7 +453,7 @@ class TestIdBasedDatasets(TestCase):
         actual_kurtosis__mean_result = 1 / len(interval_means) * deviation / variance ** 2
 
         # Action
-        expected_kurtosis_mean_result = id_based_datasets.calculate_kurtosis_mean_id_intervals(self.messages)
+        expected_kurtosis_mean_result = datasets.calculate_kurtosis_mean_id_intervals(self.messages)
 
         # Assert
         self.assertAlmostEqual(expected_kurtosis_mean_result, actual_kurtosis__mean_result)
@@ -489,8 +489,8 @@ class TestIdBasedDatasets(TestCase):
         no_bit_count_messages = [no_bit_count_message_1]
 
         # Action
-        expected_result = id_based_datasets.calculate_variance_data_bit_count(messages)
-        expected_no_bit_count = id_based_datasets.calculate_variance_data_bit_count(no_bit_count_messages)
+        expected_result = datasets.calculate_variance_data_bit_count(messages)
+        expected_no_bit_count = datasets.calculate_variance_data_bit_count(no_bit_count_messages)
         expected_message_1_bit_amount_result = 8
         expected_message_2_bit_amount_result = 2
         expected_message_3_bit_amount_result = 7
@@ -550,7 +550,7 @@ class TestIdBasedDatasets(TestCase):
         actual_result = math.fsum(variance_values) / len(variance_values)
 
         # Action
-        expected_result = id_based_datasets.calculate_mean_variance_data_bit_count_id(messages)
+        expected_result = datasets.calculate_mean_variance_data_bit_count_id(messages)
         expected_message_1_bit_amount_result = 8
         expected_message_2_bit_amount_result = 2
         expected_message_3_bit_amount_result = 7
@@ -601,7 +601,7 @@ class TestIdBasedDatasets(TestCase):
         actual_mean_result = mean / len(id_counts)
 
         # Action
-        expected_mean_result = id_based_datasets.calculate_mean_data_bit_count(messages)
+        expected_mean_result = datasets.calculate_mean_data_bit_count(messages)
 
         # Assert
         self.assertEqual(expected_mean_result, actual_mean_result)
@@ -663,8 +663,8 @@ class TestIdBasedDatasets(TestCase):
             actual_no_skewness_result = 0
 
         # Action
-        expected_skewness_result = id_based_datasets.calculate_skewness_id_frequency(messages)
-        expected_no_skewness_result = id_based_datasets.calculate_skewness_id_frequency(no_skewness_messages)
+        expected_skewness_result = datasets.calculate_skewness_id_frequency(messages)
+        expected_no_skewness_result = datasets.calculate_skewness_id_frequency(no_skewness_messages)
 
         # Assert
         self.assertEqual(expected_skewness_result, actual_skewness_result)
@@ -693,7 +693,7 @@ class TestIdBasedDatasets(TestCase):
                 values[2] - mean) ** 2
 
         # Action
-        expected_variance_result = id_based_datasets.calculate_variance_id_frequency(messages)
+        expected_variance_result = datasets.calculate_variance_id_frequency(messages)
 
         # Assert
         self.assertEqual(expected_variance_result, actual_variance_result)
@@ -758,8 +758,8 @@ class TestIdBasedDatasets(TestCase):
             actual_no_kurtosis_frequency_result = 3
 
         # Action
-        expected_kurtosis_frequency_result = id_based_datasets.calculate_kurtosis_id_frequency(messages)
-        expected_no_kurtosis_frequency_result = id_based_datasets.calculate_kurtosis_id_frequency(no_kurtosis_messages)
+        expected_kurtosis_frequency_result = datasets.calculate_kurtosis_id_frequency(messages)
+        expected_no_kurtosis_frequency_result = datasets.calculate_kurtosis_id_frequency(no_kurtosis_messages)
 
         # Assert
         self.assertEqual(expected_kurtosis_frequency_result, actual_kurtosis_frequency_result)
@@ -823,7 +823,7 @@ class TestIdBasedDatasets(TestCase):
             actual_kurtosis_variance_bit_result = 3
 
         # Action
-        expected_kurtosis_result = id_based_datasets.calculate_kurtosis_variance_data_bit_count_id(messages)
+        expected_kurtosis_result = datasets.calculate_kurtosis_variance_data_bit_count_id(messages)
 
         # Assert
         self.assertAlmostEqual(expected_kurtosis_result, actual_kurtosis_variance_bit_result)
@@ -856,8 +856,8 @@ class TestIdBasedDatasets(TestCase):
             actual_no_transition_id_result = len(transitions)
 
         # Action
-        expected_transition_id_result = id_based_datasets.calculate_num_id_transitions(messages)
-        expected_no_transition_id_result = id_based_datasets.calculate_num_id_transitions(messages_no_transition)
+        expected_transition_id_result = datasets.calculate_num_id_transitions(messages)
+        expected_no_transition_id_result = datasets.calculate_num_id_transitions(messages_no_transition)
 
         # Assert
         self.assertEqual(expected_transition_id_result, actual_transition_id_result)
@@ -895,7 +895,7 @@ class TestIdBasedDatasets(TestCase):
 
 
         # Action
-        expected_req_to_res_variance_result = id_based_datasets.calculate_req_to_res_time_variance(messages)
+        expected_req_to_res_variance_result = datasets.calculate_req_to_res_time_variance(messages)
 
         # Assert
         self.assertEqual(expected_req_to_res_variance_result, actual_req_to_res_variance_result)
@@ -935,7 +935,7 @@ class TestIdBasedDatasets(TestCase):
             actual_req_to_res_kurtosis_result = 3
 
         # Action
-        expected_req_to_res_kurtosis_result = id_based_datasets.calculate_kurtosis_req_to_res_time(messages)
+        expected_req_to_res_kurtosis_result = datasets.calculate_kurtosis_req_to_res_time(messages)
 
         # Assert
         self.assertEqual(expected_req_to_res_kurtosis_result, actual_req_to_res_kurtosis_result)
@@ -943,7 +943,7 @@ class TestIdBasedDatasets(TestCase):
     def test_messages_to_idpoint(self):
 
         # Action
-        expected_value = id_based_datasets.messages_to_idpoint(self.messages, "normal")
+        expected_value = datasets.messages_to_idpoint(self.messages, "normal")
         #expected_exception_raise = id_based_datasets.messages_to_idpoint([], "normal")
 
         # Assert

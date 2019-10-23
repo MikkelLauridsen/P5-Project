@@ -65,4 +65,4 @@ def txt_to_csv(start_dir, target_dir):
 
 
 if __name__ == "__main__":
-    txt_to_csv("data/raw_data/", "data/data_csv/")
+    txt_to_csv("data/raw/", "data/csv/")

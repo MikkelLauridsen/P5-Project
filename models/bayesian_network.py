@@ -1,9 +1,9 @@
 import hugin.pyhugin87 as hugin
 import os
-import idpoint as idp
-import datareader_csv
+import datapoint as dp
 import models.model_utility as model_utility
 from sklearn.metrics import classification_report
+from datasets import load_or_create_datasets
 
 
 # Creates a hugin dataset from a list of sets of features and their labels
@@ -30,29 +30,29 @@ def __feature_list_to_dataset(features_list, injected_labels, names):
     return dataset
 
 
-# Creates a hugin dataset from a list of idpoints
-def __idpoints_to_dataset(idpoints):
+# Creates a Hugin dataset from a list of DataPoints
+def __datapoints_to_dataset(datapoints):
     dataset = hugin.DataSet()
 
     dataset.new_column("is_injected")
 
     # Create column for each attribute
-    for attr in idp.idpoint_attributes:
+    for attr in dp.datapoint_attributes:
         dataset.new_column(attr)
 
-    # Create row for each idpoint
-    for row, idpoint in enumerate(idpoints):
+    # Create row for each DataPoint
+    for row, point in enumerate(datapoints):
         dataset.new_row()
 
-        # Insert attributes from idpoint into row
-        for col, attr in enumerate(idp.idpoint_attributes):
-            value = getattr(idpoint, attr)
+        # Insert attributes from DataPoint into row
+        for col, attr in enumerate(dp.datapoint_attributes):
+            value = getattr(point, attr)
             dataset.set_data_item(row, col, str(value))
 
     return dataset
 
 
-# Prints a hugin dataset. Used for debugging
+# Prints a Hugin dataset. Used for debugging
 def __print_dataset(dataset, limit=0):
     num_cols = dataset.get_number_of_columns()
     num_rows = dataset.get_number_of_rows()
@@ -167,7 +167,7 @@ def train_and_predict(training_points, test_points):
     X_test, y_test = model_utility.split_feature_label(test_points)
 
     # Create hugin datasets. names corresponds to the names of the features in training_points
-    names = list(idp.idpoint_attributes).copy()
+    names = list(dp.datapoint_attributes).copy()
     names.remove("time_ms")
     names.remove("is_injected")
     training_set = __feature_list_to_dataset(X_train, y_train, names)
@@ -187,8 +187,7 @@ def train_and_predict(training_points, test_points):
 if __name__ == "__main__":
     os.chdir("..")
 
-    training_points = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_training_37590_100ms.csv", 0)
-    test_points = datareader_csv.load_idpoints("data/idpoint_dataset/mixed_test_9398_100ms.csv", 0)
+    training_points, test_points = load_or_create_datasets()
     X_test, y_test = model_utility.split_feature_label(test_points)
 
     predictions = train_and_predict(training_points, test_points)

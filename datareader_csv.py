@@ -1,6 +1,6 @@
 import pandas as pd
 
-import idpoint
+import datapoint
 import message
 
 
@@ -32,50 +32,50 @@ def load_messages(filepath, start=0, limit=None):
 def load_idpoints(filepath, start=0, limit=None):
     # Check if csv format matches IDPoint structure
     df = pd.read_csv(filepath, header=0, nrows=0)
-    matching_header, diff = idpoint.is_header_matching(df.columns)
+    matching_header, diff = datapoint.is_header_matching(df.columns)
     if not matching_header:
         print("Found mismatching datapoint and csv file structure")
-        print(f"idpoint: {list(idpoint.idpoint_attributes)}")
+        print(f"idpoint: {list(datapoint.idpoint_attributes)}")
         print(f"csv    : {list(df.columns)}")
         print(f"diff   : {diff}")
 
-    return __load_data(filepath, idpoint.parse_csv_row, start, limit)
+    return __load_data(filepath, datapoint.parse_csv_row, start, limit)
 
 
 # Loads data from "Attack_free_dataset.csv"
 def load_attack_free1(start=0, limit=None):
-    return load_messages("data/data_csv/Attack_free_dataset.csv", start, limit)
+    return load_messages("data/csv/Attack_free_dataset.csv", start, limit)
 
 
 # Loads data from "Attack_free_dataset2.csv"
 def load_attack_free2(start=0, limit=None):
-    return load_messages("data/data_csv/Attack_free_dataset2.csv", start, limit)
+    return load_messages("data/csv/Attack_free_dataset2.csv", start, limit)
 
 
 # Loads data from "Impersonation_attack_dataset.csv"
 def load_impersonation_1(start=0, limit=None):
-    return load_messages("data/data_csv/Impersonation_attack_dataset.csv", start, limit)
+    return load_messages("data/csv/Impersonation_attack_dataset.csv", start, limit)
 
 
 # Loads data from "170907_impersonation.csv"
 def load_impersonation_2(start=0, limit=None):
-    return load_messages("data/data_csv/170907_impersonation.csv", start, limit)
+    return load_messages("data/csv/170907_impersonation.csv", start, limit)
 
 
 # Loads data from "170907_impersonation_2.csv"
 def load_impersonation_3(start=0, limit=None):
-    return load_messages("data/data_csv/170907_impersonation_2.csv", start, limit)
+    return load_messages("data/csv/170907_impersonation_2.csv", start, limit)
 
 
 # Loads data from "DoS_attack_dataset.csv"
 def load_dos(start=0, limit=None):
-    return load_messages("data/data_csv/DoS_attack_dataset.csv", start, limit)
+    return load_messages("data/csv/DoS_attack_dataset.csv", start, limit)
 
 
 def load_modified_dos(start=0, limit=None):
-    return load_messages("data/manipulated_data/DoS_manipulated.csv", start, limit)
+    return load_messages("data/manipulated/DoS_manipulated.csv", start, limit)
 
 
 # Loads data from "Fuzzy_attack_dataset.csv"
 def load_fuzzy(start=0, limit=None):
-    return load_messages("data/data_csv/Fuzzy_attack_dataset.csv", start, limit)
+    return load_messages("data/csv/Fuzzy_attack_dataset.csv", start, limit)

@@ -4,7 +4,6 @@ from functools import partial
 from pip._vendor.distlib.compat import raw_input
 from sklearn.metrics import classification_report
 from models.mlp import mlp
-from models.ada_boost import ada_boost
 from models.all_models import all_models_run
 from models.decision_trees import decision_trees
 from models.knn import knn
@@ -15,7 +14,7 @@ from models.svm import svm
 from models.model_utility import split_feature_label, scale_features
 
 # Creates a list of all the models
-differentModels = ["knn", "random forest", "ada boost", "decision trees", "logistic regression", "mlp", "nbc", "svm", "all"]
+differentModels = ["knn", "random forest", "decision trees", "logistic regression", "mlp", "nbc", "svm", "all"]
 
 # Reads in the data from the original file
 os.chdir("..")
@@ -30,7 +29,6 @@ cmd = {'knn': partial(knn, X_train, y_train, len(training)),
        'logistic regression': partial(logistic_regression, X_train, y_train),
        'svm': partial(svm, X_train, y_train),
        'decision trees': partial(decision_trees, X_train, y_train),
-       'ada boost': partial(ada_boost, X_train, y_train),
        'nbc': partial(nbc, X_train, y_train),
        'mlp': partial(mlp, X_train, y_train),
        'random forest': partial(random_forest, X_train, y_train),

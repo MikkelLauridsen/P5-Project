@@ -1,8 +1,7 @@
-import datareader_csv
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-import id_based_datasets as ibd
-import idpoint
+import datasets as ds
+import datapoint
 
 
 def class_to_color(cls):
@@ -18,16 +17,17 @@ def class_to_color(cls):
         raise ValueError()
 
 
-# Takes all the features defined in IDPoint and plots them
-def plot_all_features(idpoints):
-    time_ms = [point.time_ms for point in idpoints]
+# Takes all the features defined in DataPoint and plots them
+def plot_all_features(datapoints):
+    time_ms = [point.time_ms for point in datapoints]
 
-    # Extract features from idpoints
-    is_injected = [point.is_injected for point in idpoints]
+    # Extract features from DataPoints
+    is_injected = [point.is_injected for point in datapoints]
 
-    for attr in idpoint.idpoint_attributes:
-        feature_list = [getattr(idp, attr) for idp in idpoints]
-        feature_description = idpoint.idpoint_attribute_descriptions.get(attr, attr)  # Get attribute desciption if available
+    for attr in datapoint.datapoint_attributes:
+        feature_list = [getattr(point, attr) for point in datapoints]
+        # Get attribute description if available
+        feature_description = datapoint.datapoint_attribute_descriptions.get(attr, attr)
 
         if attr == "time_ms" or attr == "is_injected":
             pass
@@ -46,9 +46,9 @@ def plot_all_features(idpoints):
 def setup_scatter(xaxis, yaxis, xlabel, ylabel, is_injected, show=True):
     colors = [class_to_color(cls) for cls in is_injected]
     legends = [(class_to_color("normal"), "attack free state"),
-                               (class_to_color("dos"), "DoS attack state"),
-                               (class_to_color("fuzzy"), "Fuzzy attack state"),
-                               (class_to_color("impersonation"), "Impersonation attack state")]
+               (class_to_color("dos"), "DoS attack state"),
+               (class_to_color("fuzzy"), "Fuzzy attack state"),
+               (class_to_color("impersonation"), "Impersonation attack state")]
 
     patches = []
 
@@ -66,6 +66,6 @@ def setup_scatter(xaxis, yaxis, xlabel, ylabel, is_injected, show=True):
 
 
 if __name__ == "__main__":
-    training_points, test_points = ibd.load_or_create_datasets(dos_type='modified')
+    training_points, test_points = ds.load_or_create_datasets(dos_type='modified')
 
     plot_all_features(training_points)

@@ -1,5 +1,5 @@
 from models.mlp import mlp
-from id_based_datasets import load_or_create_datasets
+from datasets import load_or_create_datasets
 from models.model_utility import scale_features, split_feature_label
 
 
@@ -63,12 +63,17 @@ if __name__ == "__main__":
 
     for window_ms in [10, 20, 30, 50, 80, 130]:
         for overlap_ms in [10, 20, 30, 50, 80, 130]:
-            training_points, test_points = load_or_create_datasets(period_ms=window_ms, shuffle=True, overlap_ms=overlap_ms, dos_type='modified')
+            training_points, test_points = load_or_create_datasets(period_ms=window_ms,
+                                                                   shuffle=True,
+                                                                   overlap_ms=overlap_ms,
+                                                                   dos_type='modified')
+
             X_train, y_train = split_feature_label(training_points)
             X_test, y_test = split_feature_label(test_points)
             X_train, X_test = scale_features(X_train, X_test)
 
-            print(f"Generated {len(training_points)} training points and {len(test_points)} test points at overlap {overlap_ms}ms and window {window_ms}ms")
+            print(f"Generated {len(training_points)} training points and {len(test_points)} test points at overlap "
+                  f"{overlap_ms}ms and window {window_ms}ms")
 
             num_features = len(X_train[0])
 

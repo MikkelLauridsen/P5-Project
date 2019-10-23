@@ -1,7 +1,7 @@
 from recordclass import dataobject
 
 
-class IDPoint(dataobject):
+class DataPoint(dataobject):
     time_ms: float
     is_injected: str
     mean_id_interval: float
@@ -26,17 +26,17 @@ class IDPoint(dataobject):
     def __str__(self):
         str = ""
 
-        for attr in idpoint_attributes:
+        for attr in datapoint_attributes:
             str += f"{attr}: {getattr(self, attr)} "
 
         return str
 
 
-# List of the attributes of IDPoint
-idpoint_attributes = IDPoint.__annotations__.keys()
+# List of the attributes of DataPoint
+datapoint_attributes = DataPoint.__annotations__.keys()
 
 # Descriptions of features. These are displayed on the plots.
-idpoint_attribute_descriptions = {
+datapoint_attribute_descriptions = {
     "mean_id_interval": "Mean id interval",
     "variance_id_frequency": "Variance id frequency",
     "num_id_transitions": "# id transitions",
@@ -55,7 +55,7 @@ idpoint_attribute_descriptions = {
 
 def is_header_matching(header):
     header_set = set(header)
-    attr_set = set(idpoint_attributes)
+    attr_set = set(datapoint_attributes)
 
     diff = header_set.symmetric_difference(attr_set)
     return len(diff) == 0, diff
@@ -63,15 +63,15 @@ def is_header_matching(header):
 
 def parse_csv_row(row):
     args = []
-    for i in range(len(idpoint_attributes)):
+    for i in range(len(datapoint_attributes)):
         args.append(row[i])
 
-    return IDPoint(*args)
+    return DataPoint(*args)
 
 
-def get_csv_row(idpoint):
+def get_csv_row(datapoint):
     row = []
-    for attr in idpoint_attributes:
-        row.append(getattr(idpoint, attr))
+    for attr in datapoint_attributes:
+        row.append(getattr(datapoint, attr))
 
     return row

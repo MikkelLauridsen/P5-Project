@@ -1,6 +1,6 @@
 from unittest import TestCase
-import idpoint
-from idpoint import IDPoint
+import datapoint
+from datapoint import IDPoint
 
 
 class TestIdpoint(TestCase):
@@ -44,11 +44,11 @@ class TestIdpoint(TestCase):
                                        skewness_id_interval_variances, kurtosis_req_to_res_time)
 
     def test_parse_csv_row(self):
-        result = idpoint.parse_csv_row(self.id_point_row)
+        result = datapoint.parse_csv_row(self.id_point_row)
 
         self.assertEqual(result, self.id_point_object)
 
     def test_get_csv_row(self):
-        result = idpoint.get_csv_row(self.id_point_object)
+        result = datapoint.get_csv_row(self.id_point_object)
 
         self.assertEqual(result, self.id_point_row)

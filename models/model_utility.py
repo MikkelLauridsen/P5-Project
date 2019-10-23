@@ -1,29 +1,26 @@
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
-
-import idpoint
+import datapoint
 
 
 # Splitting the training data into feature and label lists.
-def split_feature_label(idpoints):
+def split_feature_label(datapoints):
     # The instance list that will contain all the features for each instance.
     X = []
     # The label list that will contain the injected status for each idpoint.
     y = []
 
     # Going through each instance and extracting the features and labels.
-    for instance in idpoints:
+    for point in datapoints:
         features = []
-        for attr in idpoint.idpoint_attributes:
+        for attr in datapoint.datapoint_attributes:
             if attr == "time_ms":
                 pass
             elif attr == "is_injected":
-                y.append(instance.is_injected)
+                y.append(point.is_injected)
             else:
-                features.append(getattr(instance, attr))
+                features.append(getattr(point, attr))
 
         X.append(features)
 
@@ -32,7 +29,7 @@ def split_feature_label(idpoints):
 
 # Fitting a transformation on the training features and scaling both the training features and test features to it.
 def scale_features(X_training, X_test):
-    #fit the scaler
+    # fit the scaler
     scaler = StandardScaler()
     scaler.fit(X_training)
 

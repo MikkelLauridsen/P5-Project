@@ -1,5 +1,5 @@
 from sklearn.neural_network import MLPClassifier
-from models.model_utility import find_best_hyperparameters, best_hyper_parameters_for_all_model
+from models.model_utility import best_hyper_parameters_for_all_model
 
 
 def mlp(X_train, y_train):
