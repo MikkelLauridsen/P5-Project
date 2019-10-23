@@ -99,7 +99,7 @@ if __name__ == "__main__":
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    manipulate_dos(source_dir + "DoS_attack_dataset.csv", target_dir + "DoS_attack_dataset.csv")
+    manipulate_dos(source_dir + "DoS_attack_dataset.csv", target_dir + "DoS_manipulated.csv")
 
     manipulate_remote_frames(source_dir + "Attack_free_dataset.csv", target_dir + "Attack_free_dataset.csv")
     manipulate_remote_frames(source_dir + "Attack_free_dataset2.csv", target_dir + "Attack_free_dataset2.csv")
