@@ -23,8 +23,8 @@ def add_labels(X, y):
 
 
 if __name__ == '__main__':
-    period_ms = 100
-    overlap_ms = 100
+    period_ms = 10
+    overlap_ms = 10
 
     datapoints1, datapoints2 = load_or_create_datasets(period_ms=period_ms,
                                                        overlap_ms=overlap_ms,
@@ -34,6 +34,7 @@ if __name__ == '__main__':
     X_1, y_1 = split_feature_label(datapoints1)
     X_2, y_2 = split_feature_label(datapoints2)
     X_1, X_2 = scale_features(X_1, X_2)
+
     X = list(X_1) + list(X_2)
     y = list(y_1) + list(y_2)
 
@@ -49,4 +50,14 @@ if __name__ == '__main__':
     plt.title(f"Correlation at {period_ms}ms windows and {overlap_ms}ms overlaps", fontsize=20)
     #plt.xticks(range(20), list(range(20)), fontsize=14, rotation=45)
     #plt.yticks(range(20), list(range(20)), fontsize=14)
+
+    print("relevant features being calculated")
+    target=["normal","dos","impersonation","fuzzy"]
+    for x in target:
+        cor_target = abs(corrmat[x])
+        relevant_features = cor_target[cor_target > 0.3]
+        print(x)
+        print(relevant_features)
     plt.show()
+
+
