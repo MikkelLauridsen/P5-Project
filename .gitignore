@@ -1,4 +1,3 @@
-raw_data/*
 .idea/*
 .vscode/*
 
@@ -107,10 +106,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-data/raw_data/
-data/data_csv/
-data/idpoint_dataset/
-data/manipulated_data/
+data/
 hugin/
 bayesian_network.hkb
 bayesian_network.hlg

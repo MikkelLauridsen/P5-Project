@@ -8,10 +8,21 @@ import csv
 import message as msg
 
 
-def manipulate_dos(filepath, target_dir):
+def manipulate_dlc(source, target, new_dlc):
+    """Replaces the every DLC in the specified file to the given new DLC"""
+    # Getting the data from the filepath.
+    data = pd.read_csv(source)
+
+    # Replacing all values in the dlc column with the specified dlc.
+    data = data.assign(dlc=new_dlc)
+
+    data.to_csv(target, columns=["timestamp", "id", "rtr", "dlc", "data"], index=False)
+
+
+def manipulate_dos_data_field(source, target):
     """Replaces DoS injection messages with more realistic attacks and outputs the changed file in the target dir."""
     # Getting the data from the filepath.
-    data = pd.read_csv(filepath)
+    data = pd.read_csv(source)
 
     # Getting the "normal" data fields, hereby meaning non-attack messages that are not remote frames.
     normal_data_fields = __get_normal_data_fields(data)
@@ -19,7 +30,7 @@ def manipulate_dos(filepath, target_dir):
     data = __replace_dos_messages(data, normal_data_fields)
 
     # Converting the manipulated dataset back into a csv file.
-    data.to_csv(target_dir, columns=["timestamp", "id", "rtr", "dlc", "data"], index=False)
+    data.to_csv(target, columns=["timestamp", "id", "rtr", "dlc", "data"], index=False)
 
 
 # Goes through a dataframe and returns list containing the data fields for normal messages. Only works for DoS.
@@ -99,7 +110,8 @@ if __name__ == "__main__":
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    manipulate_dos(source_dir + "DoS_attack_dataset.csv", target_dir + "DoS_manipulated.csv")
+    manipulate_dos_data_field(source_dir + "DoS_attack_dataset.csv", target_dir + "DoS_manipulated.csv")
+    manipulate_dlc(source_dir + "Attack_free_dataset2.csv", target_dir + "Attack_free_2_manipulated.csv", 8)
 
     manipulate_remote_frames(source_dir + "Attack_free_dataset.csv", target_dir + "Attack_free_dataset.csv")
     manipulate_remote_frames(source_dir + "Attack_free_dataset2.csv", target_dir + "Attack_free_dataset2.csv")

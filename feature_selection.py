@@ -51,5 +51,13 @@ if __name__ == '__main__':
     plt.xticks(range(data.shape[1]), list(range(22)), fontsize=14)
     # add feature names as y-axis labels
     plt.yticks([-0.5] + list(range(data.shape[1])) + [data.shape[1] - 0.5], [""] + column_labels + [""], fontsize=14)
-
     plt.show()
+
+    print("relevant features being calculated")
+    target = ["normal", "dos", "impersonation", "fuzzy"]
+
+    for x in target:
+        cor_target = abs(corrmat[x])
+        relevant_features = cor_target[cor_target > 0.3]
+        print(x)
+        print(relevant_features)
