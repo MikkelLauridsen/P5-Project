@@ -150,7 +150,7 @@ def load_or_create_metrics(period_ms, shuffle, overlap_ms, impersonation_split, 
     X_test, y_test = split_feature_label(test_data)
     X_train, X_test = scale_features(X_train, X_test)
 
-    X_train, X_test = __select_features(X_train, X_test, threshold)
+    X_train, X_test = select_features(X_train, X_test, threshold)
 
     classifier = get_classifier(model, X_train, y_train, parameters)  # TODO: cross validation
     y_predict = classifier.predict(X_test)
@@ -161,7 +161,7 @@ def load_or_create_metrics(period_ms, shuffle, overlap_ms, impersonation_split, 
     return metric_dic
 
 
-def __select_features(X_train, X_test, threshold):
+def select_features(X_train, X_test, threshold):
     column_labels = list(datapoint.datapoint_attributes)[2:]
 
     # get correlations of each feature in dataset
