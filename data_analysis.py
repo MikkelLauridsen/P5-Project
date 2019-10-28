@@ -4,7 +4,7 @@ import datareader_csv
 
 
 def get_mean_time_between_normal_messages(messages):
-    """Finds the mean time between two normal messages, ignoring remote frames and remote frame responses."""
+    """Returns the mean time between normal message neighbours, ignoring remote frames and remote frame responses."""
 
     # The times between two normal messages.
     times_between_messages = []
