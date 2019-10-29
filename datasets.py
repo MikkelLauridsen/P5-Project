@@ -572,7 +572,7 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
                                    tup[2]) for tup in raw_msgs}
 
         for future in conf.as_completed(futures):
-            datasets.append(future.result())
+            datasets.append(future.result()[0])
 
     offset = 0
     points = []
