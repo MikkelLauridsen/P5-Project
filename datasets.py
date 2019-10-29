@@ -420,6 +420,7 @@ def __find_windows(messages, period_ms, overlap_ms):
     return windows
 
 
+# Calculates a list of datapoints from a list of windows (a window being a list of messages)
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 # this function may never be called with an empty list
 def __windows_to_datapoints(windows, is_injected, name):
@@ -458,12 +459,11 @@ def __windows_to_datapoints(windows, is_injected, name):
 
     # Calculate features one by one
     for i, attr in enumerate(dp.datapoint_attributes):
-
         print(f"{name} Calculating feature {attr} ({i + 1})")
+        feature_func = attribute_function_mappings[attr]
 
         time_begin = time.perf_counter_ns()
         for j, window in enumerate(windows):
-            feature_func = attribute_function_mappings[attr]
             setattr(datapoints[j], attr, feature_func(window))
 
         feature_timespan = time.perf_counter_ns() - time_begin
@@ -561,6 +561,7 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
         ]
 
     datasets = []
+    feature_durations_list = []
 
     # create DataPoints in parallel.
     with conf.ProcessPoolExecutor() as executor:
@@ -573,6 +574,7 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
 
         for future in conf.as_completed(futures):
             datasets.append(future.result()[0])
+            feature_durations_list.append(future.result()[0])
 
     offset = 0
     points = []
@@ -583,10 +585,20 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
         points += [offset_datapoint(point, offset - time_low) for point in dataset]
         offset = points[len(points) - 1].time_ms
 
+    feature_durations = {}
+
+    # Collapse resulting feature duration dicts into a single duration dict
+    for attr in dp.datapoint_attributes:
+        for durations in feature_durations_list:
+            feature_durations[attr] += durations[attr]
+
+        # Average feature duration
+        feature_durations[attr] /= len(points)
+
     # split the list of DataPoint into training (80%) and test (20%) sets
     training, test = train_test_split(points, shuffle=shuffle, train_size=0.8, test_size=0.2, random_state=2019)
 
-    return training, test
+    return training, test, feature_durations
 
 
 # Increments the timestamp of input DataPoint by the input offset and returns the DataPoint
@@ -616,11 +628,13 @@ def load_or_create_datasets(period_ms=100, shuffle=True, overlap_ms=100, imperso
     if os.path.exists(training_name) and os.path.exists(test_name):
         training_set = datareader_csv.load_idpoints(training_name)
         test_set = datareader_csv.load_idpoints(test_name)
+        feature_durations = {}  # TODO load feature_durations
     else:
         # create and save the datasets otherwise.
-        training_set, test_set = get_mixed_datasets(period_ms, shuffle, overlap_ms, impersonation_split, dos_type)
+        training_set, test_set, feature_durations = get_mixed_datasets(period_ms, shuffle, overlap_ms, impersonation_split, dos_type)
         write_datapoints_csv(training_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
         write_datapoints_csv(test_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
+        # TODO: write feature_durations
 
-    return training_set, test_set
+    return training_set, test_set, feature_durations
 
