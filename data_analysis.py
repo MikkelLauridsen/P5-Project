@@ -9,6 +9,17 @@ def get_mean_time_between_normal_messages(messages):
     # The times between two normal messages.
     times_between_messages = []
 
+    remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
+
+    # Using the list of non-normal indexes to find the time between all neighbour pairs of normal messages.
+    for i in range(len(messages) - 1):
+        if i not in remote_frame_and_response_indices and i + 1 not in remote_frame_and_response_indices:
+            times_between_messages.append(messages[i + 1].timestamp - messages[i].timestamp)
+
+    return np.mean(times_between_messages)
+
+
+def __get_remote_frame_and_response_indices(messages):
     latest_remote_frame = None
     latest_remote_frame_index = None
 
@@ -28,18 +39,13 @@ def get_mean_time_between_normal_messages(messages):
             latest_remote_frame_index = None
             remote_frame_or_response_indices.append(i)
 
-    # Using the list of non-normal indexes to find the time between all neighbour pairs of normal messages.
-    for i in range(len(messages) - 1):
-        if i not in remote_frame_or_response_indices and i + 1 not in remote_frame_or_response_indices:
-            times_between_messages.append(messages[i + 1].timestamp - messages[i].timestamp)
-
-    return np.mean(times_between_messages)
+    return remote_frame_or_response_indices
 
 
 if __name__ == "__main__":
-    messages = datareader_csv.load_attack_free1()
+    file_messages = datareader_csv.load_attack_free1()
 
-    mean_time_between_normal_messages = get_mean_time_between_normal_messages(messages)
+    mean_time_between_normal_messages = get_mean_time_between_normal_messages(file_messages)
 
     print(f"Average time between normal messages: {mean_time_between_normal_messages}")
 
