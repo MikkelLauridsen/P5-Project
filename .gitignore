@@ -108,5 +108,5 @@ venv.bak/
 
 data/
 hugin/
-bayesian_network.hkb
-bayesian_network.hlg
+*.hkb
+*.hlg
