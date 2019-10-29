@@ -3,6 +3,7 @@ import datareader_csv
 import os
 import csv
 import math
+import time
 import functools as ft
 import concurrent.futures as conf
 from collections import deque
@@ -366,10 +367,62 @@ def calculate_kurtosis_req_to_res_time(messages):
     return __calculate_kurtosis(intervals)
 
 
-# Converts input 'messages' to a DataPoint object.
+# Converts a list of messages to a list of DataPoints,
+# where each point is comprised of 'messages' in 'period_ms' time window.
+# 'overlap_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
+# That is, if 'overlap_ms' is 50 and 'period_ms' is 100,
+# DataPoint 1 and 2 will share messages in half of their time windows.
+# 'is_injected' determines whether intrusion was conducted in 'messages'
+def messages_to_datapoints(messages, period_ms, is_injected, overlap_ms, name=""):
+    if len(messages) == 0:
+        return []
+
+    windows = __find_windows(messages, period_ms, overlap_ms)
+    return __windows_to_datapoints(windows, is_injected, name)
+
+
+def __find_windows(messages, period_ms, overlap_ms):
+    working_set = deque()
+
+    working_set.append(messages[0])
+    lowest_index = 0
+    length = len(messages)
+
+    # construct the initial working set. That is, the deque of messages used to create the next DataPoint.
+    while lowest_index < length and \
+            (messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
+        lowest_index += 1
+        working_set.append(messages[lowest_index])
+
+    lowest_index += 1
+    old_time = working_set[0].timestamp
+
+    windows = []
+    for i in range(lowest_index, length):
+        working_set.append(messages[i])
+        time_expended = (working_set[len(working_set) - 1].timestamp - old_time) * 1000.0
+
+        # repeatedly right-append to the working set,
+        # until the time period between the last message used for the previous DataPoint,
+        # and the most recently appended message are offset by at least 'overlap_ms' milliseconds.
+        if time_expended >= overlap_ms:
+            low = working_set.popleft()
+
+            # until the left-most and right-most messages in the working set are offset by at most 'period_ms',
+            # left-pop a message from the working set.
+            while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
+                low = working_set.popleft()
+
+            working_set.appendleft(low)
+            windows.append(list(working_set))
+            old_time = working_set[len(working_set) - 1].timestamp
+
+    return windows
+
+
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 # this function may never be called with an empty list
-def messages_to_datapoint(messages, is_injected):
+def __windows_to_datapoints(windows, is_injected, name):
     # maps a function to an attribute. The function must accept a list of messages.
     # missing mappings are allowed, and will give the feature a value of 0
     attribute_function_mappings = {
@@ -395,72 +448,28 @@ def messages_to_datapoint(messages, is_injected):
         "kurtosis_req_to_res_time": calculate_kurtosis_req_to_res_time
     }
 
-    # Blank DataPoint
-    datapoint = dp.DataPoint(*[0 for attr in dp.datapoint_attributes])
-
-    # Update blank DataPoint from attribute functions
-    for attr in dp.datapoint_attributes:
-        feature_func = attribute_function_mappings.get(attr, None)
-
-        if feature_func is not None:
-            setattr(datapoint, attr, feature_func(messages))
-
-    return datapoint
-
-
-# Converts a list of messages to a list of DataPoints,
-# where each point is comprised of 'messages' in 'period_ms' time window.
-# 'overlap_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
-# That is, if 'overlap_ms' is 50 and 'period_ms' is 100,
-# DataPoint 1 and 2 will share messages in half of their time windows.
-# 'is_injected' determines whether intrusion was conducted in 'messages'
-def messages_to_datapoints(messages, period_ms, is_injected, overlap_ms, name=""):
-    if len(messages) == 0:
-        return []
-
     datapoints = []
-    working_set = deque()
 
-    working_set.append(messages[0])
-    lowest_index = 0
-    length = len(messages)
+    # Fill datapoints list with blank datapoints
+    for i in range(len(windows)):
+        datapoints.append(dp.DataPoint(*[0 for attr in dp.datapoint_attributes]))
 
-    # construct the initial working set. That is, the deque of messages used to create the next DataPoint.
-    while lowest_index < length and \
-            (messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
+    durations = {}
 
-        lowest_index += 1
-        working_set.append(messages[lowest_index])
+    # Calculate features one by one
+    for i, attr in enumerate(dp.datapoint_attributes):
 
-    old_progress = -5
-    lowest_index += 1
-    old_time = working_set[0].timestamp
+        print(f"{name} Calculating feature {attr} ({i + 1})")
 
-    for i in range(lowest_index, length):
-        working_set.append(messages[i])
-        progress = math.ceil((i / length) * 100.0)
-        time_expended = (working_set[len(working_set) - 1].timestamp - old_time) * 1000.0
+        time_begin = time.perf_counter_ns()
+        for j, window in enumerate(windows):
+            feature_func = attribute_function_mappings[attr]
+            setattr(datapoints[j], attr, feature_func(window))
 
-        if progress % 5 == 0 and progress > old_progress:
-            print(f"{name} Creating data points: {progress}/100%")
-            old_progress = progress
+        feature_timespan = time.perf_counter_ns() - time_begin
+        durations[attr] = feature_timespan
 
-        # repeatedly right-append to the working set,
-        # until the time period between the last message used for the previous DataPoint,
-        # and the most recently appended message are offset by at least 'overlap_ms' milliseconds.
-        if time_expended >= overlap_ms:
-            low = working_set.popleft()
-
-            # until the left-most and right-most messages in the working set are offset by at most 'period_ms',
-            # left-pop a message from the working set.
-            while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
-                low = working_set.popleft()
-
-            working_set.appendleft(low)
-            datapoints.append(messages_to_datapoint(list(working_set), is_injected))
-            old_time = working_set[len(working_set) - 1].timestamp
-
-    return datapoints
+    return datapoints, durations
 
 
 # Writes a list of DataPoints to file.
