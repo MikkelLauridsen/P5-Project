@@ -574,7 +574,7 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
 
         for future in conf.as_completed(futures):
             datasets.append(future.result()[0])
-            feature_durations_list.append(future.result()[0])
+            feature_durations_list.append(future.result()[1])
 
     offset = 0
     points = []
@@ -589,6 +589,7 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
 
     # Collapse resulting feature duration dicts into a single duration dict
     for attr in dp.datapoint_attributes:
+        feature_durations[attr] = 0
         for durations in feature_durations_list:
             feature_durations[attr] += durations[attr]
 
@@ -620,12 +621,13 @@ def get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_ty
 
 # Returns the training and test sets associated with input argument combination.
 # If the datasets do not exist, they are created and saved in the process.
-def load_or_create_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonation_split=True, dos_type='original'):
+def load_or_create_datasets(period_ms=100, shuffle=True, overlap_ms=100,
+                            impersonation_split=True, dos_type='original', force_create=False):
     training_name, _ = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
     test_name, _ = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
 
     # load the datasets if they exist.
-    if os.path.exists(training_name) and os.path.exists(test_name):
+    if os.path.exists(training_name) and os.path.exists(test_name) and not force_create:
         training_set = datareader_csv.load_idpoints(training_name)
         test_set = datareader_csv.load_idpoints(test_name)
         feature_durations = {}  # TODO load feature_durations
