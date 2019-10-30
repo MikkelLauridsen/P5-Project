@@ -1,8 +1,8 @@
 from sklearn.naive_bayes import GaussianNB
 
 
-def nbc(X_train, y_train, parameters={}):
-    return GaussianNB(**parameters).fit(X_train, y_train)
+def nbc():  # baseline parameters
+    return GaussianNB()
 
 
 #def nbc(X_train, y_train):

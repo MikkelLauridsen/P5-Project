@@ -1,8 +1,8 @@
 from sklearn.linear_model import LogisticRegression
 
 
-def lr(X_train, y_train, parameters={}):
-    return LogisticRegression(**parameters).fit(X_train, y_train)
+def lr():  # baseline parameters
+    return LogisticRegression()
 
 
 #def logistic_regression(X_train, y_train):

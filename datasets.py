@@ -13,6 +13,9 @@ from sklearn.model_selection import train_test_split
 # Calculates the skewness of the values in input list.
 # Pearson's second skewness coefficient is used as equation.
 # If the list has less than two elements, the skewness will default to 0.
+import datawriter_csv
+
+
 def __calculate_skewness(values):
     if len(values) == 0:
         return 0
@@ -394,6 +397,7 @@ def __find_windows(messages, period_ms, overlap_ms):
     # construct the initial working set. That is, the deque of messages used to create the next DataPoint.
     while lowest_index < length and \
             (messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
+
         lowest_index += 1
         working_set.append(messages[lowest_index])
 
@@ -630,18 +634,19 @@ def load_or_create_datasets(period_ms=100, shuffle=True, overlap_ms=100,
                             impersonation_split=True, dos_type='original', force_create=False):
     training_name, _ = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
     test_name, _ = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
+    time_path, dir = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'time')
 
     # load the datasets if they exist.
     if os.path.exists(training_name) and os.path.exists(test_name) and not force_create:
-        training_set = datareader_csv.load_idpoints(training_name)
-        test_set = datareader_csv.load_idpoints(test_name)
-        feature_durations = {}  # TODO load feature_durations
+        training_set = datareader_csv.load_datapoints(training_name)
+        test_set = datareader_csv.load_datapoints(test_name)
+        feature_durations = datareader_csv.load_feature_durations(time_path)
     else:
         # create and save the datasets otherwise.
         training_set, test_set, feature_durations = get_mixed_datasets(period_ms, shuffle, overlap_ms, impersonation_split, dos_type)
         write_datapoints_csv(training_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
         write_datapoints_csv(test_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
-        # TODO: write feature_durations
+        datawriter_csv.save_feature_durations(feature_durations, time_path, dir)
 
     return training_set, test_set, feature_durations
 

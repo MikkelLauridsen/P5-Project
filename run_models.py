@@ -1,45 +1,86 @@
-from models.mlp import mlp
+import os
+from datapoint import datapoint_attributes
 from datasets import load_or_create_datasets
-from models.model_utility import scale_features, split_feature_label, get_metrics, print_metrics
+from models.model_utility import scale_features, split_feature_label, get_metrics, save_metrics, save_time, get_classifier, get_metrics_path, find_best_hyperparameters, print_metrics, load_metrics
+from sklearn.metrics import classification_report
 
 
-def select_features(X, feature_index):
-    X_sub = []
+def generate_results(windows=[100], overlaps=[100], imp_splits=[True],
+                     dos_types=['modified'], models={'mlp': {}}, max_features=4):
 
-    for x in X:
-        fs = []
+    for period_ms in windows:
+        for overlap_ms in overlaps:
+            for imp_split in imp_splits:
+                for dos_type in dos_types:
+                    X_train, y_train, X_test, y_test, feature_time_dict = get_dataset(period_ms, overlap_ms, imp_split, dos_type)
+                    save_stepwise_addition(models, X_train, y_train, X_test, y_test, max_features, feature_time_dict, period_ms, overlap_ms, imp_split, dos_type)
 
-        for i in range(len(x)):
-            if i == feature_index:
-                fs.append(x[i])
 
-        X_sub.append(fs)
+def get_dataset(period_ms, overlap_ms, imp_split, dos_type):
+    training_data, test_data, feature_time_dict = load_or_create_datasets(period_ms, True, overlap_ms,
+                                                                          imp_split, dos_type)
 
-    return X_sub
+    X_train, y_train = split_feature_label(training_data)
+    X_test, y_test = split_feature_label(test_data)
+    X_train, X_test = scale_features(X_train, X_test)
+
+    return X_train, y_train, X_test, y_test, feature_time_dict
+
+
+def save_stepwise_addition(models, X_train, y_train, X_test, y_test, max_features, feature_time_dict, period_ms, overlap_ms, imp_split, dos_type):
+    labels = (list(datapoint_attributes)[2:]).copy()
+    working_set = []
+
+    for i in range(0, max_features):
+        best_score = 0
+        best_label = ""
+
+        for label in labels:
+            for model in models.keys():
+                current_subset = working_set + [label]
+                path, _ = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, models[model], current_subset)
+
+                if os.path.exists(path):
+                    metrics = load_metrics(period_ms, overlap_ms, imp_split, dos_type, model, models[model], working_set + [label])
+                else:
+                    X_train_mod = create_feature_subset(X_train, current_subset)
+                    X_test_mod = create_feature_subset(X_test, current_subset)
+                    y_predict, time_model = find_best_hyperparameters(get_classifier(model), models[model], X_train_mod, y_train, X_test_mod)
+                    metrics = get_metrics(y_test, y_predict)
+
+                    save_metrics(metrics, period_ms, overlap_ms, imp_split, dos_type, model, models[model], current_subset)
+                    time_feature = 0.0
+
+                    for feature in feature_time_dict.keys():
+                        if feature in current_subset:
+                            time_feature += feature_time_dict[label]
+
+                    save_time(time_model, time_feature, period_ms, overlap_ms, imp_split, dos_type, model, models[model], current_subset)
+
+                if metrics['total'][6] > best_score:
+                    best_label = label
+
+        working_set.append(best_label)
+        del labels[labels.index(best_label)]
+
+
+def create_feature_subset(X, subset):
+    indices = [list(datapoint_attributes)[2:].index(f) for f in subset]
+    length = len(list(datapoint_attributes)[2:])
+
+    X_mod = []
+
+    for sample in X:
+        sample_mod = []
+
+        for i in range(0, length):
+            if i in indices:
+                sample_mod.append(sample[i])
+
+        X_mod.append(sample_mod)
+
+    return X_mod
 
 
 if __name__ == "__main__":
-
-    res = []
-
-    for window_ms in [10, 20, 30, 50, 80, 130]:
-        for overlap_ms in [10, 20, 30, 50, 80, 130]:
-            training_points, test_points = load_or_create_datasets(period_ms=window_ms,
-                                                                   shuffle=True,
-                                                                   impersonation_split=False,
-                                                                   overlap_ms=overlap_ms,
-                                                                   dos_type='modified')
-
-            X_train, y_train = split_feature_label(training_points)
-            X_test, y_test = split_feature_label(test_points)
-            X_train, X_test = scale_features(X_train, X_test)
-
-            print(f"Generated {len(training_points)} training points and {len(test_points)} test points at overlap "
-                  f"{overlap_ms}ms and window {window_ms}ms")
-
-            num_features = len(X_train[0])
-
-            y_predict = mlp(X_train, y_train).predict(X_test)
-            accuracies = get_metrics(y_test, y_predict)
-            print_metrics(accuracies)
-            res.append((window_ms, overlap_ms, accuracies))
+    generate_results()

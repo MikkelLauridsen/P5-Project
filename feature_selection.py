@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
-    period_ms = 100
-    overlap_ms = 100
+    period_ms = 10
+    overlap_ms = 10
 
     datapoints1, datapoints2 = load_or_create_datasets(period_ms=period_ms,
                                                        overlap_ms=overlap_ms,

@@ -1,10 +1,10 @@
 import datapoint
 import os
 import csv
+import time
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
-from datasets import load_or_create_datasets
 from models.decision_trees import dt
 from models.knn import knn
 from models.logistic_regression import lr
@@ -12,6 +12,7 @@ from models.mlp import mlp
 from models.nbc import nbc
 from models.random_forest import rf
 from models.svm import svm
+from operator import add
 
 # TODO: bayesian networks!
 
@@ -53,16 +54,18 @@ def scale_features(X_training, X_test):
 
 
 # Finds the best combination of hyperparameters and prints the results.
-def find_best_hyperparameters(estimator, parameter_grid, X_train, y_train, X_test, y_test):
+def find_best_hyperparameters(estimator, parameter_grid, X_train, y_train, X_test):
     # Creating the grid search that uses the parameter grid to find the best hyperparameters.
     grid_s = GridSearchCV(estimator, parameter_grid, cv=5, n_jobs=-1, scoring="accuracy", verbose=10)
     grid_s.fit(X_train, y_train)
 
     print(f"parameters found: {grid_s.best_params_}")
 
+    before = time.perf_counter_ns()
     y_predict = grid_s.predict(X_test)
+    time_ns = time.perf_counter_ns() - before
 
-    return y_predict
+    return y_predict, time_ns
 
 
 def best_hyper_parameters_for_all_model(estimator, parameter_grid, X_train, y_train):
@@ -74,23 +77,23 @@ def best_hyper_parameters_for_all_model(estimator, parameter_grid, X_train, y_tr
     return grid_s
 
 
-def print_metrics(metric_dic):
+def print_metrics(metrics):
     print("printing classification metrics:")
 
     labels = ['Precision', 'Recall', 'TNR', 'FPR', 'FNR', 'Balanced accuracy', 'F1-score']
     print("{:15}".format(" ") + "".join(["{:>18}".format(f"{label} ") for label in labels]))
 
-    for key in metric_dic.keys():
+    for key in metrics.keys():
         line = "{:>15}".format(f"{key}  ")
 
         for i in range(len(labels)):
-            line += "{:17.4f}".format(metric_dic[key][i]) + " "
+            line += "{:17.4f}".format(metrics[key][i]) + " "
 
         print(line)
 
 
-def save_metrics(metric_dic, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters={}):
-    path, dir = __get_metrics_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
+def save_metrics(metrics, period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset):
+    path, dir = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset)
     labels = ['Precision', 'Recall', 'TNR', 'FPR', 'FNR', 'Balanced accuracy', 'F1-score']
 
     if not os.path.exists(dir):
@@ -100,65 +103,55 @@ def save_metrics(metric_dic, period_ms, shuffle, overlap_ms, impersonation_split
         writer = csv.writer(file, delimiter=",")
         writer.writerow(['Class'] + labels)
 
-        for key in metric_dic.keys():
-            writer.writerow([key] + list(metric_dic[key]))
+        for key in metrics.keys():
+            writer.writerow([key] + list(metrics[key]))
 
 
-def load_metrics(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters={}):
-    path, _ = __get_metrics_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
-    metric_dic = {}
+def save_time(time_model, time_feature, period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset):
+    path, dir = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset, True)
+
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+    with open(path, "w", newline="") as file:
+        writer = csv.writer(file, delimiter=",")
+        writer.writerow(['Model_time', 'Feature_time', 'Total'])
+        writer.writerow([time_model, time_feature, time_model + time_feature])
+
+
+def load_metrics(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset):
+    path, _ = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset)
+    metrics = {}
 
     with open(path, newline="") as file:
         reader = csv.reader(file, delimiter=",")
         next(reader, None)
 
         for row in reader:
-            metric_dic[row[0]] = [float(string) for string in row[1:]]
+            metrics[row[0]] = [float(string) for string in row[1:]]
 
-    return metric_dic
+    return metrics
 
 
-def get_classifier(model, X, y, parameters={}):
+def get_classifier(model):
     if model == 'mlp':
-        return mlp(X, y) if len(parameters.keys()) == 0 else mlp(X, y, parameters)
+        return mlp()
     elif model == 'knn':
-        return knn(X, y) if len(parameters.keys()) == 0 else knn(X, y, parameters)
+        return knn()
     elif model == 'svm':
-        return svm(X, y) if len(parameters.keys()) == 0 else svm(X, y, parameters)
+        return svm()
     elif model == 'rf':
-        return rf(X, y) if len(parameters.keys()) == 0 else rf(X, y, parameters)
+        return rf()
     elif model == 'nbc':
-        return nbc(X, y) if len(parameters.keys()) == 0 else nbc(X, y, parameters)
+        return nbc()
     elif model == 'lr':
-        return lr(X, y) if len(parameters.keys()) == 0 else lr(X, y, parameters)
+        return lr()
     elif model == 'dt':
-        return dt(X, y) if len(parameters.keys()) == 0 else dt(X, y, parameters)
+        return dt()
     # elif model == 'bn': TODO: add bayesian networks
     #    return bn(X, y, parameters)
     else:
         raise ValueError()
-
-
-def load_or_create_metrics(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters={}):
-    path, _ = __get_metrics_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
-
-    if os.path.exists(path):
-        return load_metrics(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
-
-    training_data, test_data = load_or_create_datasets(period_ms, shuffle, overlap_ms, impersonation_split, dos_type)
-    X_train, y_train = split_feature_label(training_data)
-    X_test, y_test = split_feature_label(test_data)
-    X_train, X_test = scale_features(X_train, X_test)
-
-    X_train, X_test = select_features(X_train, X_test, threshold)
-
-    classifier = get_classifier(model, X_train, y_train, parameters)  # TODO: cross validation
-    y_predict = classifier.predict(X_test)
-    metric_dic = get_metrics(y_test, y_predict)
-
-    save_metrics(metric_dic, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
-
-    return metric_dic
 
 
 def select_features(X_train, X_test, threshold):
@@ -205,7 +198,6 @@ def __strip_features(X, feature_indices):
 
 
 def get_metrics(y_test, y_predict):
-    tp = fp = tn = fn = 0
     class_counters = {'normal': [0, 0, 0, 0], 'dos': [0, 0, 0, 0], 'fuzzy': [0, 0, 0, 0], 'impersonation': [0, 0, 0, 0]}
 
     if len(y_test) != len(y_predict):
@@ -214,39 +206,34 @@ def get_metrics(y_test, y_predict):
     for i in range(len(y_test)):
         if y_test[i] == y_predict[i]:
             __increment_equal(y_test[i], class_counters)
-
-            if y_test[i] == 'normal':
-                tn += 1
-            else:
-                tp += 1
         else:
             __increment_not_equal(y_test[i], y_predict[i], class_counters)
 
-            if y_test[i] == 'normal':
-                fn += 1
-            else:
-                fp += 1
-
-    metrics = {'total': __get_metrics_tuple(tp, fp, tn, fn)}
+    metrics = {}
 
     for key in class_counters.keys():
         counts = class_counters[key]
         metrics[key] = __get_metrics_tuple(counts[0], counts[1], counts[2], counts[3])
 
+    metrics['total'] = __get_samples_tuple(metrics)
+
     return metrics
 
 
 # Returns the file and directory paths associated with input argument combination.
-def __get_metrics_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters={}):
-    imp_name = "imp_split" if impersonation_split else "imp_full"
-    baseline_name = "baseline" if len(parameters.keys()) == 0 else "modified"
-    shuffle_name = "shuffled" if shuffle else "normal"
-    name = f"mixed_{period_ms}ms_{overlap_ms}ms_{shuffle_name}_{threshold}"
+def get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset, is_time=False):
+    imp_name = "imp_split" if imp_split else "imp_full"
+    baseline_name = "baseline" if len(parameters.keys()) == 0 else "selected_parameters"
+    name = f"mixed_{period_ms}ms_{overlap_ms}ms"
+    result = "result" if is_time == False else "time"
+
+    for label in subset:
+        name += f"_{label}"
 
     for parameter in parameters:
         name += f"_{parameter}"
 
-    dir = f"result/{baseline_name}/{model}/{imp_name}/{dos_type}/"
+    dir = f"{result}/{baseline_name}/{model}/{imp_name}/{dos_type}/"
 
     return dir + name + ".csv", dir
 
@@ -270,16 +257,22 @@ def __increment_not_equal(label, prediction, class_counters):
 
 def __get_metrics_tuple(tp, fp, tn, fn):
     precision = 1 if tp + fp == 0 else tp / (tp + fp)
-    recall = tp / (tp + fn)
+    recall = 1 if tp + fn == 0 else tp / (tp + fn)
     tnr = tn / (tn + fp)
     fpr = fp / (fp + tn)
     fnr = fn / (fn + tp)
     balanced_accuracy = (recall + tnr) / 2
-    f1 = 2 * precision * recall / (precision + recall)
+    f1 = 1 if precision + recall == 0 else 2 * precision * recall / (precision + recall)  # TODO: how come there are no positives?
 
     return precision, recall, tnr, fpr, fnr, balanced_accuracy, f1
 
 
-if __name__ == "__main__":
-    os.chdir("..")
-    print_metrics(load_or_create_metrics(100, True, 100, False, 'modified', 'mlp', 0.1, parameters={'hidden_layer_sizes': (12, 2)}))
+def __get_samples_tuple(metrics):
+    micros = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    for label in metrics.keys():
+        micros = list(map(add, micros, metrics[label]))
+
+    length = len(metrics.keys())
+
+    return [metric / length for metric in micros]
