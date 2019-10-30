@@ -367,8 +367,9 @@ def calculate_kurtosis_req_to_res_time(messages):
     return __calculate_kurtosis(intervals)
 
 
-# Converts a list of messages to a list of DataPoints,
-# where each point is comprised of 'messages' in 'period_ms' time window.
+# Converts a list of messages to a list of DataPoints
+# where each point is comprised of 'messages' in 'period_ms' time window
+# as well as a dict of feature calculation durations.
 # 'overlap_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
 # That is, if 'overlap_ms' is 50 and 'period_ms' is 100,
 # DataPoint 1 and 2 will share messages in half of their time windows.
@@ -381,6 +382,8 @@ def messages_to_datapoints(messages, period_ms, is_injected, overlap_ms, name=""
     return __windows_to_datapoints(windows, is_injected, name)
 
 
+# Separates a list of messages into a list of windows.
+# A window is here considered a list of messages within a specified timespan
 def __find_windows(messages, period_ms, overlap_ms):
     working_set = deque()
 
@@ -451,21 +454,23 @@ def __windows_to_datapoints(windows, is_injected, name):
 
     datapoints = []
 
-    # Fill datapoints list with blank datapoints
+    # Fill datapoint list with blank datapoints
     for i in range(len(windows)):
         datapoints.append(dp.DataPoint(*[0 for attr in dp.datapoint_attributes]))
 
     durations = {}
 
-    # Calculate features one by one
+    # Populate datapoints by adding features one by one
+    # Feature values are calculated on a per feature basis
     for i, attr in enumerate(dp.datapoint_attributes):
         print(f"{name} Calculating feature {attr} ({i + 1})")
         feature_func = attribute_function_mappings[attr]
 
-        time_begin = time.perf_counter_ns()
+        time_begin = time.perf_counter_ns()  # Start counting time
         for j, window in enumerate(windows):
             setattr(datapoints[j], attr, feature_func(window))
 
+        # Determine how long it took to calculate a specific feature for all windows
         feature_timespan = time.perf_counter_ns() - time_begin
         durations[attr] = feature_timespan
 
