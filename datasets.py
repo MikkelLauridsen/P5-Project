@@ -370,21 +370,21 @@ def calculate_kurtosis_req_to_res_time(messages):
 # Converts a list of messages to a list of DataPoints
 # where each point is comprised of 'messages' in 'period_ms' time window
 # as well as a dict of feature calculation durations.
-# 'overlap_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
-# That is, if 'overlap_ms' is 50 and 'period_ms' is 100,
+# 'stride_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
+# That is, if 'stride_ms' is 50 and 'period_ms' is 100,
 # DataPoint 1 and 2 will share messages in half of their time windows.
 # 'is_injected' determines whether intrusion was conducted in 'messages'
-def messages_to_datapoints(messages, period_ms, is_injected, overlap_ms, name=""):
+def messages_to_datapoints(messages, period_ms, is_injected, stride_ms, name=""):
     if len(messages) == 0:
         return []
 
-    windows = __find_windows(messages, period_ms, overlap_ms)
+    windows = __find_windows(messages, period_ms, stride_ms)
     return __windows_to_datapoints(windows, is_injected, name)
 
 
 # Separates a list of messages into a list of windows.
 # A window is here considered a list of messages within a specified timespan
-def __find_windows(messages, period_ms, overlap_ms):
+def __find_windows(messages, period_ms, stride_ms):
     working_set = deque()
 
     working_set.append(messages[0])
@@ -407,8 +407,8 @@ def __find_windows(messages, period_ms, overlap_ms):
 
         # repeatedly right-append to the working set,
         # until the time period between the last message used for the previous DataPoint,
-        # and the most recently appended message are offset by at least 'overlap_ms' milliseconds.
-        if time_expended >= overlap_ms:
+        # and the most recently appended message are offset by at least 'stride_ms' milliseconds.
+        if time_expended >= stride_ms:
             low = working_set.popleft()
 
             # until the left-most and right-most messages in the working set are offset by at most 'period_ms',
@@ -479,8 +479,8 @@ def __windows_to_datapoints(windows, is_injected, name):
 
 # Writes a list of DataPoints to file.
 # The file name and directory depends on the parameters.
-def write_datapoints_csv(datapoints, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, set_type):
-    csv_path, dir = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, set_type)
+def write_datapoints_csv(datapoints, period_ms, shuffle, stride_ms, impersonation_split, dos_type, set_type):
+    csv_path, dir = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, set_type)
 
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -520,7 +520,7 @@ def neutralize_offset(messages):
 
 # Constructs a list of DataPoints based on parameters.
 # 'period_ms' determines the duration of the time window used to create each DataPoint.
-# 'overlap_ms' determines how little of the previous time window may be used to create the next DataPoint.
+# 'stride_ms' determines how little of the previous time window may be used to create the next DataPoint.
 # 'shuffle' dictates whether the list of DataPoints is to be randomized.
 # 'impersonation_split' dictates whether the raw impersonation datasets,
 # should be separated in attack free and attack affected data.
@@ -532,7 +532,7 @@ def neutralize_offset(messages):
 #
 # If this function is to be used from another file,
 # all code must be wrapped in an __name__ == '__main__' check if used on a Windows system.
-def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonation_split=True, dos_type='original'):
+def get_mixed_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation_split=True, dos_type='original'):
     # load messages and remove time offsets
     attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
     attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
@@ -574,7 +574,7 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
                                    tup[0],
                                    period_ms,
                                    tup[1],
-                                   overlap_ms,
+                                   stride_ms,
                                    tup[2]) for tup in raw_msgs}
 
         for future in conf.as_completed(futures):
@@ -615,10 +615,10 @@ def offset_datapoint(point, offset):
 
 
 # Returns the file and directory paths associated with input argument combination.
-def get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, set_type):
+def get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, set_type):
     imp_name = "imp_split" if impersonation_split else "imp_full"
     shuffle_name = "shuffled" if shuffle else "normal"
-    name = f"mixed_{set_type}_{period_ms}ms_{overlap_ms}ms_{shuffle_name}"
+    name = f"mixed_{set_type}_{period_ms}ms_{stride_ms}ms_{shuffle_name}"
     dir = f"data/feature/{imp_name}/{dos_type}/"
 
     return dir + name + ".csv", dir
@@ -626,10 +626,10 @@ def get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_ty
 
 # Returns the training and test sets associated with input argument combination.
 # If the datasets do not exist, they are created and saved in the process.
-def load_or_create_datasets(period_ms=100, shuffle=True, overlap_ms=100,
+def load_or_create_datasets(period_ms=100, shuffle=True, stride_ms=100,
                             impersonation_split=True, dos_type='original', force_create=False):
-    training_name, _ = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
-    test_name, _ = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
+    training_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'training')
+    test_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'test')
 
     # load the datasets if they exist.
     if os.path.exists(training_name) and os.path.exists(test_name) and not force_create:
@@ -638,9 +638,9 @@ def load_or_create_datasets(period_ms=100, shuffle=True, overlap_ms=100,
         feature_durations = {}  # TODO load feature_durations
     else:
         # create and save the datasets otherwise.
-        training_set, test_set, feature_durations = get_mixed_datasets(period_ms, shuffle, overlap_ms, impersonation_split, dos_type)
-        write_datapoints_csv(training_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
-        write_datapoints_csv(test_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
+        training_set, test_set, feature_durations = get_mixed_datasets(period_ms, shuffle, stride_ms, impersonation_split, dos_type)
+        write_datapoints_csv(training_set, period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'training')
+        write_datapoints_csv(test_set, period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'test')
         # TODO: write feature_durations
 
     return training_set, test_set, feature_durations

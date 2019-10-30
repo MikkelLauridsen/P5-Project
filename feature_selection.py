@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     period_ms = 100
-    overlap_ms = 100
+    stride_ms = 100
 
     datapoints1, datapoints2 = load_or_create_datasets(period_ms=period_ms,
-                                                       overlap_ms=overlap_ms,
+                                                       stride_ms=stride_ms,
                                                        impersonation_split=False,
                                                        dos_type='modified')
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     figure = plt.figure(figsize=(22, 15))
     plt.matshow(corrmat, fignum=figure.number)
     plt.colorbar()
-    plt.title(f"Correlations at {period_ms}ms windows and {overlap_ms}ms overlap", fontsize=20)
+    plt.title(f"Correlations at {period_ms}ms windows and {stride_ms}ms overlap", fontsize=20)
     plt.xticks(range(data.shape[1]), list(range(22)), fontsize=14)
     # add feature names as y-axis labels
     plt.yticks([-0.5] + list(range(data.shape[1])) + [data.shape[1] - 0.5], [""] + column_labels + [""], fontsize=14)

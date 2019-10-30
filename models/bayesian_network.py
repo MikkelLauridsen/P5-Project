@@ -139,7 +139,7 @@ if __name__ == "__main__":
     os.chdir("..")
 
     bn = BayesianNetwork()
-    training_points, test_points = load_or_create_datasets(impersonation_split=False, overlap_ms=10, period_ms=10)
+    training_points, test_points = load_or_create_datasets(impersonation_split=False, stride_ms=10, period_ms=10)
     X_train, y_train = model_utility.split_feature_label(training_points)
     bn.fit(X_train, y_train)
 

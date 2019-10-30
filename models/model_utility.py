@@ -89,8 +89,8 @@ def print_metrics(metric_dic):
         print(line)
 
 
-def save_metrics(metric_dic, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters={}):
-    path, dir = __get_metrics_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
+def save_metrics(metric_dic, period_ms, shuffle, stride_ms, impersonation_split, dos_type, model, threshold, parameters={}):
+    path, dir = __get_metrics_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, model, threshold, parameters)
     labels = ['Precision', 'Recall', 'TNR', 'FPR', 'FNR', 'Balanced accuracy', 'F1-score']
 
     if not os.path.exists(dir):
@@ -104,8 +104,8 @@ def save_metrics(metric_dic, period_ms, shuffle, overlap_ms, impersonation_split
             writer.writerow([key] + list(metric_dic[key]))
 
 
-def load_metrics(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters={}):
-    path, _ = __get_metrics_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
+def load_metrics(period_ms, shuffle, stride_ms, impersonation_split, dos_type, model, threshold, parameters={}):
+    path, _ = __get_metrics_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, model, threshold, parameters)
     metric_dic = {}
 
     with open(path, newline="") as file:
@@ -139,13 +139,13 @@ def get_classifier(model, X, y, parameters={}):
         raise ValueError()
 
 
-def load_or_create_metrics(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters={}):
-    path, _ = __get_metrics_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
+def load_or_create_metrics(period_ms, shuffle, stride_ms, impersonation_split, dos_type, model, threshold, parameters={}):
+    path, _ = __get_metrics_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, model, threshold, parameters)
 
     if os.path.exists(path):
-        return load_metrics(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
+        return load_metrics(period_ms, shuffle, stride_ms, impersonation_split, dos_type, model, threshold, parameters)
 
-    training_data, test_data = load_or_create_datasets(period_ms, shuffle, overlap_ms, impersonation_split, dos_type)
+    training_data, test_data = load_or_create_datasets(period_ms, shuffle, stride_ms, impersonation_split, dos_type)
     X_train, y_train = split_feature_label(training_data)
     X_test, y_test = split_feature_label(test_data)
     X_train, X_test = scale_features(X_train, X_test)
@@ -156,7 +156,7 @@ def load_or_create_metrics(period_ms, shuffle, overlap_ms, impersonation_split, 
     y_predict = classifier.predict(X_test)
     metric_dic = get_metrics(y_test, y_predict)
 
-    save_metrics(metric_dic, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters)
+    save_metrics(metric_dic, period_ms, shuffle, stride_ms, impersonation_split, dos_type, model, threshold, parameters)
 
     return metric_dic
 
@@ -237,11 +237,11 @@ def get_metrics(y_test, y_predict):
 
 
 # Returns the file and directory paths associated with input argument combination.
-def __get_metrics_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, model, threshold, parameters={}):
+def __get_metrics_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, model, threshold, parameters={}):
     imp_name = "imp_split" if impersonation_split else "imp_full"
     baseline_name = "baseline" if len(parameters.keys()) == 0 else "modified"
     shuffle_name = "shuffled" if shuffle else "normal"
-    name = f"mixed_{period_ms}ms_{overlap_ms}ms_{shuffle_name}_{threshold}"
+    name = f"mixed_{period_ms}ms_{stride_ms}ms_{shuffle_name}_{threshold}"
 
     for parameter in parameters:
         name += f"_{parameter}"

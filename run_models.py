@@ -23,11 +23,11 @@ if __name__ == "__main__":
     res = []
 
     for window_ms in [10, 20, 30, 50, 80, 130]:
-        for overlap_ms in [10, 20, 30, 50, 80, 130]:
+        for stride_ms in [10, 20, 30, 50, 80, 130]:
             training_points, test_points = load_or_create_datasets(period_ms=window_ms,
                                                                    shuffle=True,
                                                                    impersonation_split=False,
-                                                                   overlap_ms=overlap_ms,
+                                                                   stride_ms=stride_ms,
                                                                    dos_type='modified')
 
             X_train, y_train = split_feature_label(training_points)
@@ -35,11 +35,11 @@ if __name__ == "__main__":
             X_train, X_test = scale_features(X_train, X_test)
 
             print(f"Generated {len(training_points)} training points and {len(test_points)} test points at overlap "
-                  f"{overlap_ms}ms and window {window_ms}ms")
+                  f"{stride_ms}ms and window {window_ms}ms")
 
             num_features = len(X_train[0])
 
             y_predict = mlp(X_train, y_train).predict(X_test)
             accuracies = get_metrics(y_test, y_predict)
             print_metrics(accuracies)
-            res.append((window_ms, overlap_ms, accuracies))
+            res.append((window_ms, stride_ms, accuracies))
