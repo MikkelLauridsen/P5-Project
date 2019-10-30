@@ -92,8 +92,8 @@ def print_metrics(metrics):
         print(line)
 
 
-def save_metrics(metrics, period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset):
-    path, dir = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset)
+def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset):
+    path, dir = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
     labels = ['Precision', 'Recall', 'TNR', 'FPR', 'FNR', 'Balanced accuracy', 'F1-score']
 
     if not os.path.exists(dir):
@@ -119,8 +119,8 @@ def save_time(time_model, time_feature, period_ms, overlap_ms, imp_split, dos_ty
         writer.writerow([time_model, time_feature, time_model + time_feature])
 
 
-def load_metrics(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset):
-    path, _ = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset)
+def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset):
+    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
     metrics = {}
 
     with open(path, newline="") as file:
@@ -221,10 +221,10 @@ def get_metrics(y_test, y_predict):
 
 
 # Returns the file and directory paths associated with input argument combination.
-def get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset, is_time=False):
+def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_time=False):
     imp_name = "imp_split" if imp_split else "imp_full"
     baseline_name = "baseline" if len(parameters.keys()) == 0 else "selected_parameters"
-    name = f"mixed_{period_ms}ms_{overlap_ms}ms"
+    name = f"mixed_{period_ms}ms_{stride_ms}ms"
     result = "result" if is_time == False else "time"
 
     for label in subset:
