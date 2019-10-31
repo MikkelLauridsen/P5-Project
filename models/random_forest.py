@@ -2,7 +2,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 def rf():  # baseline parameters
-    return RandomForestClassifier(n_estimators=10, max_depth=9)
+    return RandomForestClassifier(n_estimators=5, max_depth=9)
 
 
 # Creates the random forest model
