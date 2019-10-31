@@ -98,7 +98,7 @@ def __remove_remote_frames(messages):
             del messages[i]
         else:
             # Continue to next message
-            # message.timestamp -= current_offset  # Removed until after meeting
+            message.timestamp -= current_offset
             i += 1
 
 
