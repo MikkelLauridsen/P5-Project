@@ -66,9 +66,9 @@ def setup_scatter(xaxis, yaxis, xlabel, ylabel, is_injected, show=True):
 
 
 if __name__ == "__main__":
-    training_points, test_points = ds.load_or_create_datasets(period_ms=10,
-                                                              stride_ms=10,
-                                                              impersonation_split=False,
-                                                              dos_type='modified')
+    training_points, test_points, _ = ds.load_or_create_datasets(period_ms=100,
+                                                                 stride_ms=100,
+                                                                 impersonation_split=False,
+                                                                 dos_type='modified')
 
     plot_all_features(training_points)
