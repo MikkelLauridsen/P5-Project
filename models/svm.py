@@ -2,7 +2,7 @@ from sklearn.svm import SVC
 
 
 def svm():
-    return SVC()
+    return SVC(max_iter=1000)
 
 
 #def svm(X_train, y_train):

@@ -2,7 +2,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 def dt():  # baseline parameters
-    return DecisionTreeClassifier(max_depth=5)
+    return DecisionTreeClassifier(max_depth=9)
 
 
 #def decision_trees(X_train, y_train):
