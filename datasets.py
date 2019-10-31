@@ -468,16 +468,16 @@ def neutralize_offset(messages):
 #
 # If this function is to be used from another file,
 # all code must be wrapped in an __name__ == '__main__' check if used on a Windows system.
-def get_mixed_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation_split=True, dos_type='original'):
+def get_mixed_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation_split=True, dos_type='original', verbose=False):
     # load messages and remove time offsets
-    attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
-    attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
-    fuzzy_messages = neutralize_offset(datareader_csv.load_fuzzy())
-    imp_messages1 = neutralize_offset(datareader_csv.load_impersonation_1())
-    imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2())
-    imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3())
-    dos_messages = neutralize_offset(datareader_csv.load_dos() if dos_type == 'original' else
-                                     datareader_csv.load_modified_dos())
+    attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1(verbose=verbose))
+    attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2(verbose=verbose))
+    fuzzy_messages = neutralize_offset(datareader_csv.load_fuzzy(verbose=verbose))
+    imp_messages1 = neutralize_offset(datareader_csv.load_impersonation_1(verbose=verbose))
+    imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2(verbose=verbose))
+    imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3(verbose=verbose))
+    dos_messages = neutralize_offset(datareader_csv.load_dos(verbose=verbose) if dos_type == 'original' else
+                                     datareader_csv.load_modified_dos(verbose=verbose))
 
     # label raw datasets
     raw_msgs = [
@@ -562,8 +562,8 @@ def get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_typ
 
 # Returns the training and test sets associated with input argument combination.
 # If the datasets do not exist, they are created and saved in the process.
-def load_or_create_datasets(period_ms=100, shuffle=True, stride_ms=100,
-                            impersonation_split=True, dos_type='original', force_create=False):
+def load_or_create_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation_split=True,
+                            dos_type='original', force_create=False, verbose=False):
 
     training_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'training')
     test_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'test')
@@ -571,12 +571,12 @@ def load_or_create_datasets(period_ms=100, shuffle=True, stride_ms=100,
 
     # load the datasets if they exist.
     if os.path.exists(training_name) and os.path.exists(test_name) and not force_create:
-        training_set = datareader_csv.load_datapoints(training_name)
-        test_set = datareader_csv.load_datapoints(test_name)
+        training_set = datareader_csv.load_datapoints(training_name, verbose=verbose)
+        test_set = datareader_csv.load_datapoints(test_name, verbose=verbose)
         feature_durations = datareader_csv.load_feature_durations(time_path)
     else:
         # create and save the datasets otherwise.
-        training_set, test_set, feature_durations = get_mixed_datasets(period_ms, shuffle, stride_ms, impersonation_split, dos_type)
+        training_set, test_set, feature_durations = get_mixed_datasets(period_ms, shuffle, stride_ms, impersonation_split, dos_type, verbose=verbose)
         write_datapoints_csv(training_set, period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'training')
         write_datapoints_csv(test_set, period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'test')
         datawriter_csv.save_feature_durations(feature_durations, time_path, dir)

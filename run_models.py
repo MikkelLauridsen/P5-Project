@@ -1,24 +1,41 @@
 import os
 from datapoint import datapoint_attributes
 from datasets import load_or_create_datasets
-from models.model_utility import scale_features, split_feature_label, get_metrics, save_metrics, save_time, get_classifier, get_metrics_path, find_best_hyperparameters, print_metrics, load_metrics
-from sklearn.metrics import classification_report
+from models.model_utility import scale_features, split_feature_label, get_metrics, save_metrics, save_time, get_classifier, get_metrics_path, find_best_hyperparameters, load_metrics
 
 
 def generate_results(windows=[100], strides=[100], imp_splits=[True],
-                     dos_types=['modified'], models={'mlp': {}}, max_features=4):
+                     dos_types=['modified'], models={'mlp': {}}, feature_steps=4):
+
+    inner_loop_size = get_stepwise_size(feature_steps) * len(models)
+    job_count = len(windows) * len(strides) * len(imp_splits) * len(dos_types) * inner_loop_size
+    current_job = 0
 
     for period_ms in windows:
         for stride_ms in strides:
             for imp_split in imp_splits:
                 for dos_type in dos_types:
+                    print(f"starting jobs {current_job} through {current_job + inner_loop_size} of "
+                          f"{job_count} -- {current_job/job_count}%")
+
                     X_train, y_train, X_test, y_test, feature_time_dict = get_dataset(period_ms, stride_ms, imp_split, dos_type)
-                    save_stepwise_addition(models, X_train, y_train, X_test, y_test, max_features, feature_time_dict, period_ms, stride_ms, imp_split, dos_type)
+                    save_stepwise_addition(models, X_train, y_train, X_test, y_test, feature_steps, feature_time_dict, period_ms, stride_ms, imp_split, dos_type)
+
+
+def get_stepwise_size(max_features):
+    n = len(list(datapoint_attributes)[2:])
+    size = 0
+
+    for i in range(max_features):
+        size += n
+        n -= 1
+
+    return size
 
 
 def get_dataset(period_ms, stride_ms, imp_split, dos_type):
     training_data, test_data, feature_time_dict = load_or_create_datasets(period_ms, True, stride_ms,
-                                                                          imp_split, dos_type)
+                                                                          imp_split, dos_type, verbose=True)
 
     X_train, y_train = split_feature_label(training_data)
     X_test, y_test = split_feature_label(test_data)
@@ -29,7 +46,7 @@ def get_dataset(period_ms, stride_ms, imp_split, dos_type):
 
 def save_stepwise_addition(models, X_train, y_train, X_test, y_test, max_features, feature_time_dict, period_ms, stride_ms, imp_split, dos_type):
     labels = (list(datapoint_attributes)[2:]).copy()
-    working_set = []
+    working_set = labels.copy()
 
     for i in range(0, max_features):
         best_score = 0
@@ -37,7 +54,9 @@ def save_stepwise_addition(models, X_train, y_train, X_test, y_test, max_feature
 
         for label in labels:
             for model in models.keys():
-                current_subset = working_set + [label]
+                current_subset = working_set.copy()
+                del current_subset[current_subset.index(label)]
+
                 path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, models[model], current_subset)
 
                 if os.path.exists(path):
@@ -53,14 +72,14 @@ def save_stepwise_addition(models, X_train, y_train, X_test, y_test, max_feature
 
                     for feature in feature_time_dict.keys():
                         if feature in current_subset:
-                            time_feature += feature_time_dict[label]
+                            time_feature += feature_time_dict[feature]
 
                     save_time(time_model, time_feature, period_ms, stride_ms, imp_split, dos_type, model, models[model], current_subset)
 
                 if metrics['total'][6] > best_score:
                     best_label = label
 
-        working_set.append(best_label)
+        del working_set[working_set.index(best_label)]
         del labels[labels.index(best_label)]
 
 
