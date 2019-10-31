@@ -135,6 +135,10 @@ class BayesianNetwork:
         self.__domain.learn_tables()
 
 
+def bn():
+    return BayesianNetwork()
+
+
 if __name__ == "__main__":
     os.chdir("..")
 

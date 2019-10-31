@@ -13,8 +13,7 @@ from models.nbc import nbc
 from models.random_forest import rf
 from models.svm import svm
 from operator import add
-
-# TODO: bayesian networks!
+from models.bayesian_network import bn
 
 
 # Splitting the training data into feature and label lists.
@@ -148,8 +147,8 @@ def get_classifier(model):
         return lr()
     elif model == 'dt':
         return dt()
-    # elif model == 'bn': TODO: add bayesian networks
-    #    return bn(X, y, parameters)
+    elif model == 'bn':
+        return bn()
     else:
         raise ValueError()
 
