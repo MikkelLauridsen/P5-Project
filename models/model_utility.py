@@ -14,6 +14,7 @@ from models.random_forest import rf
 from models.svm import svm
 from operator import add
 from models.bayesian_network import bn
+import datasets
 
 
 # Splitting the training data into feature and label lists.
@@ -275,3 +276,15 @@ def __get_samples_tuple(metrics):
     length = len(metrics.keys())
 
     return [metric / length for metric in micros]
+
+
+def get_standard_feature_split():
+    """Returns the feature split used for finding hyperparameters in the standard case."""
+    # Loading the standard dataset
+    data = datasets.load_or_create_datasets(period_ms=50, stride_ms=50, impersonation_split=False, dos_type="modified")
+
+    # Splitting the data into features and labels.
+    X, y = split_feature_label(data)
+
+    # Returning the scaled versions.
+    return scale_features(X, y)
