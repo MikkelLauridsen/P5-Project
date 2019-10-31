@@ -8,14 +8,12 @@ import functools as ft
 import concurrent.futures as conf
 from collections import deque
 from sklearn.model_selection import train_test_split
+import datawriter_csv
 
 
 # Calculates the skewness of the values in input list.
 # Pearson's second skewness coefficient is used as equation.
 # If the list has less than two elements, the skewness will default to 0.
-import datawriter_csv
-
-
 def __calculate_skewness(values):
     if len(values) == 0:
         return 0
@@ -64,27 +62,6 @@ def __calculate_variance(values):
         variance += deviation * deviation
 
     return (1.0 / len(values)) * variance
-
-
-# For each bit in the CAN-bus data-field,
-# calculates the probability of the bit having value 1,
-# based on data-fields in input list of messages.
-# If the DLC has value 4, at most 32 bits can have value 1.
-# Returns a list of the resulting probabilities.
-def __calculate_probability_bits(messages):
-    bits = [0.0 for i in range(64)]
-
-    for message in messages:
-        if message.dlc != 0:
-            for i in range(len(message.data)):
-                for j in range(8):
-                    if message.data[i] & (0b10000000 >> j):
-                        bits[i * 8 + j] += 1.0
-
-    for i in range(64):
-        bits[i] = bits[i] / len(messages)
-
-    return bits
 
 
 # Counts the number of 1s in the data-field of input message.
@@ -150,15 +127,6 @@ def calculate_kurtosis_variance_data_bit_count_id(messages):
         variances.append(__calculate_variance(counts))
 
     return __calculate_kurtosis(variances)
-
-
-# For each bit in the CAN-bus data-field, calculates the probability of it having value 1,
-# based on input list of messages.
-# Finally, calculates and returns the mean of these probabilities.
-def calculate_mean_probability_bits(messages):
-    bits = __calculate_probability_bits(messages)
-
-    return math.fsum(bits) / 64.0
 
 
 # For each unique ID in input list of messages,
@@ -276,23 +244,6 @@ def calculate_num_ids(messages):
     return len(ids_seen)
 
 
-# Constructs a list of time periods between remote frames and responses in input list of messages.
-# Afterwards, the variance of these time periods is calculated and returned.
-# The returned value defaults to 0, if no request frame was present or responded to in the time window.
-def calculate_req_to_res_time_variance(messages):
-    intervals = []
-    latest_remote_frame_timestamp = {}
-
-    for message in messages:
-        if message.rtr == 0b100:
-            latest_remote_frame_timestamp[message.id] = message.timestamp
-        elif message.rtr == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
-            intervals.append(message.timestamp - latest_remote_frame_timestamp[message.id])
-            latest_remote_frame_timestamp[message.id] = None
-
-    return 0 if len(intervals) == 0 else __calculate_variance(intervals)
-
-
 # Constructs a list of time periods between messages of the same ID.
 # Afterwards, calculates and returns the kurtosis of these time periods.
 def calculate_kurtosis_id_interval(messages):
@@ -352,22 +303,6 @@ def calculate_kurtosis_mean_id_intervals(messages):
         interval_means.append(sum(intervals) / len(intervals))
 
     return __calculate_kurtosis(interval_means)
-
-
-# Constructs a list of time periods between remote frames and responses in input list of messages.
-# Afterwards, calculates and returns the kurtosis of these time periods.
-def calculate_kurtosis_req_to_res_time(messages):
-    intervals = []
-    latest_remote_frame_timestamp = {}
-
-    for message in messages:
-        if message.rtr == 0b100:
-            latest_remote_frame_timestamp[message.id] = message.timestamp
-        elif message.rtr == 0b000 and latest_remote_frame_timestamp.get(message.id, None) is not None:
-            intervals.append(message.timestamp - latest_remote_frame_timestamp[message.id])
-            latest_remote_frame_timestamp[message.id] = None
-
-    return __calculate_kurtosis(intervals)
 
 
 # Converts a list of messages to a list of DataPoints
@@ -445,15 +380,12 @@ def __windows_to_datapoints(windows, is_injected, name):
         "mean_data_bit_count": calculate_mean_data_bit_count,
         "variance_data_bit_count": calculate_variance_data_bit_count,
         "mean_variance_data_bit_count_id": calculate_mean_variance_data_bit_count_id,
-        "mean_probability_bits": calculate_mean_probability_bits,
-        "req_to_res_time_variance": calculate_req_to_res_time_variance,
         "kurtosis_id_interval": calculate_kurtosis_id_interval,
         "kurtosis_id_frequency": calculate_kurtosis_id_frequency,
         "kurtosis_mean_id_intervals": calculate_kurtosis_mean_id_intervals,
         "kurtosis_variance_data_bit_count_id": calculate_kurtosis_variance_data_bit_count_id,
         "skewness_id_interval_variances": calculate_skewness_id_interval_variances,
         "skewness_id_frequency": calculate_skewness_id_frequency,
-        "kurtosis_req_to_res_time": calculate_kurtosis_req_to_res_time
     }
 
     datapoints = []
@@ -632,6 +564,7 @@ def get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_typ
 # If the datasets do not exist, they are created and saved in the process.
 def load_or_create_datasets(period_ms=100, shuffle=True, stride_ms=100,
                             impersonation_split=True, dos_type='original', force_create=False):
+
     training_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'training')
     test_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'test')
     time_path, dir = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'time')

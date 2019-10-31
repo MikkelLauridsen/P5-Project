@@ -6,22 +6,19 @@ class DataPoint(dataobject):
     is_injected: str
     mean_id_interval: float
     variance_id_frequency: float
-    num_id_transitions: int
-    num_ids: int
-    num_msgs: int
+    # num_id_transitions: int
+    # num_ids: int
+    # num_msgs: int
     mean_id_intervals_variance: float
     mean_data_bit_count: float
     variance_data_bit_count: float
-    mean_variance_data_bit_count_id: float
-    # mean_probability_bits: float
-    # req_to_res_time_variance: float
+    # mean_variance_data_bit_count_id: float
     kurtosis_id_interval: float
     kurtosis_id_frequency: float
     skewness_id_frequency: float
-    kurtosis_mean_id_intervals: float
+    # kurtosis_mean_id_intervals: float
     kurtosis_variance_data_bit_count_id: float
     skewness_id_interval_variances: float
-    # kurtosis_req_to_res_time: float
 
     def __str__(self):
         str = ""

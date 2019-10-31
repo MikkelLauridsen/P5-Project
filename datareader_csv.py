@@ -64,12 +64,12 @@ def load_attack_free1(start=0, limit=None):
 
 # Loads data from "Attack_free_dataset2.csv"
 def load_attack_free2(start=0, limit=None):
-    return load_messages("data/manipulated/Attack_free_dataset2.csv", start, limit)
+    return load_messages("data/csv/Attack_free_dataset2.csv", start, limit)
 
 
 # Loads data from "Impersonation_attack_dataset.csv"
 def load_impersonation_1(start=0, limit=None):
-    return load_messages("data/manipulated/Impersonation_attack_dataset.csv", start, limit)
+    return load_messages("data/csv/Impersonation_attack_dataset.csv", start, limit)
 
 
 # Loads data from "170907_impersonation.csv"
