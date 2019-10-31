@@ -272,10 +272,11 @@ def __get_samples_tuple(metrics):
 def get_standard_feature_split():
     """Returns the feature split used for finding hyperparameters in the standard case."""
     # Loading the standard dataset
-    data = datasets.load_or_create_datasets(period_ms=50, stride_ms=50, impersonation_split=False, dos_type="modified")
+    data_train, data_test, _ = datasets.load_or_create_datasets(period_ms=50, stride_ms=50, impersonation_split=False, dos_type="modified")
 
     # Splitting the data into features and labels.
-    X, y = split_feature_label(data)
+    X_train, y_train = split_feature_label(data_train)
+    X_test, y_test = split_feature_label(data_test)
 
     # Returning the scaled versions.
-    return scale_features(X, y)
+    return scale_features(X_train, X_test)
