@@ -111,10 +111,15 @@ if __name__ == "__main__":
         os.makedirs(target_dir)
 
     manipulate_dos_data_field(source_dir + "DoS_attack_dataset.csv", target_dir + "DoS_manipulated.csv")
-    manipulate_dlc(source_dir + "Attack_free_dataset2.csv", target_dir + "Attack_free_2_manipulated.csv", 8)
 
     manipulate_remote_frames(source_dir + "Attack_free_dataset.csv", target_dir + "Attack_free_dataset.csv")
+    manipulate_remote_frames(source_dir + "Attack_free_dataset2.csv", target_dir + "Attack_free_dataset2.csv")
     manipulate_remote_frames(source_dir + "DoS_attack_dataset.csv", target_dir + "DoS_attack_dataset.csv")
     manipulate_remote_frames(source_dir + "Fuzzy_attack_dataset.csv", target_dir + "Fuzzy_attack_dataset.csv")
     manipulate_remote_frames(source_dir + "170907_impersonation.csv", target_dir + "170907_impersonation.csv")
     manipulate_remote_frames(source_dir + "170907_impersonation_2.csv", target_dir + "170907_impersonation_2.csv")
+    manipulate_remote_frames(source_dir + "Impersonation_attack_dataset.csv",
+                             target_dir + "Impersonation_attack_dataset.csv")
+
+    manipulate_remote_frames("data/manipulated/DoS_manipulated.csv", target_dir + "DoS_manipulated.csv")
+    manipulate_dlc("data/manipulated/Attack_free_dataset2.csv", target_dir + "Attack_free_dataset2.csv", 8)
