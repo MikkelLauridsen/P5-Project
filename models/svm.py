@@ -1,8 +1,8 @@
 from sklearn.svm import SVC
 
 
-def svm(X_train, y_train, parameters={}):
-    return SVC(**parameters).fit(X_train, y_train)
+def svm():
+    return SVC()
 
 
 #def svm(X_train, y_train):

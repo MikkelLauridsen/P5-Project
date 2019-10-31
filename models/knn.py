@@ -1,8 +1,8 @@
 from sklearn.neighbors import KNeighborsClassifier
 
 
-def knn(X_train, y_train, parameters={}):
-    return KNeighborsClassifier(**parameters).fit(X_train, y_train)
+def knn():  # baseline parameters
+    return KNeighborsClassifier()
 
 
 # def knn(X_train, y_train, length):

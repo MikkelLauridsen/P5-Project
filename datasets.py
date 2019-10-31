@@ -3,6 +3,7 @@ import datareader_csv
 import os
 import csv
 import math
+import time
 import functools as ft
 import concurrent.futures as conf
 from collections import deque
@@ -12,6 +13,9 @@ from sklearn.model_selection import train_test_split
 # Calculates the skewness of the values in input list.
 # Pearson's second skewness coefficient is used as equation.
 # If the list has less than two elements, the skewness will default to 0.
+import datawriter_csv
+
+
 def __calculate_skewness(values):
     if len(values) == 0:
         return 0
@@ -366,10 +370,67 @@ def calculate_kurtosis_req_to_res_time(messages):
     return __calculate_kurtosis(intervals)
 
 
-# Converts input 'messages' to a DataPoint object.
+# Converts a list of messages to a list of DataPoints
+# where each point is comprised of 'messages' in 'period_ms' time window
+# as well as a dict of feature calculation durations.
+# 'stride_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
+# That is, if 'stride_ms' is 50 and 'period_ms' is 100,
+# DataPoint 1 and 2 will share messages in half of their time windows.
+# 'is_injected' determines whether intrusion was conducted in 'messages'
+def messages_to_datapoints(messages, period_ms, is_injected, stride_ms, name=""):
+    if len(messages) == 0:
+        return []
+
+    windows = __find_windows(messages, period_ms, stride_ms)
+    return __windows_to_datapoints(windows, is_injected, name)
+
+
+# Separates a list of messages into a list of windows.
+# A window is here considered a list of messages within a specified timespan
+def __find_windows(messages, period_ms, stride_ms):
+    working_set = deque()
+
+    working_set.append(messages[0])
+    lowest_index = 0
+    length = len(messages)
+
+    # construct the initial working set. That is, the deque of messages used to create the next DataPoint.
+    while lowest_index < length and \
+            (messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
+
+        lowest_index += 1
+        working_set.append(messages[lowest_index])
+
+    lowest_index += 1
+    old_time = working_set[0].timestamp
+
+    windows = []
+    for i in range(lowest_index, length):
+        working_set.append(messages[i])
+        time_expended = (working_set[len(working_set) - 1].timestamp - old_time) * 1000.0
+
+        # repeatedly right-append to the working set,
+        # until the time period between the last message used for the previous DataPoint,
+        # and the most recently appended message are offset by at least 'stride_ms' milliseconds.
+        if time_expended >= stride_ms:
+            low = working_set.popleft()
+
+            # until the left-most and right-most messages in the working set are offset by at most 'period_ms',
+            # left-pop a message from the working set.
+            while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
+                low = working_set.popleft()
+
+            working_set.appendleft(low)
+            windows.append(list(working_set))
+            old_time = working_set[len(working_set) - 1].timestamp
+
+    return windows
+
+
+# Calculates a list of datapoints from a list of windows (a window being a list of messages)
 # 'is_injected' determines whether intrusion was conducted in 'messages'
 # this function may never be called with an empty list
-def messages_to_datapoint(messages, is_injected):
+def __windows_to_datapoints(windows, is_injected, name):
     # maps a function to an attribute. The function must accept a list of messages.
     # missing mappings are allowed, and will give the feature a value of 0
     attribute_function_mappings = {
@@ -395,78 +456,35 @@ def messages_to_datapoint(messages, is_injected):
         "kurtosis_req_to_res_time": calculate_kurtosis_req_to_res_time
     }
 
-    # Blank DataPoint
-    datapoint = dp.DataPoint(*[0 for attr in dp.datapoint_attributes])
-
-    # Update blank DataPoint from attribute functions
-    for attr in dp.datapoint_attributes:
-        feature_func = attribute_function_mappings.get(attr, None)
-
-        if feature_func is not None:
-            setattr(datapoint, attr, feature_func(messages))
-
-    return datapoint
-
-
-# Converts a list of messages to a list of DataPoints,
-# where each point is comprised of 'messages' in 'period_ms' time window.
-# 'overlap_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
-# That is, if 'overlap_ms' is 50 and 'period_ms' is 100,
-# DataPoint 1 and 2 will share messages in half of their time windows.
-# 'is_injected' determines whether intrusion was conducted in 'messages'
-def messages_to_datapoints(messages, period_ms, is_injected, overlap_ms, name=""):
-    if len(messages) == 0:
-        return []
-
     datapoints = []
-    working_set = deque()
 
-    working_set.append(messages[0])
-    lowest_index = 0
-    length = len(messages)
+    # Fill datapoint list with blank datapoints
+    for i in range(len(windows)):
+        datapoints.append(dp.DataPoint(*[0 for attr in dp.datapoint_attributes]))
 
-    # construct the initial working set. That is, the deque of messages used to create the next DataPoint.
-    while lowest_index < length and \
-            (messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
+    durations = {}
 
-        lowest_index += 1
-        working_set.append(messages[lowest_index])
+    # Populate datapoints by adding features one by one
+    # Feature values are calculated on a per feature basis
+    for i, attr in enumerate(dp.datapoint_attributes):
+        print(f"{name} Calculating feature {attr} ({i + 1})")
+        feature_func = attribute_function_mappings[attr]
 
-    old_progress = -5
-    lowest_index += 1
-    old_time = working_set[0].timestamp
+        time_begin = time.perf_counter_ns()  # Start counting time
+        for j, window in enumerate(windows):
+            setattr(datapoints[j], attr, feature_func(window))
 
-    for i in range(lowest_index, length):
-        working_set.append(messages[i])
-        progress = math.ceil((i / length) * 100.0)
-        time_expended = (working_set[len(working_set) - 1].timestamp - old_time) * 1000.0
+        # Determine how long it took to calculate a specific feature for all windows
+        feature_timespan = time.perf_counter_ns() - time_begin
+        durations[attr] = feature_timespan
 
-        if progress % 5 == 0 and progress > old_progress:
-            print(f"{name} Creating data points: {progress}/100%")
-            old_progress = progress
-
-        # repeatedly right-append to the working set,
-        # until the time period between the last message used for the previous DataPoint,
-        # and the most recently appended message are offset by at least 'overlap_ms' milliseconds.
-        if time_expended >= overlap_ms:
-            low = working_set.popleft()
-
-            # until the left-most and right-most messages in the working set are offset by at most 'period_ms',
-            # left-pop a message from the working set.
-            while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
-                low = working_set.popleft()
-
-            working_set.appendleft(low)
-            datapoints.append(messages_to_datapoint(list(working_set), is_injected))
-            old_time = working_set[len(working_set) - 1].timestamp
-
-    return datapoints
+    return datapoints, durations
 
 
 # Writes a list of DataPoints to file.
 # The file name and directory depends on the parameters.
-def write_datapoints_csv(datapoints, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, set_type):
-    csv_path, dir = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, set_type)
+def write_datapoints_csv(datapoints, period_ms, shuffle, stride_ms, impersonation_split, dos_type, set_type):
+    csv_path, dir = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, set_type)
 
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -506,7 +524,7 @@ def neutralize_offset(messages):
 
 # Constructs a list of DataPoints based on parameters.
 # 'period_ms' determines the duration of the time window used to create each DataPoint.
-# 'overlap_ms' determines how little of the previous time window may be used to create the next DataPoint.
+# 'stride_ms' determines how little of the previous time window may be used to create the next DataPoint.
 # 'shuffle' dictates whether the list of DataPoints is to be randomized.
 # 'impersonation_split' dictates whether the raw impersonation datasets,
 # should be separated in attack free and attack affected data.
@@ -518,7 +536,7 @@ def neutralize_offset(messages):
 #
 # If this function is to be used from another file,
 # all code must be wrapped in an __name__ == '__main__' check if used on a Windows system.
-def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonation_split=True, dos_type='original'):
+def get_mixed_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation_split=True, dos_type='original'):
     # load messages and remove time offsets
     attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1())
     attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2())
@@ -552,6 +570,7 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
         ]
 
     datasets = []
+    feature_durations_list = []
 
     # create DataPoints in parallel.
     with conf.ProcessPoolExecutor() as executor:
@@ -559,11 +578,12 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
                                    tup[0],
                                    period_ms,
                                    tup[1],
-                                   overlap_ms,
+                                   stride_ms,
                                    tup[2]) for tup in raw_msgs}
 
         for future in conf.as_completed(futures):
-            datasets.append(future.result())
+            datasets.append(future.result()[0])
+            feature_durations_list.append(future.result()[1])
 
     offset = 0
     points = []
@@ -574,10 +594,21 @@ def get_mixed_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonatio
         points += [offset_datapoint(point, offset - time_low) for point in dataset]
         offset = points[len(points) - 1].time_ms
 
+    feature_durations = {}
+
+    # Collapse resulting feature duration dicts into a single duration dict
+    for attr in dp.datapoint_attributes:
+        feature_durations[attr] = 0
+        for durations in feature_durations_list:
+            feature_durations[attr] += durations[attr]
+
+        # Average feature duration
+        feature_durations[attr] /= len(points)
+
     # split the list of DataPoint into training (80%) and test (20%) sets
     training, test = train_test_split(points, shuffle=shuffle, train_size=0.8, test_size=0.2, random_state=2019)
 
-    return training, test
+    return training, test, feature_durations
 
 
 # Increments the timestamp of input DataPoint by the input offset and returns the DataPoint
@@ -588,10 +619,10 @@ def offset_datapoint(point, offset):
 
 
 # Returns the file and directory paths associated with input argument combination.
-def get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, set_type):
+def get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, set_type):
     imp_name = "imp_split" if impersonation_split else "imp_full"
     shuffle_name = "shuffled" if shuffle else "normal"
-    name = f"mixed_{set_type}_{period_ms}ms_{overlap_ms}ms_{shuffle_name}"
+    name = f"mixed_{set_type}_{period_ms}ms_{stride_ms}ms_{shuffle_name}"
     dir = f"data/feature/{imp_name}/{dos_type}/"
 
     return dir + name + ".csv", dir
@@ -599,19 +630,23 @@ def get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_ty
 
 # Returns the training and test sets associated with input argument combination.
 # If the datasets do not exist, they are created and saved in the process.
-def load_or_create_datasets(period_ms=100, shuffle=True, overlap_ms=100, impersonation_split=True, dos_type='original'):
-    training_name, _ = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
-    test_name, _ = get_dataset_path(period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
+def load_or_create_datasets(period_ms=100, shuffle=True, stride_ms=100,
+                            impersonation_split=True, dos_type='original', force_create=False):
+    training_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'training')
+    test_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'test')
+    time_path, dir = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'time')
 
     # load the datasets if they exist.
-    if os.path.exists(training_name) and os.path.exists(test_name):
-        training_set = datareader_csv.load_idpoints(training_name)
-        test_set = datareader_csv.load_idpoints(test_name)
+    if os.path.exists(training_name) and os.path.exists(test_name) and not force_create:
+        training_set = datareader_csv.load_datapoints(training_name)
+        test_set = datareader_csv.load_datapoints(test_name)
+        feature_durations = datareader_csv.load_feature_durations(time_path)
     else:
         # create and save the datasets otherwise.
-        training_set, test_set = get_mixed_datasets(period_ms, shuffle, overlap_ms, impersonation_split, dos_type)
-        write_datapoints_csv(training_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'training')
-        write_datapoints_csv(test_set, period_ms, shuffle, overlap_ms, impersonation_split, dos_type, 'test')
+        training_set, test_set, feature_durations = get_mixed_datasets(period_ms, shuffle, stride_ms, impersonation_split, dos_type)
+        write_datapoints_csv(training_set, period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'training')
+        write_datapoints_csv(test_set, period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'test')
+        datawriter_csv.save_feature_durations(feature_durations, time_path, dir)
 
-    return training_set, test_set
+    return training_set, test_set, feature_durations
 

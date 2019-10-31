@@ -1,8 +1,8 @@
 from sklearn.ensemble import RandomForestClassifier
 
 
-def rf(X_train, y_train, parameters={}):
-    return RandomForestClassifier(**parameters).fit(X_train, y_train)
+def rf():  # baseline parameters
+    return RandomForestClassifier()
 
 
 # Creates the random forest model

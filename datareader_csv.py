@@ -1,3 +1,5 @@
+import csv
+
 import pandas as pd
 
 import datapoint
@@ -29,17 +31,30 @@ def load_messages(filepath, start=0, limit=None):
     return __load_data(filepath, message.parse_csv_row, start, limit)
 
 
-def load_idpoints(filepath, start=0, limit=None):
-    # Check if csv format matches IDPoint structure
+def load_datapoints(filepath, start=0, limit=None):
+    # Check if csv format matches DataPoint structure
     df = pd.read_csv(filepath, header=0, nrows=0)
     matching_header, diff = datapoint.is_header_matching(df.columns)
     if not matching_header:
         print("Found mismatching datapoint and csv file structure")
-        print(f"idpoint: {list(datapoint.idpoint_attributes)}")
-        print(f"csv    : {list(df.columns)}")
-        print(f"diff   : {diff}")
+        print(f"datapoint: {list(datapoint.datapoint_attributes)}")
+        print(f"csv      : {list(df.columns)}")
+        print(f"diff     : {diff}")
 
     return __load_data(filepath, datapoint.parse_csv_row, start, limit)
+
+
+def load_feature_durations(filepath):
+    feature_durations = {}
+
+    with open(filepath, newline="") as file:
+        reader = csv.reader(file, delimiter=",")
+        next(reader, None)
+
+        for row in reader:
+            feature_durations[row[0]] = row[1]
+
+    return feature_durations
 
 
 # Loads data from "Attack_free_dataset.csv"

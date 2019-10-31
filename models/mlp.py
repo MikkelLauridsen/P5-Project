@@ -1,8 +1,8 @@
 from sklearn.neural_network import MLPClassifier
 
 
-def mlp(X_train, y_train, parameters={'hidden_layer_sizes': (12, 2)}):
-    return MLPClassifier(**parameters).fit(X_train, y_train)
+def mlp():  # baseline parameters
+    return MLPClassifier(hidden_layer_sizes=(12, 2))
 
 
 #def mlp(X_train, y_train, parameters={}):
