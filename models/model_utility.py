@@ -95,24 +95,20 @@ def get_classifier(model):
     """returns a classification model based on specified model name,
     which may be one of ('mlp', 'knn', 'svm', 'rf', 'nbc', 'lr', 'dt', 'bn')"""
 
-    if model == 'mlp':
-        return mlp()
-    elif model == 'knn':
-        return knn()
-    elif model == 'svm':
-        return svm()
-    elif model == 'rf':
-        return rf()
-    elif model == 'nbc':
-        return nbc()
-    elif model == 'lr':
-        return lr()
-    elif model == 'dt':
-        return dt()
-    elif model == 'bn':
-        return bn()
-    else:
+    classifier = {
+        'mlp': mlp(),
+        'knn': svm(),
+        'rf':  rf(),
+        'nbc': nbc(),
+        'lr': lr(),
+        'dt': dt(),
+        'bn': bn()
+    }.get(model, None)
+
+    if classifier is None:
         raise ValueError()
+    else:
+        return classifier
 
 
 def get_metrics(y_test, y_predict):

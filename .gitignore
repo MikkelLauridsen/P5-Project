@@ -110,3 +110,5 @@ data/
 hugin/
 *.hkb
 *.hlg
+time
+result

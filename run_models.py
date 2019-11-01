@@ -204,18 +204,45 @@ def __create_feature_subset(X, subset):
 
 
 if __name__ == "__main__":
-    mlp_grid = {
-        'activation': ['logistic'],
-        'alpha': [0.0001],
-        'hidden_layer_sizes': [(16, 3)],
-        'learning_rate': ['adaptive'],
-        'max_iter': [300],
-        'solver': ['lbfgs']}
+    models = {
+        'mlp': {
+            'activation': ['logistic'],
+            'alpha': [0.0001],
+            'hidden_layer_sizes': [(16, 3)],
+            'learning_rate': ['adaptive'],
+            'max_iter': [300],
+            'solver': ['lbfgs']},
+
+        'svm': {
+            'C': 1000,
+            'gamma': 0.1,
+            'kernel': 'rbf'},
+
+        'knn': {
+            'metric': 'manhattan',
+            'n_neighbors': 8,
+            'weights': 'distance'},
+
+        'lr': {
+            'C': 3593.813663804626,
+            'penalty': 'l2'},
+
+        'dt': {
+            'criterion': 'entropy',
+            'max_depth': 13,
+            'min_samples_split': 3},
+
+        'rf': {
+            'bootstrap': True,
+            'criterion': 'gini',
+            'max_depth': 11,
+            'n_estimators': 110}
+    }
 
     generate_results(
         windows=[10, 50, 100],
         strides=[10, 50, 100],
         imp_splits=[False],
         dos_types=['modified'],
-        models={'mlp': mlp_grid},
+        models=models,
         eliminations=4)
