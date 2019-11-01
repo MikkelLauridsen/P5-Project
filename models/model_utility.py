@@ -97,7 +97,8 @@ def get_classifier(model):
 
     classifier = {
         'mlp': mlp(),
-        'knn': svm(),
+        'knn': knn(),
+        'svm': svm(),
         'rf':  rf(),
         'nbc': nbc(),
         'lr': lr(),
