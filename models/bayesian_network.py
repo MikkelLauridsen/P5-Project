@@ -1,8 +1,9 @@
 import hugin.pyhugin87 as hugin
 import datapoint as dp
+from sklearn.base import BaseEstimator
 
 
-class BayesianNetwork:
+class BayesianNetwork(BaseEstimator):
     __domain: hugin.DataSet
     __attr_names: []
 
