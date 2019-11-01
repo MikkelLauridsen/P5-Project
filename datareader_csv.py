@@ -2,6 +2,7 @@ import csv
 import pandas as pd
 import datapoint
 import message
+import models.model_utility as utility
 
 
 def __load_data(filepath, parse_func, start, limit, verbose=False):
@@ -92,3 +93,17 @@ def load_modified_dos(start=0, limit=None, verbose=False):
 # Loads data from "Fuzzy_attack_dataset.csv"
 def load_fuzzy(start=0, limit=None, verbose=False):
     return load_messages("data/manipulated/Fuzzy_attack_dataset.csv", start, limit, verbose)
+
+
+def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset):
+    path, _ = utility.get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+    metrics = {}
+
+    with open(path, newline="") as file:
+        reader = csv.reader(file, delimiter=",")
+        next(reader, None)
+
+        for row in reader:
+            metrics[row[0]] = [float(string) for string in row[1:]]
+
+    return metrics

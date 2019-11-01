@@ -1,9 +1,5 @@
 import hugin.pyhugin87 as hugin
-import os
 import datapoint as dp
-import models.model_utility as model_utility
-from sklearn.metrics import classification_report
-from datasets import load_or_create_datasets
 
 
 class BayesianNetwork:
@@ -137,17 +133,3 @@ class BayesianNetwork:
 
 def bn():
     return BayesianNetwork()
-
-
-if __name__ == "__main__":
-    os.chdir("..")
-
-    bn = BayesianNetwork()
-    training_points, test_points, _ = load_or_create_datasets(impersonation_split=False, stride_ms=10, period_ms=10)
-    X_train, y_train = model_utility.split_feature_label(training_points)
-    bn.fit(X_train, y_train)
-
-    X_test, y_test = model_utility.split_feature_label(test_points)
-    predictions = bn.predict(X_test, y_test)
-
-    print(classification_report(y_test, predictions))

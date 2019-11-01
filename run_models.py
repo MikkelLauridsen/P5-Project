@@ -1,13 +1,24 @@
 import os
+import models.model_utility as utility
 from datapoint import datapoint_attributes
-from datasets import load_or_create_datasets
-from models.model_utility import scale_features, split_feature_label, get_metrics, save_metrics, save_time, get_classifier, get_metrics_path, find_best_hyperparameters, load_metrics
+from datareader_csv import load_metrics
+from datawriter_csv import save_metrics, save_time
 
 
 def generate_results(windows=[100], strides=[100], imp_splits=[True],
-                     dos_types=['modified'], models={'mlp': {}}, feature_steps=4):
+                     dos_types=['modified'], models={'mlp': {}}, eliminations=0):
+    """Generates and saves metrics for all combinations of specified parameters.
+    If metrics for a given combination already exist, this combination is skipped.
+    Parameter options are:
+        - windows:      a list of feature window sizes (int ms)
+        - strides:      a list of stride sizes (int ms)
+        - imp_splits:   a list of impersonation type options (True, False)
+        - dos_types:    a list of DoS type options ('modified', 'original')
+        - models:       a dictionary of model names to parameter spaces ({'**model**': {'**parameter**': [**values**]}}
+        - eliminations: the number of features eliminated in step-wise elimination"""
 
-    inner_loop_size = get_stepwise_size(feature_steps) * len(models)
+    # calculate number of jobs to be conducted
+    inner_loop_size = __get_stepwise_size(eliminations) * len(models) if eliminations > 0 else len(models)
     job_count = len(windows) * len(strides) * len(imp_splits) * len(dos_types) * inner_loop_size
     current_job = 0
 
@@ -15,14 +26,52 @@ def generate_results(windows=[100], strides=[100], imp_splits=[True],
         for stride_ms in strides:
             for imp_split in imp_splits:
                 for dos_type in dos_types:
+                    # get datasets for current combination of parameters
+                    X_train, y_train, X_test, y_test, feature_time_dict = utility.get_dataset(
+                        period_ms,
+                        stride_ms,
+                        imp_split,
+                        dos_type)
+
                     print(f"starting jobs {current_job} through {current_job + inner_loop_size} of "
-                          f"{job_count} -- {current_job/job_count}%")
+                          f"{job_count} -- {current_job / job_count}%")
 
-                    X_train, y_train, X_test, y_test, feature_time_dict = get_dataset(period_ms, stride_ms, imp_split, dos_type)
-                    save_stepwise_addition(models, X_train, y_train, X_test, y_test, feature_steps, feature_time_dict, period_ms, stride_ms, imp_split, dos_type)
+                    if eliminations > 0:
+                        # conduct stepwise-elimination to test different feature subsets
+                        __save_stepwise_elimination(
+                            models,
+                            X_train,
+                            y_train,
+                            X_test,
+                            y_test,
+                            eliminations,
+                            feature_time_dict,
+                            period_ms,
+                            stride_ms,
+                            imp_split,
+                            dos_type)
+                    else:
+                        # use the full feature poll
+                        subset = list(datapoint_attributes)[2:]
+
+                        for model in models.keys():
+                            create_and_save_results(
+                                model,
+                                models[model],
+                                X_train,
+                                y_train,
+                                X_test,
+                                y_test,
+                                feature_time_dict,
+                                period_ms,
+                                stride_ms,
+                                imp_split,
+                                dos_type,
+                                subset)
 
 
-def get_stepwise_size(max_features):
+# returns the number of feature subsets to be tested
+def __get_stepwise_size(max_features):
     n = len(list(datapoint_attributes)[2:])
     size = 0
 
@@ -33,22 +82,76 @@ def get_stepwise_size(max_features):
     return size
 
 
-def get_dataset(period_ms, stride_ms, imp_split, dos_type):
-    training_data, test_data, feature_time_dict = load_or_create_datasets(period_ms, True, stride_ms,
-                                                                          imp_split, dos_type, verbose=True)
+def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test, feature_time_dict,
+                            period_ms, stride_ms, imp_split, dos_type, subset):
+    """runs specified model with specified parameters on specified dataset and saves the result to file.
+    Parameters are:
+        - model:             model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
+        - parameters:        model parameter space {'**parameter**': [**values**]}
+        - X_train:           training set feature values
+        - y_train:           training set class labels
+        - X_test:            test set feature values
+        - y_test:            test set class labels
+        - feature_time_dict: a dictionary of {'**feature**': **time_ns**}
+        - period_ms:         window size (int ms)
+        - stride_ms:         stride size (int ms)
+        - imp_split:         the impersonation type (True, False)
+        - dos_type:          the DoS type ('modified', 'original')
+        - subset:            a list of labels of features to be used"""
 
-    X_train, y_train = split_feature_label(training_data)
-    X_test, y_test = split_feature_label(test_data)
-    X_train, X_test = scale_features(X_train, X_test)
+    path, _ = utility.get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
 
-    return X_train, y_train, X_test, y_test, feature_time_dict
+    if os.path.exists(path):
+        metrics = load_metrics(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+    else:
+        X_train_mod = __create_feature_subset(X_train, subset)
+        X_test_mod = __create_feature_subset(X_test, subset)
+
+        # run grid-search on parameter space
+        y_predict, time_model = utility.find_best_hyperparameters(
+            utility.get_classifier(model),
+            parameters,
+            X_train_mod,
+            y_train,
+            X_test_mod)
+
+        # calculate scores on test set
+        metrics = utility.get_metrics(y_test, y_predict)
+
+        save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+        time_feature = 0.0
+
+        # find sum of feature times
+        for feature in feature_time_dict.keys():
+            if feature in subset:
+                time_feature += feature_time_dict[feature]
+
+        save_time(
+            time_model,
+            time_feature,
+            period_ms,
+            stride_ms,
+            imp_split,
+            dos_type,
+            model,
+            parameters,
+            subset)
+
+        print(f"Saved metrics to {path}")
+
+    return metrics
 
 
-def save_stepwise_addition(models, X_train, y_train, X_test, y_test, max_features, feature_time_dict, period_ms, stride_ms, imp_split, dos_type):
+# runs step-wise elimination on specified parameters and saves the results of each subset model combination
+def __save_stepwise_elimination(models, X_train, y_train, X_test, y_test, max_features,
+                                feature_time_dict, period_ms, stride_ms, imp_split, dos_type):
+
+    # get feature labels
     labels = (list(datapoint_attributes)[2:]).copy()
     working_set = labels.copy()
 
-    for i in range(0, max_features):
+    for i in range(max_features):
+        # save the feature label which yields the best result when eliminated from the pool
         best_score = 0
         best_label = ""
 
@@ -57,33 +160,32 @@ def save_stepwise_addition(models, X_train, y_train, X_test, y_test, max_feature
                 current_subset = working_set.copy()
                 del current_subset[current_subset.index(label)]
 
-                path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, models[model], current_subset)
-
-                if os.path.exists(path):
-                    metrics = load_metrics(period_ms, stride_ms, imp_split, dos_type, model, models[model], working_set + [label])
-                else:
-                    X_train_mod = create_feature_subset(X_train, current_subset)
-                    X_test_mod = create_feature_subset(X_test, current_subset)
-                    y_predict, time_model = find_best_hyperparameters(get_classifier(model), models[model], X_train_mod, y_train, X_test_mod)
-                    metrics = get_metrics(y_test, y_predict)
-
-                    save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, models[model], current_subset)
-                    time_feature = 0.0
-
-                    for feature in feature_time_dict.keys():
-                        if feature in current_subset:
-                            time_feature += feature_time_dict[feature]
-
-                    save_time(time_model, time_feature, period_ms, stride_ms, imp_split, dos_type, model, models[model], current_subset)
+                # get results of current model subset combination
+                metrics = create_and_save_results(
+                    model,
+                    models[model],
+                    X_train,
+                    y_train,
+                    X_test,
+                    y_test,
+                    feature_time_dict,
+                    period_ms,
+                    stride_ms,
+                    imp_split,
+                    dos_type,
+                    current_subset)
 
                 if metrics['total'][6] > best_score:
                     best_label = label
 
+        # remove the feature label which yields the best result when eliminated from the pool
         del working_set[working_set.index(best_label)]
         del labels[labels.index(best_label)]
 
 
-def create_feature_subset(X, subset):
+# returns a modified copy of input list of feature values,
+# which only contains values of features in the specified subset
+def __create_feature_subset(X, subset):
     indices = [list(datapoint_attributes)[2:].index(f) for f in subset]
     length = len(list(datapoint_attributes)[2:])
 
@@ -102,4 +204,18 @@ def create_feature_subset(X, subset):
 
 
 if __name__ == "__main__":
-    generate_results()
+    mlp_grid = {
+        'activation': ['logistic'],
+        'alpha': [0.0001],
+        'hidden_layer_sizes': [(16, 3)],
+        'learning_rate': ['adaptive'],
+        'max_iter': [300],
+        'solver': ['lbfgs']}
+
+    generate_results(
+        windows=[10, 50, 100],
+        strides=[10, 50, 100],
+        imp_splits=[False],
+        dos_types=['modified'],
+        models={'mlp': mlp_grid},
+        eliminations=4)
