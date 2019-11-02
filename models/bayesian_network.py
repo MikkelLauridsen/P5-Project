@@ -17,8 +17,9 @@ class BayesianNetwork(BaseEstimator):
         self.__construct_network_nodes(training_set)
         self.__learn_structure_and_tables(training_set)
 
-    def predict(self, X_test, y_test):
-        test_set = self.__feature_list_to_dataset(X_test, y_test, self.__attr_names)
+    def predict(self, features_list):
+        labels = ["normal" for feature_list in features_list]  # Create fictional labels. This is ignored in prediction
+        test_set = self.__feature_list_to_dataset(features_list, labels, self.__attr_names)
 
         return self.__get_predictions(test_set)
 

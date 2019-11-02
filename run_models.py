@@ -104,7 +104,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
             classifier.fit(X_train_mod, y_train, subset)
 
             before = time.perf_counter_ns()
-            y_predict = classifier.predict(X_test_mod, y_test)  # TODO: @mikkel fjern y_test herfra
+            y_predict = classifier.predict(X_test_mod)
             time_model = (time.perf_counter_ns() - before) / len(X_test_mod)
         else:
             # run grid-search to find hyperparameters
