@@ -10,11 +10,8 @@ class BayesianNetwork(BaseEstimator):
     def __init__(self):
         self.__domain = hugin.Domain()
 
-        self.__attr_names = list(dp.datapoint_attributes).copy()
-        self.__attr_names.remove("time_ms")
-        self.__attr_names.remove("is_injected")
-
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, subset):
+        self.__attr_names = subset.copy()
         training_set = self.__feature_list_to_dataset(X_train, y_train, self.__attr_names)
 
         self.__construct_network_nodes(training_set)
@@ -117,7 +114,6 @@ class BayesianNetwork(BaseEstimator):
             node.set_name(name)
             node.set_label(name)
             node.get_experience_table()
-
 
     def __learn_structure_and_tables(self, dataset):
         # Add learning data from dataset to domain

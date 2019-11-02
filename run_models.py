@@ -1,4 +1,6 @@
 import os
+import time
+
 import models.model_utility as utility
 from datapoint import datapoint_attributes
 from datareader_csv import load_metrics
@@ -28,10 +30,8 @@ def generate_results(windows=[100], strides=[100], imp_splits=[True],
                 for dos_type in dos_types:
                     # get datasets for current combination of parameters
                     X_train, y_train, X_test, y_test, feature_time_dict = utility.get_dataset(
-                        period_ms,
-                        stride_ms,
-                        imp_split,
-                        dos_type)
+                        period_ms, stride_ms,
+                        imp_split, dos_type)
 
                     print(f"starting jobs {current_job} through {current_job + inner_loop_size} of "
                           f"{job_count} -- {current_job / job_count}%")
@@ -40,33 +40,24 @@ def generate_results(windows=[100], strides=[100], imp_splits=[True],
                         # conduct stepwise-elimination to test different feature subsets
                         __save_stepwise_elimination(
                             models,
-                            X_train,
-                            y_train,
-                            X_test,
-                            y_test,
+                            X_train, y_train,
+                            X_test, y_test,
                             eliminations,
                             feature_time_dict,
-                            period_ms,
-                            stride_ms,
-                            imp_split,
-                            dos_type)
+                            period_ms, stride_ms,
+                            imp_split, dos_type)
                     else:
                         # use the full feature poll
                         subset = list(datapoint_attributes)[2:]
 
                         for model in models.keys():
                             create_and_save_results(
-                                model,
-                                models[model],
-                                X_train,
-                                y_train,
-                                X_test,
-                                y_test,
+                                model, models[model],
+                                X_train, y_train,
+                                X_test, y_test,
                                 feature_time_dict,
-                                period_ms,
-                                stride_ms,
-                                imp_split,
-                                dos_type,
+                                period_ms, stride_ms,
+                                imp_split, dos_type,
                                 subset)
 
 
@@ -107,13 +98,22 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
         X_train_mod = __create_feature_subset(X_train, subset)
         X_test_mod = __create_feature_subset(X_test, subset)
 
-        # run grid-search on parameter space
-        y_predict, time_model = utility.find_best_hyperparameters(
-            utility.get_classifier(model),
-            parameters,
-            X_train_mod,
-            y_train,
-            X_test_mod)
+        if model == 'bn':
+            # bayesian networks have no hyperparameters
+            classifier = utility.get_classifier('bn')
+            classifier.fit(X_train_mod, y_train, subset)
+
+            before = time.perf_counter_ns()
+            y_predict = classifier.predict(X_test_mod, y_test)  # TODO: @mikkel fjern y_test herfra
+            time_model = (time.perf_counter_ns() - before) / len(X_test_mod)
+        else:
+            # run grid-search to find hyperparameters
+            y_predict, time_model = utility.find_best_hyperparameters(
+                utility.get_classifier(model),
+                parameters,
+                X_train_mod,
+                y_train,
+                X_test_mod)
 
         # calculate scores on test set
         metrics = utility.get_metrics(y_test, y_predict)
@@ -205,6 +205,7 @@ def __create_feature_subset(X, subset):
 
 if __name__ == "__main__":
     models = {
+        'bn': {},
         'mlp': {
             'activation': ['logistic'],
             'alpha': [0.0001],
@@ -240,8 +241,8 @@ if __name__ == "__main__":
     }
 
     generate_results(
-        windows=[10, 50, 100],
-        strides=[10, 50, 100],
+        windows=[100, 50, 10],
+        strides=[100, 50, 10],
         imp_splits=[False],
         dos_types=['original'],
         models=models,
