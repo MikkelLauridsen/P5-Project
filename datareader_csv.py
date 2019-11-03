@@ -107,3 +107,14 @@ def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, parameters, s
             metrics[row[0]] = [float(string) for string in row[1:]]
 
     return metrics
+
+
+def load_times(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset):
+    path, _ = utility.get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, True)
+
+    with open(path, newline="") as file:
+        reader = csv.reader(file, delimiter=",")
+        next(reader, None)
+        times = [float(string) for string in next(reader, None)]
+
+    return times

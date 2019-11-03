@@ -227,8 +227,8 @@ if __name__ == "__main__":
 
     generate_results(
         windows=[100, 50, 10],
-        strides=[100, 50, 10],
+        strides=[10, 50, 100],
         imp_splits=[False],
-        dos_types=['original'],
+        dos_types=['modified'],
         models=models,
         eliminations=4)
