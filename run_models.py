@@ -61,6 +61,8 @@ def generate_results(windows=[100], strides=[100], imp_splits=[True],
                                 imp_split, dos_type,
                                 subset)
 
+                    current_job += inner_loop_size
+
 
 # returns the number of feature subsets to be tested
 def __get_stepwise_size(max_features):
@@ -230,8 +232,8 @@ if __name__ == "__main__":
     }
 
     generate_results(
-        windows=[100, 50, 10],
-        strides=[100, 50, 10],
+        windows=[100, 50, 20, 10],
+        strides=[100, 50, 20, 10],
         imp_splits=[False],
         dos_types=['modified'],
         models=models,
