@@ -3,8 +3,8 @@ import models.model_utility
 from sklearn.model_selection import GridSearchCV
 
 
-def svm():  # baseline parameters
-    return SVC(max_iter=1000)
+def svm(parameters):  # baseline parameters
+    return SVC(max_iter=1000).set_params(**parameters)
 
 
 def svm_hyperparameter(X_train, y_train):

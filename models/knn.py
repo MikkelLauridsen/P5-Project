@@ -3,8 +3,8 @@ import models.model_utility
 from sklearn.model_selection import GridSearchCV
 
 
-def knn():  # baseline parameters
-    return KNeighborsClassifier()
+def knn(parameters):  # baseline parameters
+    return KNeighborsClassifier().set_params(**parameters)
 
 
 def knn_hyperparameter(X_train, y_train):

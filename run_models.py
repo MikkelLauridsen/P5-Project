@@ -1,6 +1,6 @@
 import os
 import time
-
+import concurrent.futures as conf
 import models.model_utility as utility
 from datapoint import datapoint_attributes
 from datareader_csv import load_metrics
@@ -98,22 +98,12 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
         X_train_mod = __create_feature_subset(X_train, subset)
         X_test_mod = __create_feature_subset(X_test, subset)
 
-        if model == 'bn':
-            # bayesian networks have no hyperparameters
-            classifier = utility.get_classifier('bn')
-            classifier.fit(X_train_mod, y_train, subset)
+        classifier = utility.get_classifier(model, parameters, subset)
+        classifier.fit(X_train_mod, y_train)
 
-            before = time.perf_counter_ns()
-            y_predict = classifier.predict(X_test_mod)
-            time_model = (time.perf_counter_ns() - before) / len(X_test_mod)
-        else:
-            # run grid-search to find hyperparameters
-            y_predict, time_model = utility.find_best_hyperparameters(
-                utility.get_classifier(model),
-                parameters,
-                X_train_mod,
-                y_train,
-                X_test_mod)
+        before = time.perf_counter_ns()
+        y_predict = classifier.predict(X_test_mod)
+        time_model = (time.perf_counter_ns() - before) / len(X_test_mod)
 
         # calculate scores on test set
         metrics = utility.get_metrics(y_test, y_predict)
@@ -127,14 +117,10 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
                 time_feature += feature_time_dict[feature]
 
         save_time(
-            time_model,
-            time_feature,
-            period_ms,
-            stride_ms,
-            imp_split,
-            dos_type,
-            model,
-            parameters,
+            time_model, time_feature,
+            period_ms, stride_ms,
+            imp_split, dos_type,
+            model, parameters,
             subset)
 
         print(f"Saved metrics to {path}")
@@ -156,27 +142,26 @@ def __save_stepwise_elimination(models, X_train, y_train, X_test, y_test, max_fe
         best_label = ""
 
         for label in labels:
-            for model in models.keys():
-                current_subset = working_set.copy()
-                del current_subset[current_subset.index(label)]
+            current_subset = working_set.copy()
+            del current_subset[current_subset.index(label)]
 
-                # get results of current model subset combination
-                metrics = create_and_save_results(
-                    model,
-                    models[model],
-                    X_train,
-                    y_train,
-                    X_test,
-                    y_test,
+            with conf.ProcessPoolExecutor() as executor:
+                futures = {executor.submit(
+                    create_and_save_results,
+                    model, models[model],
+                    X_train, y_train,
+                    X_test, y_test,
                     feature_time_dict,
-                    period_ms,
-                    stride_ms,
-                    imp_split,
-                    dos_type,
-                    current_subset)
+                    period_ms, stride_ms,
+                    imp_split, dos_type,
+                    current_subset) for model in models.keys()}
 
-                if metrics['total'][6] > best_score:
-                    best_label = label
+                for future in conf.as_completed(futures):
+                    score = future.result()['total'][6]
+
+                    if score > best_score:
+                        best_score = score
+                        best_label = label
 
         # remove the feature label which yields the best result when eliminated from the pool
         del working_set[working_set.index(best_label)]
@@ -207,37 +192,37 @@ if __name__ == "__main__":
     models = {
         'bn': {},
         'mlp': {
-            'activation': ['logistic'],
-            'alpha': [0.0001],
-            'hidden_layer_sizes': [(16, 3)],
-            'learning_rate': ['adaptive'],
-            'max_iter': [300],
-            'solver': ['lbfgs']},
+            'activation': 'logistic',
+            'alpha': 0.0001,
+            'hidden_layer_sizes': (16, 3),
+            'learning_rate': 'adaptive',
+            'max_iter': 300,
+            'solver': 'lbfgs'},
 
         'svm': {
-            'C': [1000],
-            'gamma': [0.1],
-            'kernel': ['rbf']},
+            'C': 1000,
+            'gamma': 0.1,
+            'kernel': 'rbf'},
 
         'knn': {
-            'metric': ['manhattan'],
-            'n_neighbors': [8],
-            'weights': ['distance']},
+            'metric': 'manhattan',
+            'n_neighbors': 8,
+            'weights': 'distance'},
 
         'lr': {
-            'C': [3593.813663804626],
-            'penalty': ['l2']},
+            'C': 3593.813663804626,
+            'penalty': 'l2'},
 
         'dt': {
-            'criterion': ['entropy'],
-            'max_depth': [13],
-            'min_samples_split': [3]},
+            'criterion': 'entropy',
+            'max_depth': 13,
+            'min_samples_split': 3},
 
         'rf': {
-            'bootstrap': [True],
-            'criterion': ['gini'],
-            'max_depth': [11],
-            'n_estimators': [110]}
+            'bootstrap': True,
+            'criterion': 'gini',
+            'max_depth': 11,
+            'n_estimators': 110}
     }
 
     generate_results(

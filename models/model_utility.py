@@ -91,25 +91,28 @@ def print_metrics(metrics):
         print(line)
 
 
-def get_classifier(model):
+def get_classifier(model, parameters, subset):
     """returns a classification model based on specified model name,
     which may be one of ('mlp', 'knn', 'svm', 'rf', 'nbc', 'lr', 'dt', 'bn')"""
 
-    classifier = {
-        'mlp': mlp(),
-        'knn': knn(),
-        'svm': svm(),
-        'rf':  rf(),
-        'nbc': nbc(),
-        'lr': lr(),
-        'dt': dt(),
-        'bn': bn()
-    }.get(model, None)
-
-    if classifier is None:
-        raise ValueError()
+    if model == 'mlp':
+        return mlp(parameters)
+    elif model == 'knn':
+        return knn(parameters)
+    elif model == 'svm':
+        return svm(parameters)
+    elif model == 'rf':
+        return rf(parameters)
+    elif model == 'nbc':
+        return nbc(parameters)
+    elif model == 'lr':
+        return lr(parameters)
+    elif model == 'dt':
+        return dt(parameters)
+    elif model == 'bn':
+        return bn(subset)
     else:
-        return classifier
+        raise ValueError
 
 
 def get_metrics(y_test, y_predict):
