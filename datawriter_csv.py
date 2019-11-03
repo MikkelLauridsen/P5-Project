@@ -1,6 +1,6 @@
 import csv
 import os
-import models.model_utility as utility
+from metrics import get_metrics_path
 
 
 def save_feature_durations(feature_durations, path, dir):
@@ -33,7 +33,7 @@ def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, para
         - parameters: the model parameter space {'**parameter**': [**values**]}
         - subset:     a list of labels of features to be used"""
 
-    path, dir = utility.get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+    path, dir = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
     labels = ['Precision', 'Recall', 'TNR', 'FPR', 'FNR', 'Balanced accuracy', 'F1-score']
 
     if not os.path.exists(dir):
@@ -44,11 +44,11 @@ def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, para
         writer.writerow(['Class'] + labels)
 
         for key in metrics.keys():
-            writer.writerow([key] + list(metrics[key]))
+            writer.writerow([key] + list(iter(metrics[key])))
 
 
 def save_time(time_model, time_feature, period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset):
-    path, dir = utility.get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset, True)
+    path, dir = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset, True)
 
     if not os.path.exists(dir):
         os.makedirs(dir)

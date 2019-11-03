@@ -2,6 +2,7 @@ import os
 import time
 import concurrent.futures as conf
 import models.model_utility as utility
+from metrics import get_metrics, get_metrics_path
 from datapoint import datapoint_attributes
 from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
@@ -90,10 +91,13 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
         - dos_type:          the DoS type ('modified', 'original')
         - subset:            a list of labels of features to be used"""
 
-    path, _ = utility.get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
 
     if os.path.exists(path):
         metrics = load_metrics(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+
+        if metrics == {}:
+            print(path)
     else:
         X_train_mod = __create_feature_subset(X_train, subset)
         X_test_mod = __create_feature_subset(X_test, subset)
@@ -106,7 +110,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
         time_model = (time.perf_counter_ns() - before) / len(X_test_mod)
 
         # calculate scores on test set
-        metrics = utility.get_metrics(y_test, y_predict)
+        metrics = get_metrics(y_test, y_predict)
 
         save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
         time_feature = 0.0
@@ -157,7 +161,7 @@ def __save_stepwise_elimination(models, X_train, y_train, X_test, y_test, max_fe
                     current_subset) for model in models.keys()}
 
                 for future in conf.as_completed(futures):
-                    score = future.result()['total'][6]
+                    score = future.result()['total'].f1
 
                     if score > best_score:
                         best_score = score
@@ -227,7 +231,7 @@ if __name__ == "__main__":
 
     generate_results(
         windows=[100, 50, 10],
-        strides=[10, 50, 100],
+        strides=[100, 50, 10],
         imp_splits=[False],
         dos_types=['modified'],
         models=models,
