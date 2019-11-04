@@ -93,10 +93,10 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
         - dos_type:          the DoS type ('modified', 'original')
         - subset:            a list of labels of features to be used"""
 
-    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters == {}, subset)
 
     if os.path.exists(path):
-        metrics = load_metrics(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+        metrics = load_metrics(period_ms, stride_ms, imp_split, dos_type, model, parameters == {}, subset)
 
         if metrics == {}:
             print(path)

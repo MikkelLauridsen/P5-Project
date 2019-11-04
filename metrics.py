@@ -44,6 +44,29 @@ class Metrics():
         return metric
 
 
+class Result():
+    window_ms: int
+    stride_ms: int
+    model: str
+    imp_split: bool
+    dos_type: str
+    baseline: bool
+    subset: str
+    metrics: {}
+    times: {}
+
+    def __init__(self, window_ms, stride_ms, model, imp_split, dos_type, baseline, subset, metrics, times):
+        self.window_ms = window_ms
+        self.stride_ms = stride_ms
+        self.model = model
+        self.imp_split = imp_split
+        self.dos_type = dos_type
+        self.baseline = baseline
+        self.subset = subset
+        self.metrics = metrics
+        self.times = times
+
+
 def print_metrics(metrics):
     """Outputs a classification report to console, based on specified metrics"""
 
@@ -92,7 +115,7 @@ def get_metrics(y_test, y_predict):
     return metrics
 
 
-def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_time=False):
+def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_time=False):
     """returns the file path and directory path associated with the specified parameters.
     Parameters are:
         - period_ms:  window size (int ms)
@@ -105,7 +128,7 @@ def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameter
         - is_time:    whether the path is related to scores or durations (True, False)"""
 
     imp_name = "imp_split" if imp_split else "imp_full"
-    baseline_name = "baseline" if len(parameters.keys()) == 0 else "selected_parameters"
+    baseline_name = "baseline" if baseline else "selected_parameters"
     metric_type = "score" if is_time is False else "time"
     name = f"mixed_{metric_type}_{period_ms}ms_{stride_ms}ms"
 

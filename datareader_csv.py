@@ -2,7 +2,10 @@ import csv
 import pandas as pd
 import datapoint
 import message
-from metrics import Metrics, get_metrics_path
+import os
+from glob import glob
+from metrics import Metrics, Result, get_metrics_path
+from datapoint import datapoint_attributes
 
 
 def __load_data(filepath, parse_func, start, limit, verbose=False):
@@ -95,8 +98,8 @@ def load_fuzzy(start=0, limit=None, verbose=False):
     return load_messages("data/manipulated/Fuzzy_attack_dataset.csv", start, limit, verbose)
 
 
-def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset):
-    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset):
+    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
     metrics = {}
 
     with open(path, newline="") as file:
@@ -110,8 +113,8 @@ def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, parameters, s
     return metrics
 
 
-def load_times(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset):
-    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, True)
+def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset):
+    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, True)
 
     with open(path, newline="") as file:
         reader = csv.reader(file, delimiter=",")
@@ -121,3 +124,50 @@ def load_times(period_ms, stride_ms, imp_split, dos_type, model, parameters, sub
         row = next(reader, None)
 
     return {'model_time': row[0], 'feature_time': row[1], 'total_time': row[2]}
+
+
+def load_result(path):
+    labels = list(datapoint_attributes)[2:]
+    substrings = (path[:-4]).split("\\")
+    begin = len(substrings) - 1
+
+    while substrings[begin] != 'result':
+        begin -= 1
+
+    baseline = substrings[begin + 1] == 'baseline'
+    model = substrings[begin + 2]
+    imp_split = substrings[begin + 3] != 'imp_full'
+    dos_type = substrings[begin + 4]
+
+    file_split = substrings[begin + 5].split("_")[2:]
+
+    period_ms = int((file_split[0])[:-2])
+    stride_ms = int((file_split[1])[:-2])
+    subset = []
+
+    for substring in file_split[2:]:
+        index = int(substring)
+
+        subset.append(labels[index])
+
+    metrics = load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
+    times = load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
+
+    return Result(period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, metrics, times)
+
+
+def load_all_metric_time_pairs(directory):
+    results = []
+
+    for path in os.listdir(directory):
+        abs_path = os.path.join(directory, path)
+
+        if os.path.isfile(abs_path):
+            results.append(load_result(abs_path))
+
+    return results
+
+
+if __name__ == "__main__":
+
+    print(load_all_metric_time_pairs("C:\\Users\\Herrmann\\PycharmProjects\\P5-Project\\result\\baseline\\bn\\imp_full\\modified"))

@@ -33,7 +33,7 @@ def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, para
         - parameters: the model parameter space {'**parameter**': [**values**]}
         - subset:     a list of labels of features to be used"""
 
-    path, dir = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters, subset)
+    path, dir = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters == {}, subset)
     labels = ['Precision', 'Recall', 'TNR', 'FPR', 'FNR', 'Balanced accuracy', 'F1-score']
 
     if not os.path.exists(dir):
@@ -48,7 +48,7 @@ def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, para
 
 
 def save_time(time_model, time_feature, period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset):
-    path, dir = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset, True)
+    path, dir = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters == {}, subset, True)
 
     if not os.path.exists(dir):
         os.makedirs(dir)
