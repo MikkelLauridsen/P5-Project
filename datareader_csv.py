@@ -166,8 +166,3 @@ def load_all_metric_time_pairs(directory):
             results.append(load_result(abs_path))
 
     return results
-
-
-if __name__ == "__main__":
-
-    print(load_all_metric_time_pairs("C:\\Users\\Herrmann\\PycharmProjects\\P5-Project\\result\\baseline\\bn\\imp_full\\modified"))
