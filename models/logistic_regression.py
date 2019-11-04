@@ -1,17 +1,17 @@
 import os
+
 import numpy as np
-from sklearn import linear_model
-from sklearn.linear_model import LogisticRegression, logistic
-import models.model_utility
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
+
+import models.model_utility
 
 
 def lr(parameters):  # baseline parameters
     return LogisticRegression().set_params(**parameters)
 
 
-def lgr(X_train, y_train):
-    logistic = linear_model.LogisticRegression()
+def lr_hyperparameter(X_train, y_train):
     # Create regularization penalty space
     penalty = ['l1', 'l2']
 
@@ -21,24 +21,13 @@ def lgr(X_train, y_train):
     # Create hyperparameter options
     hyperparameters = dict(C=C, penalty=penalty)
 
-    best_model = GridSearchCV(logistic, hyperparameters, cv=5, scoring="f1_macro", verbose=0)
+    best_model = GridSearchCV(LogisticRegression(), hyperparameters, cv=5, scoring="f1_macro", verbose=0)
     best_model.fit(X_train, y_train)
     print('Best Penalty:', best_model.best_estimator_.get_params()['penalty'])
     print('Best C:', best_model.best_estimator_.get_params()['C'])
 
+
 if __name__ == "__main__":
     os.chdir("..")
     X_train, y_train = models.model_utility.get_standard_feature_split()
-    lgr(X_train, y_train)
-
-#def logistic_regression(X_train, y_train):
-#    # Define the model
-#    print("the Logistic Regression model is now being created and fitted with data")
-#    logistic_regr = LogisticRegression()
-#
-#    # Fit the model
-#    logistic_regr.fit(X_train, y_train)
-#
-#    # Model get returned so accuracy can get calculated
-#    print("The Logistic Regression Model has been created, prediction of accuracy is now being calculated")
-#    return logistic_regr
+    lr_hyperparameter(X_train, y_train)
