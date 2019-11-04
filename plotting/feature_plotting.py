@@ -5,16 +5,12 @@ import datapoint
 
 
 def class_to_color(cls):
-    if cls == "normal":
-        return "#246EB6"
-    elif cls == "dos":
-        return "#B62121"
-    elif cls == "fuzzy":
-        return "#0A813E"
-    elif cls == "impersonation":
-        return "#FF7A0E"
-    else:
-        raise ValueError()
+    return {
+        "normal": "#246EB6",
+        "dos": "#B62121",
+        "fuzzy": "#0A813E",
+        "impersonation": "#FF7A0E"
+    }.get(cls, "#000000")
 
 
 # Takes all the features defined in DataPoint and plots them
