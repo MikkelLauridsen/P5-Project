@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from sklearn import linear_model
 from sklearn.linear_model import LogisticRegression, logistic
 import models.model_utility
 from sklearn.model_selection import GridSearchCV
@@ -10,6 +11,7 @@ def lr(parameters):  # baseline parameters
 
 
 def lgr(X_train, y_train):
+    logistic = linear_model.LogisticRegression()
     # Create regularization penalty space
     penalty = ['l1', 'l2']
 
@@ -19,12 +21,10 @@ def lgr(X_train, y_train):
     # Create hyperparameter options
     hyperparameters = dict(C=C, penalty=penalty)
 
-    best_model = GridSearchCV(logistic(), hyperparameters, cv=5, scoring="f1_macro")
+    best_model = GridSearchCV(logistic, hyperparameters, cv=5, scoring="f1_macro", verbose=0)
     best_model.fit(X_train, y_train)
     print('Best Penalty:', best_model.best_estimator_.get_params()['penalty'])
     print('Best C:', best_model.best_estimator_.get_params()['C'])
-    print(best_model.best_params_)
-
 
 if __name__ == "__main__":
     os.chdir("..")
