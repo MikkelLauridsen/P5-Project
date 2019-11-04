@@ -1,21 +1,15 @@
 import hugin.pyhugin87 as hugin
-import os
 import datapoint as dp
-import models.model_utility as model_utility
-from sklearn.metrics import classification_report
-from datasets import load_or_create_datasets
+from sklearn.base import BaseEstimator
 
 
-class BayesianNetwork:
+class BayesianNetwork(BaseEstimator):
     __domain: hugin.DataSet
     __attr_names: []
 
-    def __init__(self):
+    def __init__(self, subset):
         self.__domain = hugin.Domain()
-
-        self.__attr_names = list(dp.datapoint_attributes).copy()
-        self.__attr_names.remove("time_ms")
-        self.__attr_names.remove("is_injected")
+        self.__attr_names = subset.copy()
 
     def fit(self, X_train, y_train):
         training_set = self.__feature_list_to_dataset(X_train, y_train, self.__attr_names)
@@ -23,8 +17,9 @@ class BayesianNetwork:
         self.__construct_network_nodes(training_set)
         self.__learn_structure_and_tables(training_set)
 
-    def predict(self, X_test, y_test):
-        test_set = self.__feature_list_to_dataset(X_test, y_test, self.__attr_names)
+    def predict(self, features_list):
+        labels = ["normal" for feature_list in features_list]  # Create fictional labels. This is ignored in prediction
+        test_set = self.__feature_list_to_dataset(features_list, labels, self.__attr_names)
 
         return self.__get_predictions(test_set)
 
@@ -121,7 +116,6 @@ class BayesianNetwork:
             node.set_label(name)
             node.get_experience_table()
 
-
     def __learn_structure_and_tables(self, dataset):
         # Add learning data from dataset to domain
         self.__domain.add_cases(dataset, 0, dataset.get_number_of_rows())
@@ -135,19 +129,5 @@ class BayesianNetwork:
         self.__domain.learn_tables()
 
 
-def bn():
-    return BayesianNetwork()
-
-
-if __name__ == "__main__":
-    os.chdir("..")
-
-    bn = BayesianNetwork()
-    training_points, test_points, _ = load_or_create_datasets(impersonation_split=False, stride_ms=10, period_ms=10)
-    X_train, y_train = model_utility.split_feature_label(training_points)
-    bn.fit(X_train, y_train)
-
-    X_test, y_test = model_utility.split_feature_label(test_points)
-    predictions = bn.predict(X_test, y_test)
-
-    print(classification_report(y_test, predictions))
+def bn(subset):
+    return BayesianNetwork(subset)

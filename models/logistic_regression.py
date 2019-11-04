@@ -4,8 +4,9 @@ from sklearn.linear_model import LogisticRegression, logistic
 import models.model_utility
 from sklearn.model_selection import GridSearchCV
 
-def lr():  # baseline parameters
-    return LogisticRegression()
+
+def lr(parameters):  # baseline parameters
+    return LogisticRegression().set_params(**parameters)
 
 
 def lgr(X_train, y_train):

@@ -30,7 +30,7 @@ class DataPoint(dataobject):
 
 
 # List of the attributes of DataPoint
-datapoint_attributes = DataPoint.__annotations__.keys()
+datapoint_attributes = list(DataPoint.__annotations__.keys())
 
 # Descriptions of features. These are displayed on the plots.
 datapoint_attribute_descriptions = {

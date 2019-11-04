@@ -506,12 +506,13 @@ def get_mixed_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation
 
     # create DataPoints in parallel.
     with conf.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(messages_to_datapoints,
-                                   tup[0],
-                                   period_ms,
-                                   tup[1],
-                                   stride_ms,
-                                   tup[2]) for tup in raw_msgs}
+        futures = {executor.submit(
+            messages_to_datapoints,
+            tup[0],
+            period_ms,
+            tup[1],
+            stride_ms,
+            tup[2]) for tup in raw_msgs}
 
         for future in conf.as_completed(futures):
             datasets.append(future.result()[0])

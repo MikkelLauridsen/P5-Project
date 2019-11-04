@@ -1,8 +1,8 @@
 from sklearn.tree import DecisionTreeClassifier
 
 
-def dt():  # baseline parameters
-    return DecisionTreeClassifier(max_depth=9)
+def dt(parameters):  # baseline parameters
+    return DecisionTreeClassifier(max_depth=9).set_params(**parameters)
 
 
 #def decision_trees(X_train, y_train):
