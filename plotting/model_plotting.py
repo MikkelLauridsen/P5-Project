@@ -163,15 +163,36 @@ def plot_model_window_times(windows, imp_split=True, dos_type='modified'):
     )
 
 
+def plot_all_results(imp_split='imp_full', dos_type='modified'):
+    for model in __models.keys():
+        pares = "baseline" if model == "bn" else "selected_parameters"
+
+        path = f"{os.getcwd()}\\result\\{pares}\\{model}\\{imp_split}\\{dos_type}"
+
+        results = datareader_csv.load_all_metric_time_pairs(path)
+
+        y = [float(result.metrics["total"].f1) for result in results]
+        x = [float(result.times["total_time"]) / 1000000 for result in results]
+
+        plt.scatter(x, y, label=model, s=5)
+
+    plt.xlabel("Time (ms)")
+    plt.ylabel("F1 score")
+    plt.legend(loc='lower right')
+    plt.title("Correlation between F1 score and model+feature time")
+    plt.show()
+
+
 if __name__ == '__main__':
     os.chdir("..")
 
     _windows = [10, 25, 50, 100]
     _strides = [200, 100, 50, 25, 10]
 
-    plot_windows(_windows)
-    plot_strides(_strides)
-    plot_feature_stride_times(_strides)
-    plot_feature_window_times(_windows)
-    plot_model_window_times(_windows)
-    plot_model_stride_times(_strides)
+    plot_all_results()
+    # plot_windows(_windows)
+    # plot_strides(_strides)
+    # plot_feature_stride_times(_strides)
+    # plot_feature_window_times(_windows)
+    # plot_model_window_times(_windows)
+    # plot_model_stride_times(_strides)
