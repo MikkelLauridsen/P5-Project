@@ -45,7 +45,7 @@ class Metrics():
 
 
 class Result():
-    window_ms: int
+    period_ms: int
     stride_ms: int
     model: str
     imp_split: bool
@@ -55,8 +55,8 @@ class Result():
     metrics: {}
     times: {}
 
-    def __init__(self, window_ms, stride_ms, model, imp_split, dos_type, baseline, subset, metrics, times):
-        self.window_ms = window_ms
+    def __init__(self, period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, metrics, times):
+        self.period_ms = period_ms
         self.stride_ms = stride_ms
         self.model = model
         self.imp_split = imp_split
@@ -65,6 +65,24 @@ class Result():
         self.subset = subset
         self.metrics = metrics
         self.times = times
+
+
+def filter_results(results, periods=None, strides=None, models=None,
+                   imp_splits=None, dos_types=None, parameter_types=None, subsets=None):
+    kept_results = []
+
+    for result in results:
+        if (periods is None or result.period_ms in periods) and \
+                (strides is None or result.stride_ms in strides) and \
+                (models is None or result.model in models) and \
+                (imp_splits is None or result.imp_split in imp_splits) and \
+                (dos_types is None or result.dos_type in dos_types) and \
+                (parameter_types is None or result.baseline in parameter_types) and \
+                (subsets is None or result.subset in subsets):
+
+            kept_results.append(result)
+
+    return kept_results
 
 
 def print_metrics(metrics):
