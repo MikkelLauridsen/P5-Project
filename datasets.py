@@ -1,3 +1,7 @@
+"""
+Functions for creating the different datasets that can be used to train machine learning models.
+Feature calculation is also carried out in this module.
+"""
 import datapoint as dp
 import datareader_csv
 import os
