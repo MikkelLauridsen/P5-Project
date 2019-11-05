@@ -1,3 +1,9 @@
+"""The Message class describing an object containing a single CAN bus message.
+
+Functions:
+parse_csv_row: Parses a row from a csv file into a corresponding message object.
+get_csv_row: Returns a list containing every attribute in the given Message object.
+"""
 from recordclass import dataobject
 
 

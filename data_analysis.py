@@ -1,4 +1,9 @@
-"""Functions for analysing aspects of the data. The analysis is used to make decision about data manipulation."""
+"""Running this file analyses certain aspects of the data to allow for decision making through increased information.
+
+Aspects being analysed:
+Mean time between normal messages: The average time between normal message pairs (not remote frame or response).
+Mean time between split messages: The average time between normal message pairs with a remote frame or response between.
+"""
 import numpy as np
 import datareader_csv
 
