@@ -1,3 +1,4 @@
+"""Functions for loading and parsing data from the csv files into lists of Messages."""
 import csv
 import pandas as pd
 import datapoint

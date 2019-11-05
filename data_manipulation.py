@@ -1,5 +1,12 @@
-"""Functions for manipulating data."""
+"""
+Running this file takes all csv files in the "csv" directory, manipulates them and puts the result in the
+"manipulated" directory.
 
+Manipulations:
+DLC: The DLC for every message in the file "Attack_free_dataset2.csv" is changed to 8.
+Remote frames: Remote frames and remote frame responses are removed from every file.
+Modified DoS: The data field of every DoS injected message is changed to represent a more realistic attack.
+"""
 import pandas as pd
 import random
 import os

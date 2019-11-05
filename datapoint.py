@@ -1,3 +1,10 @@
+"""The datapoint class describing an instance containing the features for a single window of messages.
+
+Functions:
+is_header_matching: Compares the given header with the current attributes of the DataPoint class.
+parse_csv_row: Parses a row in a csv file and returns a corresponding DataPoint object.
+get_csv_row: Returns a list containing every attribute in the given DataPoint object.
+"""
 from recordclass import dataobject
 
 
