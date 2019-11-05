@@ -123,7 +123,7 @@ def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subse
 
         row = next(reader, None)
 
-    return {'model_time': row[0], 'feature_time': row[1], 'total_time': row[2]}
+    return {'model_time': float(row[0]), 'feature_time': float(row[1]), 'total_time': float(row[2])}
 
 
 def load_result(path):
