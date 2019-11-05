@@ -101,8 +101,8 @@ def get_dataset(period_ms, stride_ms, imp_split, dos_type):
     """returns the scaled and split equivalent of the dataset associated with specified parameters:
         - X_train:           feature values of the training set
         - y_train:           class labels of the training set
-        - X_test:            feature values of the test set
-        - y_test:            class labels of the test set
+        - X_validation:            feature values of the test set
+        - y_validation:            class labels of the test set
         - feature_time_dict: a dictionary of {'**feature**': **time_ns**}
 
     If it does not exist, it is created.
@@ -111,35 +111,34 @@ def get_dataset(period_ms, stride_ms, imp_split, dos_type):
         - stride_ms: the stride size (int ms)
         - imp_split: the impersonation type (True, False)
         - dos_type:  the DoS type ('modified', 'original')"""
-    training_data, test_data, feature_time_dict = datasets.load_or_create_datasets(
+    training_data, validation_data, feature_time_dict = datasets.load_or_create_datasets(
         period_ms,
-        True,
         stride_ms,
         imp_split,
         dos_type,
         verbose=True)
 
     X_train, y_train = split_feature_label(training_data)
-    X_test, y_test = split_feature_label(test_data)
-    X_train, X_test = scale_features(X_train, X_test)
+    X_validation, y_validation = split_feature_label(validation_data)
+    X_train, X_validation = scale_features(X_train, X_validation)
 
-    return X_train, y_train, X_test, y_test, feature_time_dict
+    return X_train, y_train, X_validation, y_validation, feature_time_dict
 
 
 def get_standard_feature_split():
     """Returns the feature split used for finding hyperparameter values in the standard case."""
     # Loading the standard dataset
-    data_train, data_test, _ = datasets.load_or_create_datasets(
+    training_data, validation_data, _ = datasets.load_or_create_datasets(
         period_ms=50,
         stride_ms=50,
         impersonation_split=False,
         dos_type="modified")
 
     # Splitting the data into features and labels.
-    X_train, y_train = split_feature_label(data_train)
-    X_test, y_test = split_feature_label(data_test)
+    X_train, y_train = split_feature_label(training_data)
+    X_validation, y_validation = split_feature_label(validation_data)
 
     # Returning the scaled versions.
-    X_train, _ = scale_features(X_train, X_test)
+    X_train, _ = scale_features(X_train, X_validation)
 
     return X_train, y_train
