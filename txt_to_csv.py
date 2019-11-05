@@ -1,3 +1,7 @@
+"""
+Running this file takes every txt file in the "raw" directory and turns them into equivalent csv files.
+The resulting csv files are put into the "csv" directory.
+"""
 import os
 import re
 

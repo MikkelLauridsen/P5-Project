@@ -1,4 +1,4 @@
-"""The datapoint class describing an instance containing the features for a single window of messages.
+"""The DataPoint class describing an object containing the features for a single window of messages.
 
 Functions:
 is_header_matching: Compares the given header with the current attributes of the DataPoint class.
