@@ -3,7 +3,6 @@ import pandas as pd
 import datapoint
 import message
 import os
-from glob import glob
 from metrics import Metrics, Result, get_metrics_path
 from datapoint import datapoint_attributes
 
@@ -156,7 +155,7 @@ def load_result(path):
     return Result(period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, metrics, times)
 
 
-def load_all_metric_time_pairs(directory):
+def load_results(directory):
     results = []
 
     for path in os.listdir(directory):
@@ -164,5 +163,13 @@ def load_all_metric_time_pairs(directory):
 
         if os.path.isfile(abs_path):
             results.append(load_result(abs_path))
+        else:
+            results += load_results(abs_path)
 
     return results
+
+
+def load_all_results():
+    directory = os.getcwd() + "\\result"
+
+    return load_results(directory)
