@@ -141,11 +141,12 @@ def load_result(path):
 
     file_split = substrings[begin + 5].split("_")[2:]
 
-    period_ms = int((file_split[0])[:-2])
-    stride_ms = int((file_split[1])[:-2])
+    is_test = file_split[0] == 'test'
+    period_ms = int((file_split[1])[:-2])
+    stride_ms = int((file_split[2])[:-2])
     subset = []
 
-    for substring in file_split[2:]:
+    for substring in file_split[3:]:
         index = int(substring)
 
         subset.append(labels[index])
@@ -153,7 +154,7 @@ def load_result(path):
     metrics = load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
     times = load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
 
-    return Result(period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, metrics, times)
+    return Result(period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, is_test, metrics, times)
 
 
 def load_results(directory):

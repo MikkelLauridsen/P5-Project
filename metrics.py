@@ -52,10 +52,11 @@ class Result():
     dos_type: str
     baseline: bool
     subset: str
+    is_test: bool
     metrics: {}
     times: {}
 
-    def __init__(self, period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, metrics, times):
+    def __init__(self, period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, is_test, metrics, times):
         self.period_ms = period_ms
         self.stride_ms = stride_ms
         self.model = model
@@ -63,6 +64,7 @@ class Result():
         self.dos_type = dos_type
         self.baseline = baseline
         self.subset = subset
+        self.is_test = is_test
         self.metrics = metrics
         self.times = times
 
