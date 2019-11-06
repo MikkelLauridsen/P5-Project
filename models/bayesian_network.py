@@ -121,11 +121,9 @@ class BayesianNetwork(BaseEstimator):
         self.__domain.add_cases(dataset, 0, dataset.get_number_of_rows())
 
         # Learn structure and condition tables
-        print("Learning structure...")
         self.__domain.learn_structure()
         self.__domain.compile()
         self.__domain.save_to_memory()
-        print("Learning tables...")
         self.__domain.learn_tables()
 
 

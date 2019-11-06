@@ -4,7 +4,7 @@ from sklearn.model_selection import GridSearchCV
 
 
 def svm(parameters):  # baseline parameters
-    return SVC(max_iter=2000).set_params(**parameters)
+    return SVC(max_iter=5000).set_params(**parameters)
 
 
 def svm_hyperparameter(X_train, y_train):

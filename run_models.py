@@ -211,6 +211,7 @@ def __create_feature_subset(X, subset):
 if __name__ == "__main__":
     models = {
         'bn': {},
+        'nbc': {},
         'mlp': {
             'activation': 'logistic',
             'alpha': 0.0001,
