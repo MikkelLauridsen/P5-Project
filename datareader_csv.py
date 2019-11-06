@@ -9,6 +9,8 @@ from datapoint import datapoint_attributes
 
 
 def __load_data(filepath, parse_func, start, limit, verbose=False):
+    # Loading data from the file row by row and parsing the rows using the specified parse function.
+
     print(f"Started reading from {filepath}")
 
     data = []
@@ -30,10 +32,28 @@ def __load_data(filepath, parse_func, start, limit, verbose=False):
 
 
 def load_messages(filepath, start=0, limit=None, verbose=False):
+    """
+    Loading a specified amount of messages from the filepath.
+
+    :param filepath: The filepath where the data should be read from.
+    :param start: The index indicating where the function should start loading messages.
+    :param limit: The index indicating where the function should stop loading messages.
+    :param verbose: Boolean indicator controlling how much information about the loading process that should be printed.
+    :return: A list of Message objects corresponding to the given parameters.
+    """
     return __load_data(filepath, message.parse_csv_row, start, limit, verbose)
 
 
 def load_datapoints(filepath, start=0, limit=None, verbose=False):
+    """
+    Loading a specified amount of data points from the filepath.
+
+    :param filepath: The filepath where the data should be read from.
+    :param start: The index indicating where the function should start loading data points.
+    :param limit: The index indicating where the function should stop loading data points.
+    :param verbose: Boolean indicator controlling how much information about the loading process that should be printed.
+    :return: A list of DataPoint objects corresponding to the given parameters.
+    """
     # Check if csv format matches DataPoint structure
     df = pd.read_csv(filepath, header=0, nrows=0)
     matching_header, diff = datapoint.is_header_matching(df.columns)
@@ -47,6 +67,12 @@ def load_datapoints(filepath, start=0, limit=None, verbose=False):
 
 
 def load_feature_durations(filepath):
+    """
+    Loads the average time of feature calculation from the specified filepath.
+
+    :param filepath: The filepath where the data should be read from.
+    :return: A list containing the average times it took to calculate features.
+    """
     feature_durations = {}
 
     with open(filepath, newline="") as file:
@@ -59,42 +85,43 @@ def load_feature_durations(filepath):
     return feature_durations
 
 
-# Loads data from "Attack_free_dataset.csv"
 def load_attack_free1(start=0, limit=None, verbose=False):
+    """Loads data from "Attack_free_dataset.csv"."""
     return load_messages("data/manipulated/Attack_free_dataset.csv", start, limit, verbose)
 
 
-# Loads data from "Attack_free_dataset2.csv"
 def load_attack_free2(start=0, limit=None, verbose=False):
+    """Loads data from "Attack_free_dataset2.csv"."""
     return load_messages("data/csv/Attack_free_dataset2.csv", start, limit, verbose)
 
 
-# Loads data from "Impersonation_attack_dataset.csv"
 def load_impersonation_1(start=0, limit=None, verbose=False):
+    """Loads data from "Impersonation_attack_dataset.csv"."""
     return load_messages("data/csv/Impersonation_attack_dataset.csv", start, limit, verbose)
 
 
-# Loads data from "170907_impersonation.csv"
 def load_impersonation_2(start=0, limit=None, verbose=False):
+    """Loads data from "170907_impersonation.csv"."""
     return load_messages("data/manipulated/170907_impersonation.csv", start, limit, verbose)
 
 
-# Loads data from "170907_impersonation_2.csv"
 def load_impersonation_3(start=0, limit=None, verbose=False):
+    """Loads data from "170907_impersonation_2.csv"."""
     return load_messages("data/manipulated/170907_impersonation_2.csv", start, limit, verbose)
 
 
-# Loads data from "DoS_attack_dataset.csv"
 def load_dos(start=0, limit=None, verbose=False):
+    """Loads data from "DoS_attack_dataset.csv"."""
     return load_messages("data/manipulated/DoS_attack_dataset.csv", start, limit, verbose)
 
 
 def load_modified_dos(start=0, limit=None, verbose=False):
+    """Loads data from "DoS_manipulated.csv"."""
     return load_messages("data/manipulated/DoS_manipulated.csv", start, limit, verbose)
 
 
-# Loads data from "Fuzzy_attack_dataset.csv"
 def load_fuzzy(start=0, limit=None, verbose=False):
+    """Loads data from "Fuzzy_attack_dataset.csv"."""
     return load_messages("data/manipulated/Fuzzy_attack_dataset.csv", start, limit, verbose)
 
 
