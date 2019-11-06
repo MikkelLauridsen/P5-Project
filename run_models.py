@@ -1,3 +1,4 @@
+"""Functions for generating results by running the models with different settings."""
 import os
 import time
 import concurrent.futures as conf
@@ -9,21 +10,28 @@ from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
 
 
-def generate_validation_results(windows=[100], strides=[100], imp_splits=[True],
-                                dos_types=['modified'], models={'mlp': {}}, eliminations=0):
-    """Generates and saves metrics for all combinations of specified parameters using the validation set.
+def generate_validation_results(windows=None, strides=None, imp_splits=None,
+                                dos_types=None, models=None, eliminations=0):
+    """
+    Generates and saves metrics for all combinations of specified parameters using the validation set.
     If metrics for a given combination already exist, this combination is skipped.
+
+    :param windows: A list of feature window sizes (int ms)
+    :param strides: A list of stride sizes (int ms)
+    :param imp_splits: A list of impersonation type options (True, False)
+    :param dos_types: A list of DoS type options ('modified', 'original')
+    :param models: A dictionary of model names to parameter spaces ({'**model**': {'**parameter**': [**values**]}}
+    :param eliminations: The number of features eliminated in step-wise elimination
     :return:
-    :parameter:
-        - windows:      a list of feature window sizes (int ms)
-        - strides:      a list of stride sizes (int ms)
-        - imp_splits:   a list of impersonation type options (True, False)
-        - dos_types:    a list of DoS type options ('modified', 'original')
-        - models:       a dictionary of model names to parameter spaces ({'**model**': {'**parameter**': [**values**]}}
-        - eliminations: the number of features eliminated in step-wise elimination
     """
 
-    # calculate number of jobs to be conducted
+    windows = [100] if windows is None else windows
+    strides = [100] if strides is None else strides
+    imp_splits = [True] if imp_splits is None else imp_splits
+    dos_types = ['modified'] if dos_types is None else dos_types
+    models = {'mlp': {}} if models is None else models
+
+    # Calculate number of jobs to be conducted.
     inner_loop_size = __get_stepwise_size(eliminations) * len(models) if eliminations > 0 else len(models)
     job_count = len(windows) * len(strides) * len(imp_splits) * len(dos_types) * inner_loop_size
     current_job = 0
@@ -32,7 +40,7 @@ def generate_validation_results(windows=[100], strides=[100], imp_splits=[True],
         for stride_ms in strides:
             for imp_split in imp_splits:
                 for dos_type in dos_types:
-                    # get datasets for current combination of parameters
+                    # Get datasets for current combination of parameters.
                     X_train, y_train, X_validation, y_validation, feature_time_dict = get_scaled_training_validation(
                         period_ms, stride_ms,
                         imp_split, dos_type)
@@ -41,7 +49,7 @@ def generate_validation_results(windows=[100], strides=[100], imp_splits=[True],
                           f"{job_count} -- {(current_job / job_count) * 100.0}%")
 
                     if eliminations > 0:
-                        # conduct stepwise-elimination to test different feature subsets
+                        # Conduct stepwise-elimination to test different feature subsets.
                         __save_stepwise_elimination(
                             models,
                             X_train, y_train,
@@ -51,7 +59,7 @@ def generate_validation_results(windows=[100], strides=[100], imp_splits=[True],
                             period_ms, stride_ms,
                             imp_split, dos_type)
                     else:
-                        # use the full feature poll
+                        # Use the full feature poll.
                         subset = list(datapoint_attributes)[2:]
 
                         for model in models.keys():
@@ -67,8 +75,9 @@ def generate_validation_results(windows=[100], strides=[100], imp_splits=[True],
                     current_job += inner_loop_size
 
 
-# returns the number of feature subsets to be tested
 def __get_stepwise_size(max_features):
+    # Returns the number of feature subsets to be tested.
+
     n = len(list(datapoint_attributes)[2:])
     size = 0
 
@@ -81,23 +90,24 @@ def __get_stepwise_size(max_features):
 
 def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test, feature_time_dict,
                             period_ms, stride_ms, imp_split, dos_type, subset, is_test=False):
-    """runs specified model with specified parameters on specified dataset and saves the result to file.
-    Parameters are:
-        - model:             model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
-        - parameters:        model parameter space {'**parameter**': [**values**]}
-        - X_train:           training set feature values
-        - y_train:           training set class labels
-        - X_test:            test or validation set feature values
-        - y_test:            test or validation set class labels
-        - feature_time_dict: a dictionary of {'**feature**': **time_ns**}
-        - period_ms:         window size (int ms)
-        - stride_ms:         stride size (int ms)
-        - imp_split:         the impersonation type (True, False)
-        - dos_type:          the DoS type ('modified', 'original')
-        - subset:            a list of labels of features to be used
-        - is_test:           a flag indicating whether the test set or validation set is used
-        """
+    """
+    Runs specified model with specified parameters on specified dataset and saves the result to file.
 
+    :param model: Model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
+    :param parameters: Model parameter space {'**parameter**': [**values**]}
+    :param X_train: Training set feature values
+    :param y_train: Training set class labels
+    :param X_test: Test or validation set feature values
+    :param y_test: Test or validation set class labels
+    :param feature_time_dict: A dictionary of {'**feature**': **time_ns**}
+    :param period_ms: Window size (int ms)
+    :param stride_ms: Stride size (int ms)
+    :param imp_split: The impersonation type (True, False)
+    :param dos_type: The DoS type ('modified', 'original')
+    :param subset: A list of labels of features to be used
+    :param is_test: A flag indicating whether the test set or validation set is used
+    :return:
+    """
     path, _ = get_metrics_path(
         period_ms, stride_ms,
         imp_split, dos_type,
@@ -125,13 +135,13 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
         y_predict = classifier.predict(X_test_mod)
         time_model = (time.perf_counter_ns() - before) / len(X_test_mod)
 
-        # calculate scores on test set
+        # Calculate scores on test set.
         metrics = get_metrics(y_test, y_predict)
 
         save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_test=is_test)
         time_feature = 0.0
 
-        # find sum of feature times
+        # Find sum of feature times.
         for feature in feature_time_dict.keys():
             if feature in subset:
                 time_feature += feature_time_dict[feature]
@@ -148,16 +158,16 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
     return metrics
 
 
-# runs step-wise elimination on specified parameters and saves the results of each subset model combination
 def __save_stepwise_elimination(models, X_train, y_train, X_validation, y_validation, max_features,
                                 feature_time_dict, period_ms, stride_ms, imp_split, dos_type):
+    # Runs step-wise elimination on specified parameters and saves the results of each subset model combination.
 
-    # get feature labels
+    # Get feature labels.
     labels = (list(datapoint_attributes)[2:]).copy()
     working_set = labels.copy()
 
     for i in range(max_features):
-        # save the feature label which yields the best result when eliminated from the pool
+        # Save the feature label which yields the best result when eliminated from the pool.
         best_score = 0
         best_label = ""
 
@@ -183,14 +193,15 @@ def __save_stepwise_elimination(models, X_train, y_train, X_validation, y_valida
                         best_score = score
                         best_label = label
 
-        # remove the feature label which yields the best result when eliminated from the pool
+        # Remove the feature label which yields the best result when eliminated from the pool.
         del working_set[working_set.index(best_label)]
         del labels[labels.index(best_label)]
 
 
-# returns a modified copy of input list of feature values,
-# which only contains values of features in the specified subset
 def __create_feature_subset(X, subset):
+    # Returns a modified copy of input list of feature values,
+    # which only contains values of features in the specified subset.
+
     indices = [list(datapoint_attributes)[2:].index(f) for f in subset]
     length = len(list(datapoint_attributes)[2:])
 
@@ -209,7 +220,7 @@ def __create_feature_subset(X, subset):
 
 
 if __name__ == "__main__":
-    models = {
+    selected_models = {
         'bn': {},
         'nbc': {},
         'mlp': {
@@ -251,5 +262,5 @@ if __name__ == "__main__":
         strides=[100, 50, 20, 10],
         imp_splits=[False],
         dos_types=['modified'],
-        models=models,
+        models=selected_models,
         eliminations=4)

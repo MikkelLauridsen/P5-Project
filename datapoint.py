@@ -1,4 +1,5 @@
-"""The DataPoint class describing an object containing the features for a single window of messages.
+"""
+The DataPoint class describing an object containing the features for a single window of messages.
 
 Functions:
 is_header_matching: Compares the given header with the current attributes of the DataPoint class.
@@ -9,8 +10,9 @@ from recordclass import dataobject
 
 
 class DataPoint(dataobject):
+    """Class representing a single window of messages from the data through its features."""
     time_ms: float
-    is_injected: str
+    class_label: str
     mean_id_interval: float
     variance_id_frequency: float
     # num_id_transitions: int
@@ -28,12 +30,12 @@ class DataPoint(dataobject):
     skewness_id_interval_variances: float
 
     def __str__(self):
-        str = ""
+        string = ""
 
         for attr in datapoint_attributes:
-            str += f"{attr}: {getattr(self, attr)} "
+            string += f"{attr}: {getattr(self, attr)} "
 
-        return str
+        return string
 
 
 # List of the attributes of DataPoint
@@ -58,6 +60,7 @@ datapoint_attribute_descriptions = {
 
 
 def is_header_matching(header):
+    """Compares the given header with the set of DataPoint attributes and returns the difference."""
     header_set = set(header)
     attr_set = set(datapoint_attributes)
 
@@ -66,6 +69,7 @@ def is_header_matching(header):
 
 
 def parse_csv_row(row):
+    """Parses a single row from a csv file and returns the corresponding DataPoint object."""
     args = []
     for i in range(len(datapoint_attributes)):
         args.append(row[i])
@@ -74,6 +78,7 @@ def parse_csv_row(row):
 
 
 def get_csv_row(datapoint):
+    """Creates a list of the given DataPoints components and returns it to facilitate csv file creation."""
     row = []
     for attr in datapoint_attributes:
         row.append(getattr(datapoint, attr))

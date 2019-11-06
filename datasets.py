@@ -20,13 +20,13 @@ import features
 # 'stride_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
 # That is, if 'stride_ms' is 50 and 'period_ms' is 100,
 # DataPoint 1 and 2 will share messages in half of their time windows.
-# 'is_injected' determines whether intrusion was conducted in 'messages'
-def messages_to_datapoints(messages, period_ms, is_injected, stride_ms, name=""):
+# 'class_label' determines whether intrusion was conducted in 'messages'
+def messages_to_datapoints(messages, period_ms, class_label, stride_ms, name=""):
     if len(messages) == 0:
         return []
 
     windows = __find_windows(messages, period_ms, stride_ms)
-    return features.windows_to_datapoints(windows, is_injected, name)
+    return features.windows_to_datapoints(windows, class_label, name)
 
 
 # Separates a list of messages into a list of windows.
@@ -321,12 +321,12 @@ def get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, set_ty
 
 # Returns the training and validation sets associated with input argument combination.
 # If the datasets do not exist, they are created and saved in the process.
-def load_or_create_datasets(period_ms=100, stride_ms=100, impersonation_split=True,
+def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True,
                             dos_type='original', force_create=False, verbose=False):
 
-    training_name, _ = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, 'training')
-    validation_name, _ = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, 'validation')
-    time_path, dir = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, 'validation_time')
+    training_name, _ = get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'training')
+    validation_name, _ = get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'validation')
+    time_path, dir = get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'validation_time')
 
     # load the datasets if they exist.
     if os.path.exists(training_name) and os.path.exists(validation_name) and not force_create:
@@ -337,11 +337,11 @@ def load_or_create_datasets(period_ms=100, stride_ms=100, impersonation_split=Tr
         # create and save the datasets otherwise.
         training_set, validation_set, feature_durations = get_mixed_training_validation(
             period_ms, stride_ms,
-            impersonation_split, dos_type,
+            imp_split, dos_type,
             verbose=verbose)
 
-        write_datapoints_csv(training_set, period_ms, stride_ms, impersonation_split, dos_type, 'training')
-        write_datapoints_csv(validation_set, period_ms, stride_ms, impersonation_split, dos_type, 'validation')
+        write_datapoints_csv(training_set, period_ms, stride_ms, imp_split, dos_type, 'training')
+        write_datapoints_csv(validation_set, period_ms, stride_ms, imp_split, dos_type, 'validation')
         datawriter_csv.save_feature_durations(feature_durations, time_path, dir)
 
     return training_set, validation_set, feature_durations

@@ -31,7 +31,7 @@ class BayesianNetwork(BaseEstimator):
     def __feature_list_to_dataset(features_list, injected_labels, names):
         dataset = hugin.DataSet()
 
-        dataset.new_column("is_injected")  # Make sure is_injected is included in dataset
+        dataset.new_column("class_label")  # Make sure class_label is included in dataset
 
         # Create one column per feature
         for name in names:
@@ -41,7 +41,7 @@ class BayesianNetwork(BaseEstimator):
         for row, features in enumerate(features_list):
             dataset.new_row()
 
-            # Insert is_injected separately
+            # Insert class_label separately
             dataset.set_data_item(row, 0, injected_labels[row])
 
             # Insert features
@@ -63,8 +63,8 @@ class BayesianNetwork(BaseEstimator):
 
             self.__domain.enter_case(i)  # Enter evidence from dataset into network
 
-            injected_node = self.__domain.get_node_by_name("is_injected")
-            injected_node.retract_findings()  # Remove known evidence about the is_injected node
+            injected_node = self.__domain.get_node_by_name("class_label")
+            injected_node.retract_findings()  # Remove known evidence about the class_label node
 
             # Propagate evidence
             injected_node.get_junction_tree().propagate()
@@ -74,7 +74,7 @@ class BayesianNetwork(BaseEstimator):
             dos_belief = injected_node.get_belief(2)
             impersonation_belief = injected_node.get_belief(3)
 
-            # Find state of is_injected node with largest value
+            # Find state of class_label node with largest value
             beliefs = [normal_belief, fuzzy_belief, dos_belief, impersonation_belief]
             largest_index = beliefs.index(max(beliefs))
 
@@ -92,10 +92,10 @@ class BayesianNetwork(BaseEstimator):
     # Constructs the nodes of a network from a given dataset
     def __construct_network_nodes(self, dataset):
 
-        # Insert node for is_injected. This is the only discrete node, and is therefore handled separately
+        # Insert node for class_label. This is the only discrete node, and is therefore handled separately
         output_node = hugin.Node(self.__domain, kind=hugin.KIND.DISCRETE)
-        output_node.set_name("is_injected")
-        output_node.set_label("is_injected")
+        output_node.set_name("class_label")
+        output_node.set_label("class_label")
         output_node.set_number_of_states(4)
         output_node.set_state_label(0, "normal")
         output_node.set_state_label(1, "dos")
@@ -107,8 +107,8 @@ class BayesianNetwork(BaseEstimator):
         for name_index in range(dataset.get_number_of_columns()):
             name = dataset.get_column_name(name_index)
 
-            # Ignore time_ms and is_injected attributes
-            if name == "time_ms" or name == "is_injected":
+            # Ignore time_ms and class_label attributes
+            if name == "time_ms" or name == "class_label":
                 continue
 
             node = hugin.Node(self.__domain, kind=hugin.KIND.CONTINUOUS)

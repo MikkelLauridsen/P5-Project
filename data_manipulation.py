@@ -16,7 +16,14 @@ import message as msg
 
 
 def manipulate_dlc(source, target, new_dlc):
-    """Replaces the every DLC in the specified file to the given new DLC"""
+    """
+    Replaces every DLC in the specified file with the given new DLC
+
+    :param source: The source file that is going to be changed.
+    :param target: The target file where the changes are going to be saved.
+    :param new_dlc: The new DLC value that every message in the source file will get.
+    :return:
+    """
     # Getting the data from the filepath.
     data = pd.read_csv(source)
 
@@ -27,7 +34,13 @@ def manipulate_dlc(source, target, new_dlc):
 
 
 def manipulate_dos_data_field(source, target):
-    """Replaces DoS injection messages with more realistic attacks and outputs the changed file in the target dir."""
+    """
+    Replaces the data field of DoS injected messages with a more realistic data field.
+
+    :param source: The source file that is going to be changed.
+    :param target: The target file where the changes are going to be saved.
+    :return:
+    """
     # Getting the data from the filepath.
     data = pd.read_csv(source)
 
@@ -40,8 +53,9 @@ def manipulate_dos_data_field(source, target):
     data.to_csv(target, columns=["timestamp", "id", "rtr", "dlc", "data"], index=False)
 
 
-# Goes through a dataframe and returns list containing the data fields for normal messages. Only works for DoS.
 def __get_normal_data_fields(df):
+    # Goes through a dataframe and returns list containing the data fields for normal messages. Only works for DoS.
+
     # Getting all attack free messages in the file.
     df = df.drop(df[df.id == 0].index)
 
@@ -51,9 +65,10 @@ def __get_normal_data_fields(df):
     return df["data"].tolist()
 
 
-# Going through all DoS injected messages and replacing the data field with a random normal data field.
-# Also updates the data length control column for the message.
 def __replace_dos_messages(df, normal_data_fields):
+    # Going through all DoS injected messages and replacing the data field with a random normal data field.
+    # Also updates the data length control column for the message.
+
     for row in df.itertuples():
         if row.id == 0:
             # Setting the seed with "Random(row.Index)" so it is consistent across multiple program executions.
@@ -64,6 +79,13 @@ def __replace_dos_messages(df, normal_data_fields):
 
 
 def manipulate_remote_frames(source, target):
+    """
+    Removes remote frames and remote frame responses and closes the time gaps created by this removal.
+
+    :param source: The source file that is going to be changed.
+    :param target: The target file where the changes are going to be saved.
+    :return:
+    """
     print(f"Removing remote frames and corresponding responses from {source}")
     messages = datareader_csv.load_messages(source)
     __remove_remote_frames(messages)
@@ -79,8 +101,8 @@ def manipulate_remote_frames(source, target):
 
 
 def __remove_remote_frames(messages):
-    """Removes remote frames and their corresponding responses.
-    It is assumed that responses arrive withing 7 messages."""
+    # Removes remote frames and their corresponding responses. It is assumed that responses arrive withing 7 messages.
+
     latest_remote_frame = None
     latest_remote_frame_index = None
     current_offset = 0

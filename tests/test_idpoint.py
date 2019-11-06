@@ -6,7 +6,7 @@ from datapoint import IDPoint
 class TestIdpoint(TestCase):
     def setUp(self) -> None:
         time_ms = 1881258.816042923
-        is_injected = "normal"
+        class_label = "normal"
         mean_id_interval = 0.011034680628272332,
         variance_id_frequency = 17.72437499999999
         num_id_transitions = 101
@@ -26,7 +26,7 @@ class TestIdpoint(TestCase):
         skewness_id_interval_variances = 0.694951701467612
         kurtosis_req_to_res_time = 6.3109383892063535
 
-        self.id_point_row = [time_ms, is_injected, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids,
+        self.id_point_row = [time_ms, class_label, mean_id_interval, variance_id_frequency, num_id_transitions, num_ids,
                              num_msgs, mean_id_intervals_variance, mean_data_bit_count, variance_data_bit_count,
                              mean_variance_data_bit_count_id, mean_probability_bits, req_to_res_time_variance,
                              kurtosis_id_interval,
@@ -34,7 +34,7 @@ class TestIdpoint(TestCase):
                              kurtosis_variance_data_bit_count_id,
                              skewness_id_interval_variances, kurtosis_req_to_res_time]
 
-        self.id_point_object = IDPoint(time_ms, is_injected, mean_id_interval, variance_id_frequency,
+        self.id_point_object = IDPoint(time_ms, class_label, mean_id_interval, variance_id_frequency,
                                        num_id_transitions,
                                        num_ids, num_msgs, mean_id_intervals_variance, mean_data_bit_count,
                                        variance_data_bit_count,

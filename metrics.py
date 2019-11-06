@@ -1,8 +1,9 @@
+import math
 import datapoint
 from operator import add
 
 
-class Metrics():
+class Metrics:
     precision: float
     recall: float
     tnr: float
@@ -44,7 +45,7 @@ class Metrics():
         return metric
 
 
-class Result():
+class Result:
     period_ms: int
     stride_ms: int
     model: str
@@ -71,6 +72,20 @@ class Result():
 
 def filter_results(results, periods=None, strides=None, models=None,
                    imp_splits=None, dos_types=None, parameter_types=None, subsets=None):
+    """
+    Creates a list of filtered results from the specified list.
+
+    :param results: a list of Result objects.
+    :param periods: a list of window sizes (int ms).
+    :param strides: a list of step-sizes (int ms).
+    :param models: a list of model labels ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
+    :param imp_splits: a list of flags indicating whether the dataset used had split impersonation labels.
+    :param dos_types: a list of DoS type labels ('modified', 'original')
+    :param parameter_types: a list of flags indicating whether the model baseline was used
+    :param subsets: a list of feature label lists, indicating the acceptable subsets used [[**labels**],..]
+    :return: returns a new list containing the filtered results.
+    """
+
     kept_results = []
 
     for result in results:
@@ -102,52 +117,63 @@ def print_metrics(metrics):
         print(line)
 
 
-def get_metrics(y_test, y_predict):
-    """returns a dictionary of metrics of the form:
-        - {'**class**': (precision, recall, tnr, fpr, fnr, balanced_accuracy, f1)}
-    Parameters are:
-        - y_test:    a list of actual class labels
-        - y_predict: a list of predicted class labels"""
+def get_metrics(y_actual, y_predict):
+    """Returns a dictionary of metrics of the form
+    {'**class**': (precision, recall, tnr, fpr, fnr, balanced_accuracy, f1)}.
 
-    if len(y_test) != len(y_predict):
+    :param y_actual: a list of actual class labels.
+    :param y_predict: a list of predicted class labels.
+    :return: a dictionary of Metrics objects.
+    """
+
+    if len(y_actual) != len(y_predict):
         raise IndexError()
 
+    # Setup initial counters of true positives, false positives, true negatives, false negatives
     class_counters = {
         'normal': [0, 0, 0, 0],
         'dos': [0, 0, 0, 0],
         'fuzzy': [0, 0, 0, 0],
         'impersonation': [0, 0, 0, 0]}
 
-    for i in range(len(y_test)):
-        if y_test[i] == y_predict[i]:
-            __increment_equal(y_test[i], class_counters)
+    sample_sizes = {'normal': 0, 'dos': 0, 'fuzzy': 0, 'impersonation': 0}
+
+    # For each pair of (actual label, predicted label), increment counters based on difference/equality
+    for i in range(len(y_actual)):
+        sample_sizes[y_actual[i]] += 1
+
+        if y_actual[i] == y_predict[i]:
+            __increment_equal(y_actual[i], class_counters)
         else:
-            __increment_not_equal(y_test[i], y_predict[i], class_counters)
+            __increment_not_equal(y_actual[i], y_predict[i], class_counters)
 
     metrics = {}
 
+    # For each class, use corresponding counters to calculate scoring metrics
     for key in class_counters.keys():
         counts = class_counters[key]
         metrics[key] = Metrics(*__get_metrics_tuple(counts[0], counts[1], counts[2], counts[3]))
 
-    metrics['total'] = Metrics(*__get_macro_tuple(metrics))
+    # Calculate overall score as a weighted average of the
+    metrics['total'] = Metrics(*__get_weighted_metrics_tuple(metrics, sample_sizes))
 
     return metrics
 
 
 def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_time=False, is_test=False):
-    """returns the file path and directory path associated with the specified parameters.
-    Parameters are:
-        - period_ms:  window size (int ms)
-        - stride_ms:  stride size (int ms)
-        - imp_split:  the impersonation type (True, False)
-        - dos_type:   the DoS type ('modified', 'original')
-        - model:      model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
-        - parameters: model parameter space {'**parameter**': [**values**]}
-        - subset:     a list of labels of features to be used
-        - is_time:    whether the path is related to scores or durations (True, False)
-        - is_test:    a flag indicating whether the test or validation set is used
-        """
+    """Returns the file path and directory path associated with the specified parameters.
+
+    :param period_ms: window size (int ms).
+    :param stride_ms: stride size (int ms).
+    :param imp_split: the impersonation type (True, False).
+    :param dos_type: the DoS type ('modified', 'original').
+    :param model: model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm').
+    :param baseline: a flag indicating whether baseline parameters were used.
+    :param subset: a list of labels of features that were used.
+    :param is_time: a flag indicating whether the path is related to scores or durations (True, False).
+    :param is_test: a flag indicating whether the test or validation set is used.
+    :return: the file and directory paths.
+    """
 
     imp_name = "imp_split" if imp_split else "imp_full"
     baseline_name = "baseline" if baseline else "selected_parameters"
@@ -165,8 +191,8 @@ def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline,
     return dir + name + ".csv", dir
 
 
-# updates specified class counters dictionary based on specified label
 def __increment_equal(label, class_counters):
+    # Updates specified class counters dictionary based on specified label
     class_counters[label][0] += 1
 
     for key in class_counters.keys():
@@ -174,8 +200,8 @@ def __increment_equal(label, class_counters):
             class_counters[key][2] += 1
 
 
-# updates specified class counters dictionary based on actual and predicted labels, which are different
 def __increment_not_equal(label, prediction, class_counters):
+    # Updates specified class counters dictionary based on actual and predicted labels, which are different
     class_counters[label][3] += 1
     class_counters[prediction][1] += 1
 
@@ -184,8 +210,8 @@ def __increment_not_equal(label, prediction, class_counters):
             class_counters[key][2] += 1
 
 
-# returns a list of evaluation metrics based on specified classification counters
 def __get_metrics_tuple(tp, fp, tn, fn):
+    # Returns a list of evaluation metrics based on specified classification counters
     precision = 0.0 if tp + fp == 0 else tp / (tp + fp)
     recall = 1 if tp + fn == 0 else tp / (tp + fn)
     tnr = tn / (tn + fp)
@@ -197,13 +223,14 @@ def __get_metrics_tuple(tp, fp, tn, fn):
     return precision, recall, tnr, fpr, fnr, balanced_accuracy, f1
 
 
-# finds the macro average of class scores in specified metric dictionary
-def __get_macro_tuple(metrics):
+def __get_weighted_metrics_tuple(metrics, sample_sizes):
+    # Finds the weighted average of class scores in specified metric dictionary
     micros = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
+    # For each class, add weighted metrics to the list of summed metrics (micros)
     for label in metrics.keys():
-        micros = list(map(add, micros, metrics[label]))
+        micros = list(map(add, micros, [sample_sizes[label] * metric for metric in metrics[label]]))
 
-    length = len(metrics.keys())
+    length = math.fsum(sample_sizes.values())
 
     return [metric / length for metric in micros]

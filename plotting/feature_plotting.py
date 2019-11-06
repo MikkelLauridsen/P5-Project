@@ -18,29 +18,29 @@ def plot_all_features(datapoints):
     time_ms = [point.time_ms for point in datapoints]
 
     # Extract features from DataPoints
-    is_injected = [point.is_injected for point in datapoints]
+    class_label = [point.class_label for point in datapoints]
 
     for attr in datapoint.datapoint_attributes:
         feature_list = [getattr(point, attr) for point in datapoints]
         # Get attribute description if available
         feature_description = datapoint.datapoint_attribute_descriptions.get(attr, attr)
 
-        if attr == "time_ms" or attr == "is_injected":
+        if attr == "time_ms" or attr == "class_label":
             pass
 
         # Special case for mean_id_intervals_variance and req_to_res_time_variance, to manually set axis limits
         elif attr == "mean_id_intervals_variance" or attr == "req_to_res_time_variance":
-            setup_scatter(time_ms, feature_list, "Time", feature_description, is_injected, False)
+            setup_scatter(time_ms, feature_list, "Time", feature_description, class_label, False)
             plt.ylim(top=0.0005, bottom=-0.00025)  # Manually set axis limits
             plt.show()
         else:
-            setup_scatter(time_ms, feature_list, "Time", feature_description, is_injected)
+            setup_scatter(time_ms, feature_list, "Time", feature_description, class_label)
 
 
 # Helper function for setting up a scatter plot.
 # The function does not call plt.show() in order to allow further configuration afterwards.
-def setup_scatter(xaxis, yaxis, xlabel, ylabel, is_injected, show=True):
-    colors = [class_to_color(cls) for cls in is_injected]
+def setup_scatter(xaxis, yaxis, xlabel, ylabel, class_label, show=True):
+    colors = [class_to_color(cls) for cls in class_label]
     legends = [(class_to_color("normal"), "attack free state"),
                (class_to_color("dos"), "DoS attack state"),
                (class_to_color("fuzzy"), "Fuzzy attack state"),
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     training_points, test_points, _ = ds.load_or_create_datasets(
         period_ms=100,
         stride_ms=100,
-        impersonation_split=False,
+        imp_split=False,
         dos_type='modified'
     )
 
