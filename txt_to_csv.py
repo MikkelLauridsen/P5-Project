@@ -31,7 +31,7 @@ def __load_data(filepath, pattern, start=0):
     print(f"Started reading from {filepath}")
     data = []
     with open(filepath, "r") as fileobject:
-        # Skipping the header if necessary
+        # Skipping the header if necessary.
         if start == 1:
             next(fileobject)
 
@@ -59,7 +59,7 @@ def txt_to_csv(start_dir, target_dir):
     :param target_dir: The directory that is going to contain the newly generated csv files.
     :return:
     """
-    # Creating the directory if it does not exist
+    # Creating the directory if it does not exist.
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
