@@ -13,12 +13,13 @@ def find_mlp_parameters():
 
     X, y = models.model_utility.get_standard_feature_split()
 
-    parameter_space = [{'activation': ['logistic', 'relu'],
-                        'solver': ['lbfgs', 'sgd', 'adam'],
-                        'alpha': [1.e-03, 1.e-04, 1.e-05, 1.e-06],
-                        'learning_rate': ['constant', 'adaptive'],
-                        'hidden_layer_sizes': [(12, 3), (14, 3), (16, 3), (12, 4), (14, 4), (16, 4)],
-                        'max_iter': [200, 400, 600]}]
+    parameter_space = [
+        {'activation': ['logistic', 'relu'],
+         'solver': ['lbfgs', 'sgd', 'adam'],
+         'alpha': [1.e-03, 1.e-04, 1.e-05, 1.e-06],
+         'learning_rate': ['constant', 'adaptive'],
+         'hidden_layer_sizes': [(12, 3), (14, 3), (16, 3), (12, 4), (14, 4), (16, 4)],
+         'max_iter': [200, 400, 600]}]
 
     classifier = GridSearchCV(mlp(), parameter_space, cv=5, n_jobs=-1, scoring="f1_macro", verbose=10).fit(X, y)
     best_parameters = classifier.best_params_

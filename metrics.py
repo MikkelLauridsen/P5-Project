@@ -133,7 +133,7 @@ def get_metrics(y_test, y_predict):
     return metrics
 
 
-def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_time=False):
+def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_time=False, is_test=False):
     """returns the file path and directory path associated with the specified parameters.
     Parameters are:
         - period_ms:  window size (int ms)
@@ -143,12 +143,15 @@ def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline,
         - model:      model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
         - parameters: model parameter space {'**parameter**': [**values**]}
         - subset:     a list of labels of features to be used
-        - is_time:    whether the path is related to scores or durations (True, False)"""
+        - is_time:    whether the path is related to scores or durations (True, False)
+        - is_test:    a flag indicating whether the test or validation set is used
+        """
 
     imp_name = "imp_split" if imp_split else "imp_full"
     baseline_name = "baseline" if baseline else "selected_parameters"
+    result_type = "test" if is_test else "validation"
     metric_type = "score" if is_time is False else "time"
-    name = f"mixed_{metric_type}_{period_ms}ms_{stride_ms}ms"
+    name = f"mixed_{result_type}_{metric_type}_{period_ms}ms_{stride_ms}ms"
 
     labels = list(datapoint.datapoint_attributes)[2:]
 
