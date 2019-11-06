@@ -8,8 +8,9 @@ import re
 import pandas as pd
 
 
-# This function uses regular expressions to match the contents of a message to its specific parts.
 def __parse_message(message_str, pattern):
+    # This function uses regular expressions to match the contents of a message to its specific parts.
+
     m = re.match(pattern, message_str)
     timestamp = float(m.group("timestamp"))
     id = int(m.group("id"), 16)
@@ -24,8 +25,9 @@ def __parse_message(message_str, pattern):
     return [timestamp, id, rtr, dlc, data]
 
 
-# Takes a filepath and a pattern for parsing rows and returns a pandas dataframe containing the contents of the file.
 def __load_data(filepath, pattern, start=0):
+    # Takes a filepath and a pattern for parsing rows, returns a pandas data frame containing the contents of the file.
+
     print(f"Started reading from {filepath}")
     data = []
     with open(filepath, "r") as fileobject:
@@ -50,7 +52,13 @@ pattern2 = r"(?P<id>[0-9a-f]*)	(?P<dlc>[0-8])	(?P<data>(([0-9a-f]*)( )?)*)		( )*
 
 
 def txt_to_csv(start_dir, target_dir):
-    """Taking all txt files in the start dir, converting them to csv files and putting them in the target dir."""
+    """
+    Taking all txt files in the start dir, converting them to csv files and putting them in the target dir.
+
+    :param start_dir: The directory containing the txt files that should be converted to csv files.
+    :param target_dir: The directory that is going to contain the newly generated csv files.
+    :return:
+    """
     # Creating the directory if it does not exist
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
@@ -63,7 +71,7 @@ def txt_to_csv(start_dir, target_dir):
         else:
             text_file = __load_data(path, pattern1)
 
-        # Converting the dataframe into a csv file and placing it in the target dir.
+        # Converting the data frame into a csv file and placing it in the target dir.
         text_file.to_csv(f"{path.replace(start_dir, target_dir)[:-3]}csv",
                          header=["timestamp", "id", "rtr", "dlc", "data"], index=False)
 
