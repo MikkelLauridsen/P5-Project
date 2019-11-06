@@ -1,25 +1,29 @@
+"""Functions for generating results by running the models with different settings."""
+import concurrent.futures as conf
 import os
 import time
-import concurrent.futures as conf
+
 import models.model_utility as utility
-from metrics import get_metrics, get_metrics_path, filter_results
 from datapoint import datapoint_attributes
-from datareader_csv import load_metrics, load_all_results
+from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
+from metrics import get_metrics, get_metrics_path
 
 
 def generate_results(windows=[100], strides=[100], imp_splits=[True],
                      dos_types=['modified'], models={'mlp': {}}, eliminations=0):
-    """Generates and saves metrics for all combinations of specified parameters.
-    If metrics for a given combination already exist, this combination is skipped.
-    Parameter options are:
-        - windows:      a list of feature window sizes (int ms)
-        - strides:      a list of stride sizes (int ms)
-        - imp_splits:   a list of impersonation type options (True, False)
-        - dos_types:    a list of DoS type options ('modified', 'original')
-        - models:       a dictionary of model names to parameter spaces ({'**model**': {'**parameter**': [**values**]}}
-        - eliminations: the number of features eliminated in step-wise elimination"""
+    """
+    Generates and saves metrics for all combinations of specified parameters. If metrics for a given combination
+    already exist, this combination is skipped.
 
+    :param windows: A list of feature window sizes (int ms)
+    :param strides:   A list of stride sizes (int ms)
+    :param imp_splits:   A list of impersonation type options (True, False)
+    :param dos_types:    A list of DoS type options ('modified', 'original')
+    :param models:       A dictionary of model names to parameter spaces ({'**model**': {'**parameter**': [**values**]}}
+    :param eliminations: The number of features eliminated in step-wise elimination
+    :return:
+    """
     # calculate number of jobs to be conducted
     inner_loop_size = __get_stepwise_size(eliminations) * len(models) if eliminations > 0 else len(models)
     job_count = len(windows) * len(strides) * len(imp_splits) * len(dos_types) * inner_loop_size
@@ -64,8 +68,9 @@ def generate_results(windows=[100], strides=[100], imp_splits=[True],
                     current_job += inner_loop_size
 
 
-# returns the number of feature subsets to be tested
 def __get_stepwise_size(max_features):
+    # returns the number of feature subsets to be tested
+
     n = len(list(datapoint_attributes)[2:])
     size = 0
 
@@ -78,20 +83,23 @@ def __get_stepwise_size(max_features):
 
 def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test, feature_time_dict,
                             period_ms, stride_ms, imp_split, dos_type, subset):
-    """runs specified model with specified parameters on specified dataset and saves the result to file.
-    Parameters are:
-        - model:             model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
-        - parameters:        model parameter space {'**parameter**': [**values**]}
-        - X_train:           training set feature values
-        - y_train:           training set class labels
-        - X_test:            test set feature values
-        - y_test:            test set class labels
-        - feature_time_dict: a dictionary of {'**feature**': **time_ns**}
-        - period_ms:         window size (int ms)
-        - stride_ms:         stride size (int ms)
-        - imp_split:         the impersonation type (True, False)
-        - dos_type:          the DoS type ('modified', 'original')
-        - subset:            a list of labels of features to be used"""
+    """
+    Runs specified model with specified parameters on specified dataset and saves the result to file.
+
+    :param model: Model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
+    :param parameters: Model parameter space {'**parameter**': [**values**]}
+    :param X_train: Training set feature values
+    :param y_train: Training set class labels
+    :param X_test: Test set feature values
+    :param y_test: Test set class labels
+    :param feature_time_dict: A dictionary of {'**feature**': **time_ns**}
+    :param period_ms: Window size (int ms)
+    :param stride_ms: Stride size (int ms)
+    :param imp_split: The impersonation type (True, False)
+    :param dos_type: The DoS type ('modified', 'original')
+    :param subset: A list of labels of features to be used
+    :return:
+    """
 
     path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters == {}, subset)
 
@@ -134,9 +142,9 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
     return metrics
 
 
-# runs step-wise elimination on specified parameters and saves the results of each subset model combination
 def __save_stepwise_elimination(models, X_train, y_train, X_test, y_test, max_features,
                                 feature_time_dict, period_ms, stride_ms, imp_split, dos_type):
+    # runs step-wise elimination on specified parameters and saves the results of each subset model combination
 
     # get feature labels
     labels = (list(datapoint_attributes)[2:]).copy()
@@ -174,9 +182,10 @@ def __save_stepwise_elimination(models, X_train, y_train, X_test, y_test, max_fe
         del labels[labels.index(best_label)]
 
 
-# returns a modified copy of input list of feature values,
-# which only contains values of features in the specified subset
 def __create_feature_subset(X, subset):
+    # returns a modified copy of input list of feature values,
+    # which only contains values of features in the specified subset
+
     indices = [list(datapoint_attributes)[2:].index(f) for f in subset]
     length = len(list(datapoint_attributes)[2:])
 
