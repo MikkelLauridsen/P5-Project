@@ -1,4 +1,5 @@
-"""The Message class describing an object containing a single CAN bus message.
+"""
+The Message class describing an object containing a single CAN bus message.
 
 Functions:
 parse_csv_row: Parses a row from a csv file into a corresponding message object.
@@ -7,8 +8,8 @@ get_csv_row: Returns a list containing every attribute in the given Message obje
 from recordclass import dataobject
 
 
-# Class representing the messages in the .csv file(s)
 class Message(dataobject):
+    """Class representing a single CAN bus message."""
     timestamp: float
     id: int
     rtr: int
@@ -22,8 +23,8 @@ class Message(dataobject):
 message_attributes = Message.__annotations__.keys()
 
 
-# Function to read single line FROM .csv file(s) and return a Message dataobject.
 def parse_csv_row(row):
+    """Parses a single row from a csv file and returns the corresponding Message object."""
     timestamp = float(row[0])
     id = int(row[1])
     rtr = int(row[2])
@@ -40,6 +41,7 @@ def parse_csv_row(row):
 
 
 def get_csv_row(message):
+    """Creates a list of the given messages components and returns it to facilitate csv file creation."""
     row = [
         "%.6f" % message.timestamp,
         message.id,

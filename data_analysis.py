@@ -1,4 +1,5 @@
-"""Running this file analyses certain aspects of the data to allow for decision making through increased information.
+"""
+Running this file analyses certain aspects of the data to allow for decision making through increased information.
 
 Aspects being analysed:
 Mean time between normal messages: The average time between normal message pairs (not remote frame or response).
@@ -9,7 +10,13 @@ import datareader_csv
 
 
 def get_mean_time_between_normal_messages(messages, remote_frame_and_response_indices):
-    """Returns the mean time between normal message neighbours, ignoring remote frames and remote frame responses."""
+    """
+    Finds the mean time between normal message neighbours, ignoring remote frames and remote frame responses.
+
+    :param messages: A list of CAN bus Message objects.
+    :param remote_frame_and_response_indices: A list of indices specifying where to find remote frames and responses.
+    :return: The mean time between normal message pairs.
+    """
     # The times between two normal messages.
     times_between_messages = []
 
@@ -25,7 +32,13 @@ def get_mean_time_between_normal_messages(messages, remote_frame_and_response_in
 
 
 def get_mean_time_between_split_messages(messages, remote_frame_and_response_indices):
-    """Returns the mean time between message pairs that have a remote frame or remote frame response between them."""
+    """
+    Returns the mean time between message pairs that have a remote frame or remote frame response between them.
+
+    :param messages: A list of CAN bus Message objects.
+    :param remote_frame_and_response_indices: A list of indices specifying where to find remote frames and responses.
+    :return: 0 if there are no remote frames and responses and the mean of split normal message pairs if there is.
+    """
     times_between_messages = []
 
     # Using the list of non-normal indices to find all neighbours of remote frames and remote frame responses.
@@ -36,6 +49,8 @@ def get_mean_time_between_split_messages(messages, remote_frame_and_response_ind
 
 
 def __get_remote_frame_and_response_indices(messages):
+    # Finding the indices of every remote frame and remote frame response in the given list of messages.
+
     latest_remote_frame = None
     latest_remote_frame_index = None
 
@@ -59,7 +74,12 @@ def __get_remote_frame_and_response_indices(messages):
 
 
 def analyze_messages(messages):
-    """Returns a dictionary where the keys are descriptions of the information in the values"""
+    """
+    Calls the information gathering functions in a centralized manner
+
+    :param messages: A list of CAN bus Message objects.
+    :return: A dictionary where the keys are descriptions of the information in the values
+    """
     remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
 
     information = {
@@ -73,7 +93,7 @@ def analyze_messages(messages):
 
 
 if __name__ == "__main__":
-    file_messages = datareader_csv.load_attack_free1()
+    file_messages = datareader_csv.load_messages("data/csv/Attack_free_dataset.csv")
 
     print(analyze_messages(file_messages))
 
