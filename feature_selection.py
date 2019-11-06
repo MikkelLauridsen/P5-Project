@@ -9,7 +9,7 @@ if __name__ == '__main__':
     period_ms = 100
     stride_ms = 100
 
-    datapoints1, datapoints2, _ = load_or_create_datasets(impersonation_split=False, dos_type='modified')
+    datapoints1, datapoints2, _ = load_or_create_datasets(imp_split=False, dos_type='modified')
 
     X_1, y = split_feature_label(datapoints1)
     X_2, _ = split_feature_label(datapoints2)

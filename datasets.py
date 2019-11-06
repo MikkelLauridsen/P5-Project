@@ -666,12 +666,12 @@ def get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, set_ty
 
 # Returns the training and validation sets associated with input argument combination.
 # If the datasets do not exist, they are created and saved in the process.
-def load_or_create_datasets(period_ms=100, stride_ms=100, impersonation_split=True,
+def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True,
                             dos_type='original', force_create=False, verbose=False):
 
-    training_name, _ = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, 'training')
-    validation_name, _ = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, 'validation')
-    time_path, dir = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, 'validation_time')
+    training_name, _ = get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'training')
+    validation_name, _ = get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'validation')
+    time_path, dir = get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'validation_time')
 
     # load the datasets if they exist.
     if os.path.exists(training_name) and os.path.exists(validation_name) and not force_create:
@@ -682,11 +682,11 @@ def load_or_create_datasets(period_ms=100, stride_ms=100, impersonation_split=Tr
         # create and save the datasets otherwise.
         training_set, validation_set, feature_durations = get_mixed_training_validation(
             period_ms, stride_ms,
-            impersonation_split, dos_type,
+            imp_split, dos_type,
             verbose=verbose)
 
-        write_datapoints_csv(training_set, period_ms, stride_ms, impersonation_split, dos_type, 'training')
-        write_datapoints_csv(validation_set, period_ms, stride_ms, impersonation_split, dos_type, 'validation')
+        write_datapoints_csv(training_set, period_ms, stride_ms, imp_split, dos_type, 'training')
+        write_datapoints_csv(validation_set, period_ms, stride_ms, imp_split, dos_type, 'validation')
         datawriter_csv.save_feature_durations(feature_durations, time_path, dir)
 
     return training_set, validation_set, feature_durations
