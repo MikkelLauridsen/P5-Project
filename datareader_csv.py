@@ -125,8 +125,8 @@ def load_fuzzy(start=0, limit=None, verbose=False):
     return load_messages("data/manipulated/Fuzzy_attack_dataset.csv", start, limit, verbose)
 
 
-def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset):
-    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
+def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=False):
+    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=is_test)
     metrics = {}
 
     with open(path, newline="") as file:
@@ -140,8 +140,8 @@ def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, sub
     return metrics
 
 
-def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset):
-    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, True)
+def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=False):
+    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, True, is_test)
 
     with open(path, newline="") as file:
         reader = csv.reader(file, delimiter=",")
@@ -150,7 +150,7 @@ def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subse
 
         row = next(reader, None)
 
-    return {'model_time': row[0], 'feature_time': row[1], 'total_time': row[2]}
+    return {'model_time': float(row[0]), 'feature_time': float(row[1]), 'total_time': float(row[2])}
 
 
 def load_result(path):
@@ -168,11 +168,12 @@ def load_result(path):
 
     file_split = substrings[begin + 5].split("_")[2:]
 
-    period_ms = int((file_split[0])[:-2])
-    stride_ms = int((file_split[1])[:-2])
+    is_test = file_split[0] == 'test'
+    period_ms = int((file_split[1])[:-2])
+    stride_ms = int((file_split[2])[:-2])
     subset = []
 
-    for substring in file_split[2:]:
+    for substring in file_split[3:]:
         index = int(substring)
 
         subset.append(labels[index])
@@ -180,7 +181,7 @@ def load_result(path):
     metrics = load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
     times = load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
 
-    return Result(period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, metrics, times)
+    return Result(period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, is_test, metrics, times)
 
 
 def load_results(directory):

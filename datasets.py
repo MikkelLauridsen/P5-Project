@@ -11,7 +11,6 @@ import time
 import functools as ft
 import concurrent.futures as conf
 from collections import deque
-from sklearn.model_selection import train_test_split
 import datawriter_csv
 
 
@@ -419,8 +418,8 @@ def __windows_to_datapoints(windows, is_injected, name):
 
 # Writes a list of DataPoints to file.
 # The file name and directory depends on the parameters.
-def write_datapoints_csv(datapoints, period_ms, shuffle, stride_ms, impersonation_split, dos_type, set_type):
-    csv_path, dir = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, set_type)
+def write_datapoints_csv(datapoints, period_ms, stride_ms, impersonation_split, dos_type, set_type):
+    csv_path, dir = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, set_type)
 
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -458,21 +457,90 @@ def neutralize_offset(messages):
     return messages
 
 
-# Constructs a list of DataPoints based on parameters.
-# 'period_ms' determines the duration of the time window used to create each DataPoint.
-# 'stride_ms' determines how little of the previous time window may be used to create the next DataPoint.
-# 'shuffle' dictates whether the list of DataPoints is to be randomized.
-# 'impersonation_split' dictates whether the raw impersonation datasets,
-# should be separated in attack free and attack affected data.
-# 'dos_type' determines which DoS dataset should be used: 'original', 'modified'.
-#
-# Splits the list of DataPoints into two lists:
-#   - a training set containing 80% of points.
-#   - a test set containing 20% of points.
-#
-# If this function is to be used from another file,
-# all code must be wrapped in an __name__ == '__main__' check if used on a Windows system.
-def get_mixed_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation_split=True, dos_type='original', verbose=False):
+def __percentage_subset(collection, init, end):
+    length = len(collection)
+    init_index = math.floor(length * (init / 100.0))
+    end_index = math.floor(length * (end / 100.0))
+
+
+    return collection[init_index:end_index]
+
+
+def get_mixed_test(period_ms=100, stride_ms=100, impersonation_split=True, dos_type='original', verbose=False):
+    """Constructs a list of test set DataPoints based on parameters.
+    :returns
+        a list of DataPoints.
+        a dictionary of feature durations.
+
+    :parameter
+        'period_ms' determines the duration of the time window used to create each DataPoint.
+        'stride_ms' determines how little of the previous time window may be used to create the next DataPoint.
+        'impersonation_split' dictates whether the raw impersonation datasets,
+            should be separated in attack free and attack affected data.
+        'dos_type' determines which DoS dataset should be used: 'original', 'modified'.
+
+    Constructed from 15% of each raw dataset.
+    If this function is to be used from another file,
+    all code must be wrapped in an __name__ == '__main__' check if used on a Windows system.
+    """
+
+    # load messages and remove time offsets
+    attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1(verbose=verbose))
+    attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2(verbose=verbose))
+    fuzzy_messages = neutralize_offset(datareader_csv.load_fuzzy(verbose=verbose))
+    imp_messages1 = neutralize_offset(datareader_csv.load_impersonation_1(verbose=verbose))
+    imp_messages2 = neutralize_offset(datareader_csv.load_impersonation_2(verbose=verbose))
+    imp_messages3 = neutralize_offset(datareader_csv.load_impersonation_3(verbose=verbose))
+    dos_messages = neutralize_offset(datareader_csv.load_dos(verbose=verbose) if dos_type == 'original' else
+                                     datareader_csv.load_modified_dos(verbose=verbose))
+
+    raw_test_msgs = [
+        (__percentage_subset(attack_free_messages1, 85, 100), "normal", "attack_free_1"),
+        (__percentage_subset(attack_free_messages2, 85, 100), "normal", "attack_free_2"),
+        (__percentage_subset(dos_messages, 85, 100), "dos", "dos"),
+        (__percentage_subset(fuzzy_messages, 85, 100), "fuzzy", "fuzzy")]
+
+    if impersonation_split:
+        raw_test_msgs += [
+            (__percentage_subset(imp_messages1[0:517000], 85, 100), "normal", "impersonation_normal_1"),
+            (__percentage_subset(imp_messages1[517000:], 85, 100), "impersonation", "impersonation_attack_1"),
+            (__percentage_subset(imp_messages2[0:330000], 85, 100), "normal", "impersonation_normal_2"),
+            (__percentage_subset(imp_messages2[330000:], 85, 100), "impersonation", "impersonation_attack_2"),
+            (__percentage_subset(imp_messages3[0:534000], 85, 100), "normal", "impersonation_normal_3"),
+            (__percentage_subset(imp_messages3[534000:], 85, 100), "impersonation", "impersonation_attack_3")]
+    else:
+        raw_test_msgs += [
+            (__percentage_subset(imp_messages1, 85, 100), "impersonation", "impersonation_1"),
+            (__percentage_subset(imp_messages2, 85, 100), "impersonation", "impersonation_2"),
+            (__percentage_subset(imp_messages3, 85, 100), "impersonation", "impersonation_3")]
+
+    test_sets, feature_durations_list = calculate_datapoints_parallelly(raw_test_msgs, period_ms, stride_ms)
+    test_points = collapse_datasets(test_sets)
+    feature_durations = get_feature_durations(feature_durations_list, test_points)
+
+    return test_points, feature_durations
+
+
+def get_mixed_training_validation(period_ms=100, stride_ms=100, impersonation_split=True,
+                                  dos_type='original', verbose=False):
+    """Constructs a training and validation set of DataPoints based on parameters.
+        :returns
+            a list of DataPoints corresponding to the training data.
+            a list of DataPoints corresponding to the validation data.
+            a dictionary of feature durations.
+
+        :parameter
+            'period_ms' determines the duration of the time window used to create each DataPoint.
+            'stride_ms' determines how little of the previous time window may be used to create the next DataPoint.
+            'impersonation_split' dictates whether the raw impersonation datasets,
+                should be separated in attack free and attack affected data.
+            'dos_type' determines which DoS dataset should be used: 'original', 'modified'.
+
+        Constructed from 15% of each raw dataset.
+        If this function is to be used from another file,
+        all code must be wrapped in an __name__ == '__main__' check if used on a Windows system.
+    """
+
     # load messages and remove time offsets
     attack_free_messages1 = neutralize_offset(datareader_csv.load_attack_free1(verbose=verbose))
     attack_free_messages2 = neutralize_offset(datareader_csv.load_attack_free2(verbose=verbose))
@@ -484,53 +552,55 @@ def get_mixed_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation
                                      datareader_csv.load_modified_dos(verbose=verbose))
 
     # label raw datasets
-    raw_msgs = [
-        (attack_free_messages1, "normal", "attack_free_1"),
-        (attack_free_messages2, "normal", "attack_free_2"),
-        (dos_messages, "dos", "dos"),
-        (fuzzy_messages, "fuzzy", "fuzzy")]
+    raw_training_msgs = [
+        (__percentage_subset(attack_free_messages1, 0, 70), "normal", "attack_free_1"),
+        (__percentage_subset(attack_free_messages2, 0, 70), "normal", "attack_free_2"),
+        (__percentage_subset(dos_messages, 0, 70), "dos", "dos"),
+        (__percentage_subset(fuzzy_messages, 0, 70), "fuzzy", "fuzzy")]
+
+    raw_validation_msgs = [
+        (__percentage_subset(attack_free_messages1, 70, 85), "normal", "attack_free_1"),
+        (__percentage_subset(attack_free_messages2, 70, 85), "normal", "attack_free_2"),
+        (__percentage_subset(dos_messages, 70, 85), "dos", "dos"),
+        (__percentage_subset(fuzzy_messages, 70, 85), "fuzzy", "fuzzy")]
 
     if impersonation_split:
-        raw_msgs += [
-            (imp_messages1[0:517000], "normal", "impersonation_normal_1"),
-            (imp_messages1[517000:], "impersonation", "impersonation_attack_1"),
-            (imp_messages2[0:330000], "normal", "impersonation_normal_2"),
-            (imp_messages2[330000:], "impersonation", "impersonation_attack_2"),
-            (imp_messages3[0:534000], "normal", "impersonation_normal_3"),
-            (imp_messages3[534000:], "impersonation", "impersonation_attack_3")]
+        raw_training_msgs += [
+            (__percentage_subset(imp_messages1[0:517000], 0, 70), "normal", "impersonation_normal_1"),
+            (__percentage_subset(imp_messages1[517000:], 0, 70), "impersonation", "impersonation_attack_1"),
+            (__percentage_subset(imp_messages2[0:330000], 0, 70), "normal", "impersonation_normal_2"),
+            (__percentage_subset(imp_messages2[330000:], 0, 70), "impersonation", "impersonation_attack_2"),
+            (__percentage_subset(imp_messages3[0:534000], 0, 70), "normal", "impersonation_normal_3"),
+            (__percentage_subset(imp_messages3[534000:], 0, 70), "impersonation", "impersonation_attack_3")]
+
+        raw_validation_msgs += [
+            (__percentage_subset(imp_messages1[0:517000], 70, 85), "normal", "impersonation_normal_1"),
+            (__percentage_subset(imp_messages1[517000:], 70, 85), "impersonation", "impersonation_attack_1"),
+            (__percentage_subset(imp_messages2[0:330000], 70, 85), "normal", "impersonation_normal_2"),
+            (__percentage_subset(imp_messages2[330000:], 70, 85), "impersonation", "impersonation_attack_2"),
+            (__percentage_subset(imp_messages3[0:534000], 70, 85), "normal", "impersonation_normal_3"),
+            (__percentage_subset(imp_messages3[534000:], 70, 85), "impersonation", "impersonation_attack_3")]
     else:
-        raw_msgs += [
-            (imp_messages1, "impersonation", "impersonation_1"),
-            (imp_messages2, "impersonation", "impersonation_2"),
-            (imp_messages3, "impersonation", "impersonation_3")
-        ]
+        raw_training_msgs += [
+            (__percentage_subset(imp_messages1, 0, 70), "impersonation", "impersonation_1"),
+            (__percentage_subset(imp_messages2, 0, 70), "impersonation", "impersonation_2"),
+            (__percentage_subset(imp_messages3, 0, 70), "impersonation", "impersonation_3")]
 
-    datasets = []
-    feature_durations_list = []
+        raw_validation_msgs += [
+            (__percentage_subset(imp_messages1, 70, 85), "impersonation", "impersonation_1"),
+            (__percentage_subset(imp_messages2, 70, 85), "impersonation", "impersonation_2"),
+            (__percentage_subset(imp_messages3, 70, 85), "impersonation", "impersonation_3")]
 
-    # create DataPoints in parallel.
-    with conf.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(
-            messages_to_datapoints,
-            tup[0],
-            period_ms,
-            tup[1],
-            stride_ms,
-            tup[2]) for tup in raw_msgs}
+    training_sets, _ = calculate_datapoints_parallelly(raw_training_msgs, period_ms, stride_ms)
+    validation_sets, feature_durations_list = calculate_datapoints_parallelly(raw_validation_msgs, period_ms, stride_ms)
+    training_points = collapse_datasets(training_sets)
+    validation_points = collapse_datasets(validation_sets)
+    feature_durations = get_feature_durations(feature_durations_list, validation_points)
 
-        for future in conf.as_completed(futures):
-            datasets.append(future.result()[0])
-            feature_durations_list.append(future.result()[1])
+    return training_points, validation_points, feature_durations
 
-    offset = 0
-    points = []
 
-    # collapse resulting lists of DataPoints into a single list of continuous timestamps
-    for dataset in datasets:
-        time_low = dataset[0].time_ms
-        points += [offset_datapoint(point, offset - time_low) for point in dataset]
-        offset = points[len(points) - 1].time_ms
-
+def get_feature_durations(feature_durations_list, points):
     feature_durations = {}
 
     # Collapse resulting feature duration dicts into a single duration dict
@@ -542,10 +612,40 @@ def get_mixed_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation
         # Average feature duration
         feature_durations[attr] /= len(points)
 
-    # split the list of DataPoint into training (80%) and test (20%) sets
-    training, test = train_test_split(points, shuffle=shuffle, train_size=0.8, test_size=0.2, random_state=2019)
+    return feature_durations
 
-    return training, test, feature_durations
+
+def collapse_datasets(datasets):
+    offset = 0
+    points = []
+
+    # collapse resulting lists of DataPoints into a single list of continuous timestamps
+    for dataset in datasets:
+        time_low = dataset[0].time_ms
+        points += [offset_datapoint(point, offset - time_low) for point in dataset]
+        offset = points[len(points) - 1].time_ms
+
+    return points
+
+
+def calculate_datapoints_parallelly(raw_msgs, period_ms, stride_ms):
+    datasets = []
+    feature_durations = []
+
+    with conf.ProcessPoolExecutor() as executor:
+        futures = {executor.submit(
+            messages_to_datapoints,
+            tup[0],
+            period_ms,
+            tup[1],
+            stride_ms,
+            tup[2]) for tup in raw_msgs}
+
+        for future in conf.as_completed(futures):
+            datasets.append(future.result()[0])
+            feature_durations.append(future.result()[1])
+
+    return datasets, feature_durations
 
 
 # Increments the timestamp of input DataPoint by the input offset and returns the DataPoint
@@ -556,35 +656,37 @@ def offset_datapoint(point, offset):
 
 
 # Returns the file and directory paths associated with input argument combination.
-def get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, set_type):
+def get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, set_type):
     imp_name = "imp_split" if impersonation_split else "imp_full"
-    shuffle_name = "shuffled" if shuffle else "normal"
-    name = f"mixed_{set_type}_{period_ms}ms_{stride_ms}ms_{shuffle_name}"
+    name = f"mixed_{set_type}_{period_ms}ms_{stride_ms}ms"
     dir = f"data/feature/{imp_name}/{dos_type}/"
 
     return dir + name + ".csv", dir
 
 
-# Returns the training and test sets associated with input argument combination.
+# Returns the training and validation sets associated with input argument combination.
 # If the datasets do not exist, they are created and saved in the process.
-def load_or_create_datasets(period_ms=100, shuffle=True, stride_ms=100, impersonation_split=True,
+def load_or_create_datasets(period_ms=100, stride_ms=100, impersonation_split=True,
                             dos_type='original', force_create=False, verbose=False):
 
-    training_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'training')
-    test_name, _ = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'test')
-    time_path, dir = get_dataset_path(period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'time')
+    training_name, _ = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, 'training')
+    validation_name, _ = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, 'validation')
+    time_path, dir = get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, 'validation_time')
 
     # load the datasets if they exist.
-    if os.path.exists(training_name) and os.path.exists(test_name) and not force_create:
+    if os.path.exists(training_name) and os.path.exists(validation_name) and not force_create:
         training_set = datareader_csv.load_datapoints(training_name, verbose=verbose)
-        test_set = datareader_csv.load_datapoints(test_name, verbose=verbose)
+        validation_set = datareader_csv.load_datapoints(validation_name, verbose=verbose)
         feature_durations = datareader_csv.load_feature_durations(time_path)
     else:
         # create and save the datasets otherwise.
-        training_set, test_set, feature_durations = get_mixed_datasets(period_ms, shuffle, stride_ms, impersonation_split, dos_type, verbose=verbose)
-        write_datapoints_csv(training_set, period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'training')
-        write_datapoints_csv(test_set, period_ms, shuffle, stride_ms, impersonation_split, dos_type, 'test')
+        training_set, validation_set, feature_durations = get_mixed_training_validation(
+            period_ms, stride_ms,
+            impersonation_split, dos_type,
+            verbose=verbose)
+
+        write_datapoints_csv(training_set, period_ms, stride_ms, impersonation_split, dos_type, 'training')
+        write_datapoints_csv(validation_set, period_ms, stride_ms, impersonation_split, dos_type, 'validation')
         datawriter_csv.save_feature_durations(feature_durations, time_path, dir)
 
-    return training_set, test_set, feature_durations
-
+    return training_set, validation_set, feature_durations
