@@ -4,7 +4,7 @@ from sklearn.model_selection import GridSearchCV
 
 
 def svm(parameters):  # baseline parameters
-    return SVC(max_iter=1000).set_params(**parameters)
+    return SVC(max_iter=2000).set_params(**parameters)
 
 
 def svm_hyperparameter(X_train, y_train):
@@ -12,8 +12,7 @@ def svm_hyperparameter(X_train, y_train):
     # set up the parameter grid
     param_grid = [
         {'C': [0.01, 0.1, 1, 10, 50, 100], 'kernel': ['linear']},
-        {'C': [0.01, 0.1, 1, 10, 50, 100], 'gamma': [0.001, 0.0001], 'kernel': ['rbf', "poly", "sigmoid"]},
-    ]
+        {'C': [0.01, 0.1, 1, 10, 50, 100], 'gamma': [0.001, 0.0001], 'kernel': ['rbf', "poly", "sigmoid"]}]
 
     # Find hyperparameters
     grid_s = GridSearchCV(SVC(), param_grid, cv=5, scoring="f1_macro")

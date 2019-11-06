@@ -44,7 +44,7 @@ __models = {
 
 
 def __generate_results(windows, strides, imp_splits, dos_types, models):
-    run_models.generate_results(
+    run_models.generate_validation_results(
         windows=windows,
         strides=strides,
         imp_splits=imp_splits,

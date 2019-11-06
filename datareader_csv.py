@@ -98,8 +98,8 @@ def load_fuzzy(start=0, limit=None, verbose=False):
     return load_messages("data/manipulated/Fuzzy_attack_dataset.csv", start, limit, verbose)
 
 
-def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset):
-    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
+def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=False):
+    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=is_test)
     metrics = {}
 
     with open(path, newline="") as file:
@@ -113,8 +113,8 @@ def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, sub
     return metrics
 
 
-def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset):
-    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, True)
+def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=False):
+    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, True, is_test)
 
     with open(path, newline="") as file:
         reader = csv.reader(file, delimiter=",")

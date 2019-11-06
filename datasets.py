@@ -690,4 +690,3 @@ def load_or_create_datasets(period_ms=100, stride_ms=100, impersonation_split=Tr
         datawriter_csv.save_feature_durations(feature_durations, time_path, dir)
 
     return training_set, validation_set, feature_durations
-

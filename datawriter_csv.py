@@ -21,9 +21,10 @@ def save_feature_durations(feature_durations, path, dir):
             writer.writerow([feature, feature_durations[feature]])
 
 
-def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset):
+def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_test=False):
     """Saves specified metrics to a file with the name associated with the remaining parameters.
-    Parameters are:
+    :return:
+    :parameter:
         - metrics:    a dictionary of scores {'**class**': (precision, recall, tnr, fpr, fnr, balanced_accuracy, f1)}
         - period_ms:  the window size (int ms)
         - stride_ms:  the stride size (int ms)
@@ -31,9 +32,16 @@ def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, para
         - dos_type:   the DoS type ('modified', 'original')
         - model:      the model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
         - parameters: the model parameter space {'**parameter**': [**values**]}
-        - subset:     a list of labels of features to be used"""
+        - subset:     a list of labels of features to be used
+        - is_test:    a flag indicating whether the test or validation set is used
+    """
 
-    path, dir = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, parameters == {}, subset)
+    path, dir = get_metrics_path(
+        period_ms, stride_ms,
+        imp_split, dos_type,
+        model, parameters == {},
+        subset, is_test=is_test)
+
     labels = ['Precision', 'Recall', 'TNR', 'FPR', 'FNR', 'Balanced accuracy', 'F1-score']
 
     if not os.path.exists(dir):
@@ -47,8 +55,14 @@ def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, para
             writer.writerow([key] + list(iter(metrics[key])))
 
 
-def save_time(time_model, time_feature, period_ms, overlap_ms, imp_split, dos_type, model, parameters, subset):
-    path, dir = get_metrics_path(period_ms, overlap_ms, imp_split, dos_type, model, parameters == {}, subset, True)
+def save_time(time_model, time_feature, period_ms, overlap_ms,
+              imp_split, dos_type, model, parameters, subset, is_test=False):
+
+    path, dir = get_metrics_path(
+        period_ms, overlap_ms,
+        imp_split, dos_type,
+        model, parameters == {},
+        subset, True, is_test)
 
     if not os.path.exists(dir):
         os.makedirs(dir)

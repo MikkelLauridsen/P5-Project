@@ -1,5 +1,4 @@
 import datapoint
-import time
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from models.decision_trees import dt
@@ -36,41 +35,36 @@ def split_feature_label(datapoints):
     return X, y
 
 
-# Fitting a transformation on the training features and scaling both the training features and test features to it.
-def scale_features(X_training, X_test):
+# Fitting a transformation on the training features,
+# and scaling both the training features and validation features to it.
+def scale_features(X_training, X_validation):
     # fit the scaler
     scaler = StandardScaler()
     scaler.fit(X_training)
 
-    # Transforming the training and test features with the fitted scaler.
+    # Transforming the training and validation features with the fitted scaler.
     X_training = scaler.transform(X_training)
-    X_test = scaler.transform(X_test)
+    X_validation = scaler.transform(X_validation)
 
-    return X_training, X_test
+    return X_training, X_validation
 
 
-def find_best_hyperparameters(estimator, parameter_grid, X_train, y_train, X_test):
+def find_best_hyperparameters(estimator, parameter_grid, X_train, y_train):
     """Conducts a gridsearch of specified model with combinations of parameters in specified space.
-    Returns:
-        - y_predict: a list of predicted class labels
-        - time_ns:   the time spent predicting labels (int ns)
-    Parameters are:
+    :return:
+        - a dictionary of the best parameters {'**parameter**': **value**}
+    :parameter:
         - estimator:      the classifier
         - parameter_grid: the model's parameter space {'**parameter**': [**values**]}
         - X_train:        a list of training feature values
         - y_train:        a list of training class labels
-        - X_test:         a list of test feature values
     """
 
     # Creating the grid search that uses the parameter grid to find the best hyperparameters.
     grid_s = GridSearchCV(estimator, parameter_grid, cv=5, n_jobs=-1, scoring="f1_macro", verbose=10)
     grid_s.fit(X_train, y_train)
 
-    before = time.perf_counter_ns()
-    y_predict = grid_s.predict(X_test)
-    time_ns = (time.perf_counter_ns() - before) / len(X_test)
-
-    return y_predict, time_ns
+    return grid_s.best_params_
 
 
 def get_classifier(model, parameters, subset):
@@ -97,20 +91,45 @@ def get_classifier(model, parameters, subset):
         raise ValueError
 
 
-def get_dataset(period_ms, stride_ms, imp_split, dos_type):
-    """returns the scaled and split equivalent of the dataset associated with specified parameters:
-        - X_train:           feature values of the training set
-        - y_train:           class labels of the training set
-        - X_validation:            feature values of the test set
-        - y_validation:            class labels of the test set
+def get_scaled_test(period_ms, stride_ms, imp_split, dos_type):
+    """returns the scaled and split equivalent of the dataset associated with specified parameters.
+    :return:
+        - X_test:           feature values of the test set
+        - y_test:           class labels of the test set
         - feature_time_dict: a dictionary of {'**feature**': **time_ns**}
-
-    If it does not exist, it is created.
-    Parameters are:
+    :parameter:
         - period_ms: the window size (int ms)
         - stride_ms: the stride size (int ms)
         - imp_split: the impersonation type (True, False)
-        - dos_type:  the DoS type ('modified', 'original')"""
+        - dos_type:  the DoS type ('modified', 'original')
+
+    If it does not exist, it is created.
+    """
+    test_data, feature_time_dict = datasets.get_mixed_test(period_ms, stride_ms, imp_split, dos_type, verbose=True)
+    X_test, y_test = split_feature_label(test_data)
+
+    scaler = StandardScaler()
+    scaler.fit(X_test)
+
+    return scaler.transform(X_test), y_test, feature_time_dict
+
+
+def get_scaled_training_validation(period_ms, stride_ms, imp_split, dos_type):
+    """returns the scaled and split equivalent of the dataset associated with specified parameters.
+    :return:
+        - X_train:           feature values of the training set
+        - y_train:           class labels of the training set
+        - X_validation:            feature values of the validation set
+        - y_validation:            class labels of the validation set
+        - feature_time_dict: a dictionary of {'**feature**': **time_ns**}
+    :parameter:
+        - period_ms: the window size (int ms)
+        - stride_ms: the stride size (int ms)
+        - imp_split: the impersonation type (True, False)
+        - dos_type:  the DoS type ('modified', 'original')
+
+    If it does not exist, it is created.
+    """
     training_data, validation_data, feature_time_dict = datasets.load_or_create_datasets(
         period_ms,
         stride_ms,
