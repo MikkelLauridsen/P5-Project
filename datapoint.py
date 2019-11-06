@@ -1,4 +1,5 @@
-"""The DataPoint class describing an object containing the features for a single window of messages.
+"""
+The DataPoint class describing an object containing the features for a single window of messages.
 
 Functions:
 is_header_matching: Compares the given header with the current attributes of the DataPoint class.
@@ -9,6 +10,7 @@ from recordclass import dataobject
 
 
 class DataPoint(dataobject):
+    """Class representing a single window of messages from the data through its features."""
     time_ms: float
     is_injected: str
     mean_id_interval: float
@@ -58,6 +60,7 @@ datapoint_attribute_descriptions = {
 
 
 def is_header_matching(header):
+    """Comparing the given header with the set of DataPoint attributes and returning the difference."""
     header_set = set(header)
     attr_set = set(datapoint_attributes)
 
@@ -66,6 +69,7 @@ def is_header_matching(header):
 
 
 def parse_csv_row(row):
+    """Parses a single row from a csv file and returns the corresponding DataPoint object."""
     args = []
     for i in range(len(datapoint_attributes)):
         args.append(row[i])
@@ -74,6 +78,7 @@ def parse_csv_row(row):
 
 
 def get_csv_row(datapoint):
+    """Creates a list of the given DataPoints components and returns it to facilitate csv file creation."""
     row = []
     for attr in datapoint_attributes:
         row.append(getattr(datapoint, attr))
