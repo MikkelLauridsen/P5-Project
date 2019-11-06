@@ -314,13 +314,13 @@ def calculate_kurtosis_mean_id_intervals(messages):
 # 'stride_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
 # That is, if 'stride_ms' is 50 and 'period_ms' is 100,
 # DataPoint 1 and 2 will share messages in half of their time windows.
-# 'is_injected' determines whether intrusion was conducted in 'messages'
-def messages_to_datapoints(messages, period_ms, is_injected, stride_ms, name=""):
+# 'class_label' determines whether intrusion was conducted in 'messages'
+def messages_to_datapoints(messages, period_ms, class_label, stride_ms, name=""):
     if len(messages) == 0:
         return []
 
     windows = __find_windows(messages, period_ms, stride_ms)
-    return __windows_to_datapoints(windows, is_injected, name)
+    return __windows_to_datapoints(windows, class_label, name)
 
 
 # Separates a list of messages into a list of windows.
@@ -366,14 +366,14 @@ def __find_windows(messages, period_ms, stride_ms):
 
 
 # Calculates a list of datapoints from a list of windows (a window being a list of messages)
-# 'is_injected' determines whether intrusion was conducted in 'messages'
+# 'class_label' determines whether intrusion was conducted in 'messages'
 # this function may never be called with an empty list
-def __windows_to_datapoints(windows, is_injected, name):
+def __windows_to_datapoints(windows, class_label, name):
     # maps a function to an attribute. The function must accept a list of messages.
     # missing mappings are allowed, and will give the feature a value of 0
     attribute_function_mappings = {
         "time_ms": lambda msgs: msgs[0].timestamp * 1000,
-        "is_injected": lambda msgs: is_injected,
+        "class_label": lambda msgs: class_label,
         "mean_id_interval": calculate_mean_id_interval,
         "variance_id_frequency": calculate_variance_id_frequency,
         "num_id_transitions": calculate_num_id_transitions,

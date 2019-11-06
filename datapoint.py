@@ -12,7 +12,7 @@ from recordclass import dataobject
 class DataPoint(dataobject):
     """Class representing a single window of messages from the data through its features."""
     time_ms: float
-    is_injected: str
+    class_label: str
     mean_id_interval: float
     variance_id_frequency: float
     # num_id_transitions: int
@@ -30,12 +30,12 @@ class DataPoint(dataobject):
     skewness_id_interval_variances: float
 
     def __str__(self):
-        str = ""
+        string = ""
 
         for attr in datapoint_attributes:
-            str += f"{attr}: {getattr(self, attr)} "
+            string += f"{attr}: {getattr(self, attr)} "
 
-        return str
+        return string
 
 
 # List of the attributes of DataPoint
@@ -60,7 +60,7 @@ datapoint_attribute_descriptions = {
 
 
 def is_header_matching(header):
-    """Comparing the given header with the set of DataPoint attributes and returning the difference."""
+    """Compares the given header with the set of DataPoint attributes and returns the difference."""
     header_set = set(header)
     attr_set = set(datapoint_attributes)
 

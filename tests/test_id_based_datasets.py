@@ -49,7 +49,7 @@ class TestIdBasedDatasets(TestCase):
 
         # Assum for message_to_idpoint
         time_ms = 0.0
-        is_injected = "normal"
+        class_label = "normal"
         mean_id_interval = datasets.calculate_mean_id_interval(self.messages)
         variance_id_frequency = datasets.calculate_variance_id_frequency(self.messages)
         num_id_transitions = datasets.calculate_num_id_transitions(self.messages)
@@ -71,7 +71,7 @@ class TestIdBasedDatasets(TestCase):
         kurtosis_req_to_res_time = datasets.calculate_kurtosis_req_to_res_time(self.messages)
 
         self.actual_datapoint = IDPoint(time_ms,
-                                   is_injected,
+                                   class_label,
                                    mean_id_interval,
                                    variance_id_frequency,
                                    num_id_transitions,
@@ -93,7 +93,7 @@ class TestIdBasedDatasets(TestCase):
 
         # Assume for test_offset_idpoint,
         self.time_ms = 1881258.816042923
-        self.is_injected = "normal"
+        self.class_label = "normal"
         self.mean_id_interval = 0.011034680628272332,
         self.variance_id_frequency = 17.72437499999999
         self.num_id_transitions = 101
@@ -113,7 +113,7 @@ class TestIdBasedDatasets(TestCase):
         self.skewness_id_interval_variances = 0.694951701467612
         self.kurtosis_req_to_res_time = 6.3109383892063535
 
-        self.id_point_object = IDPoint(self.time_ms, self.is_injected,
+        self.id_point_object = IDPoint(self.time_ms, self.class_label,
                                        self.mean_id_interval,
                                        self.variance_id_frequency,
                                        self.num_id_transitions,
@@ -232,7 +232,7 @@ class TestIdBasedDatasets(TestCase):
         id_points = [self.id_point_object]
 
         id_point_object_2 = IDPoint(time_ms_2,
-                                    self.is_injected,
+                                    self.class_label,
                                     self.mean_id_interval,
                                     self.variance_id_frequency,
                                     self.num_id_transitions,
@@ -253,7 +253,7 @@ class TestIdBasedDatasets(TestCase):
                                     self.kurtosis_req_to_res_time)
 
         id_point_object_3 = IDPoint(time_ms_3,
-                                    self.is_injected,
+                                    self.class_label,
                                     self.mean_id_interval,
                                     self.variance_id_frequency,
                                     self.num_id_transitions,
@@ -275,7 +275,7 @@ class TestIdBasedDatasets(TestCase):
         id_points_2 = [id_point_object_2, id_point_object_3]
 
         id_point_object_2_dup = IDPoint(time_ms_2,
-                                    self.is_injected,
+                                    self.class_label,
                                     self.mean_id_interval,
                                     self.variance_id_frequency,
                                     self.num_id_transitions,
@@ -296,7 +296,7 @@ class TestIdBasedDatasets(TestCase):
                                     self.kurtosis_req_to_res_time)
 
         id_point_object_3_dup = IDPoint(time_ms_3,
-                                    self.is_injected,
+                                    self.class_label,
                                     self.mean_id_interval,
                                     self.variance_id_frequency,
                                     self.num_id_transitions,
@@ -948,7 +948,7 @@ class TestIdBasedDatasets(TestCase):
 
         # Assert
         self.assertAlmostEqual(expected_value.time_ms, self.actual_datapoint.time_ms)
-        self.assertAlmostEqual(expected_value.is_injected, self.actual_datapoint.is_injected)
+        self.assertAlmostEqual(expected_value.class_label, self.actual_datapoint.class_label)
         self.assertAlmostEqual(expected_value.mean_id_interval, self.actual_datapoint.mean_id_interval)
         self.assertAlmostEqual(expected_value.variance_id_frequency, self.actual_datapoint.variance_id_frequency)
         self.assertAlmostEqual(expected_value.num_id_transitions, self.actual_datapoint.num_id_transitions)
