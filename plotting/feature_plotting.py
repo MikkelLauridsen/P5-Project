@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import datasets as ds
@@ -62,11 +64,14 @@ def setup_scatter(xaxis, yaxis, xlabel, ylabel, class_label, show=True):
 
 
 if __name__ == "__main__":
-    training_points, test_points, _ = ds.load_or_create_datasets(
+    os.chdir("..")
+
+    training_points, validation_points, _ = ds.load_or_create_datasets(
         period_ms=100,
         stride_ms=100,
-        imp_split=False,
-        dos_type='modified'
-    )
+        imp_split=True,
+        dos_type='original',
+        in_parallel=False,
+        force_create=True)
 
     plot_all_features(training_points)
