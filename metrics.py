@@ -103,11 +103,14 @@ def print_metrics(metrics):
 
 
 def get_metrics(y_test, y_predict):
-    """returns a dictionary of metrics of the form:
+    """
+    Calculates the different metrics for the given given test set compared with the given predict set.
+
+    :param y_test: A list of actual class labels
+    :param y_predict: A list of predicted class labels
+    :return: returns A dictionary of metrics of the form:
         - {'**class**': (precision, recall, tnr, fpr, fnr, balanced_accuracy, f1)}
-    Parameters are:
-        - y_test:    a list of actual class labels
-        - y_predict: a list of predicted class labels"""
+    """
 
     if len(y_test) != len(y_predict):
         raise IndexError()
@@ -136,18 +139,20 @@ def get_metrics(y_test, y_predict):
 
 
 def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_time=False, is_test=False):
-    """returns the file path and directory path associated with the specified parameters.
-    Parameters are:
-        - period_ms:  window size (int ms)
-        - stride_ms:  stride size (int ms)
-        - imp_split:  the impersonation type (True, False)
-        - dos_type:   the DoS type ('modified', 'original')
-        - model:      model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
-        - parameters: model parameter space {'**parameter**': [**values**]}
-        - subset:     a list of labels of features to be used
-        - is_time:    whether the path is related to scores or durations (True, False)
-        - is_test:    a flag indicating whether the test or validation set is used
-        """
+    """
+    Finds the file path corresponding to the given parameters.
+
+    :param period_ms: Window size (int ms)
+    :param stride_ms: Stride size (int ms)
+    :param imp_split: The impersonation type (True, False)
+    :param dos_type: The DoS type ('modified', 'original')
+    :param model: Model name ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
+    :param baseline: Model parameter space {'**parameter**': [**values**]}
+    :param subset: A list of labels of features to be used
+    :param is_time: Whether the path is related to scores or durations (True, False)
+    :param is_test: A flag indicating whether the test or validation set is used
+    :return: returns the file path and directory path associated with the specified parameters.
+    """
 
     imp_name = "imp_split" if imp_split else "imp_full"
     baseline_name = "baseline" if baseline else "selected_parameters"
@@ -165,8 +170,8 @@ def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline,
     return dir + name + ".csv", dir
 
 
-# updates specified class counters dictionary based on specified label
 def __increment_equal(label, class_counters):
+    # Updates specified class counters dictionary based on specified label
     class_counters[label][0] += 1
 
     for key in class_counters.keys():
@@ -174,8 +179,8 @@ def __increment_equal(label, class_counters):
             class_counters[key][2] += 1
 
 
-# updates specified class counters dictionary based on actual and predicted labels, which are different
 def __increment_not_equal(label, prediction, class_counters):
+    # Updates specified class counters dictionary based on actual and predicted labels, which are different
     class_counters[label][3] += 1
     class_counters[prediction][1] += 1
 
@@ -184,8 +189,8 @@ def __increment_not_equal(label, prediction, class_counters):
             class_counters[key][2] += 1
 
 
-# returns a list of evaluation metrics based on specified classification counters
 def __get_metrics_tuple(tp, fp, tn, fn):
+    # Returns a list of evaluation metrics based on specified classification counters
     precision = 0.0 if tp + fp == 0 else tp / (tp + fp)
     recall = 1 if tp + fn == 0 else tp / (tp + fn)
     tnr = tn / (tn + fp)
@@ -197,8 +202,9 @@ def __get_metrics_tuple(tp, fp, tn, fn):
     return precision, recall, tnr, fpr, fnr, balanced_accuracy, f1
 
 
-# finds the macro average of class scores in specified metric dictionary
 def __get_macro_tuple(metrics):
+    # Finds the macro average of class scores in specified metric dictionary
+
     micros = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     for label in metrics.keys():
