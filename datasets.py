@@ -502,19 +502,19 @@ def get_mixed_test(period_ms=100, stride_ms=100, impersonation_split=True, dos_t
 
     if impersonation_split:
         raw_test_msgs += [
-            (__percentage_subset(imp_messages1[0:517000], 85, 100), "normal", "impersonation_normal_1"),
-            (__percentage_subset(imp_messages1[517000:], 85, 100), "impersonation", "impersonation_attack_1"),
-            (__percentage_subset(imp_messages2[0:330000], 85, 100), "normal", "impersonation_normal_2"),
-            (__percentage_subset(imp_messages2[330000:], 85, 100), "impersonation", "impersonation_attack_2"),
-            (__percentage_subset(imp_messages3[0:534000], 85, 100), "normal", "impersonation_normal_3"),
-            (__percentage_subset(imp_messages3[534000:], 85, 100), "impersonation", "impersonation_attack_3")]
+            (__percentage_subset(imp_messages1[0:524052], 85, 100), "normal", "impersonation_normal_1"),
+            (__percentage_subset(imp_messages1[524052:], 85, 100), "impersonation", "impersonation_attack_1"),
+            (__percentage_subset(imp_messages2[0:484233], 85, 100), "normal", "impersonation_normal_2"),
+            (__percentage_subset(imp_messages2[484233:], 85, 100), "impersonation", "impersonation_attack_2"),
+            (__percentage_subset(imp_messages3[0:489677], 85, 100), "normal", "impersonation_normal_3"),
+            (__percentage_subset(imp_messages3[489677:], 85, 100), "impersonation", "impersonation_attack_3")]
     else:
         raw_test_msgs += [
             (__percentage_subset(imp_messages1, 85, 100), "impersonation", "impersonation_1"),
             (__percentage_subset(imp_messages2, 85, 100), "impersonation", "impersonation_2"),
             (__percentage_subset(imp_messages3, 85, 100), "impersonation", "impersonation_3")]
 
-    test_sets, feature_durations_list = calculate_datapoints_parallelly(raw_test_msgs, period_ms, stride_ms)
+    test_sets, feature_durations_list = calculate_datapoints_from_sets(raw_test_msgs, period_ms, stride_ms)
     test_points = collapse_datasets(test_sets)
     feature_durations = get_feature_durations(feature_durations_list, test_points)
 
@@ -522,7 +522,7 @@ def get_mixed_test(period_ms=100, stride_ms=100, impersonation_split=True, dos_t
 
 
 def get_mixed_training_validation(period_ms=100, stride_ms=100, impersonation_split=True,
-                                  dos_type='original', verbose=False):
+                                  dos_type='original', verbose=False, in_parallel=True):
     """Constructs a training and validation set of DataPoints based on parameters.
         :returns
             a list of DataPoints corresponding to the training data.
@@ -591,8 +591,12 @@ def get_mixed_training_validation(period_ms=100, stride_ms=100, impersonation_sp
             (__percentage_subset(imp_messages2, 70, 85), "impersonation", "impersonation_2"),
             (__percentage_subset(imp_messages3, 70, 85), "impersonation", "impersonation_3")]
 
-    training_sets, _ = calculate_datapoints_parallelly(raw_training_msgs, period_ms, stride_ms)
-    validation_sets, feature_durations_list = calculate_datapoints_parallelly(raw_validation_msgs, period_ms, stride_ms)
+    training_sets, _ = calculate_datapoints_from_sets(raw_training_msgs, period_ms, stride_ms, in_parallel)
+    validation_sets, feature_durations_list = calculate_datapoints_from_sets(
+        raw_validation_msgs,
+        period_ms, stride_ms,
+        in_parallel)
+
     training_points = collapse_datasets(training_sets)
     validation_points = collapse_datasets(validation_sets)
     feature_durations = get_feature_durations(feature_durations_list, validation_points)
@@ -628,22 +632,28 @@ def collapse_datasets(datasets):
     return points
 
 
-def calculate_datapoints_parallelly(raw_msgs, period_ms, stride_ms):
+def calculate_datapoints_from_sets(raw_msgs, period_ms, stride_ms, in_parallel=True):
     datasets = []
     feature_durations = []
 
-    with conf.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(
-            messages_to_datapoints,
-            tup[0],
-            period_ms,
-            tup[1],
-            stride_ms,
-            tup[2]) for tup in raw_msgs}
+    if in_parallel:
+        with conf.ProcessPoolExecutor() as executor:
+            futures = {executor.submit(
+                messages_to_datapoints,
+                tup[0],
+                period_ms,
+                tup[1],
+                stride_ms,
+                tup[2]) for tup in raw_msgs}
 
-        for future in conf.as_completed(futures):
-            datasets.append(future.result()[0])
-            feature_durations.append(future.result()[1])
+            for future in conf.as_completed(futures):
+                datasets.append(future.result()[0])
+                feature_durations.append(future.result()[1])
+    else:
+        for tup in raw_msgs:
+            dataset, times = messages_to_datapoints(tup[0], period_ms, tup[1], stride_ms, tup[2])
+            datasets.append(dataset)
+            feature_durations.append(times)
 
     return datasets, feature_durations
 
@@ -666,8 +676,8 @@ def get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, set_ty
 
 # Returns the training and validation sets associated with input argument combination.
 # If the datasets do not exist, they are created and saved in the process.
-def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True,
-                            dos_type='original', force_create=False, verbose=False):
+def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True, dos_type='original',
+                            force_create=False, verbose=False, in_parallel=True):
 
     training_name, _ = get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'training')
     validation_name, _ = get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'validation')
@@ -683,7 +693,8 @@ def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True,
         training_set, validation_set, feature_durations = get_mixed_training_validation(
             period_ms, stride_ms,
             imp_split, dos_type,
-            verbose=verbose)
+            verbose=verbose,
+            in_parallel=in_parallel)
 
         write_datapoints_csv(training_set, period_ms, stride_ms, imp_split, dos_type, 'training')
         write_datapoints_csv(validation_set, period_ms, stride_ms, imp_split, dos_type, 'validation')
