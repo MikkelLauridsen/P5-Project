@@ -15,7 +15,7 @@ def get_mean_time_between_normal_messages(messages, remote_frame_and_response_in
 
     :param messages: A list of CAN bus Message objects.
     :param remote_frame_and_response_indices: A list of indices specifying where to find remote frames and responses.
-    :returns: The mean time between normal message pairs.
+    :return: The mean time between normal message pairs.
     """
     # The times between two normal messages.
     times_between_messages = []
@@ -37,7 +37,7 @@ def get_mean_time_between_split_messages(messages, remote_frame_and_response_ind
 
     :param messages: A list of CAN bus Message objects.
     :param remote_frame_and_response_indices: A list of indices specifying where to find remote frames and responses.
-    :returns: 0 if there are no remote frames and responses and the mean of split normal message pairs if there is.
+    :return: 0 if there are no remote frames and responses and the mean of split normal message pairs if there is.
     """
     times_between_messages = []
 
@@ -50,6 +50,7 @@ def get_mean_time_between_split_messages(messages, remote_frame_and_response_ind
 
 def __get_remote_frame_and_response_indices(messages):
     # Finding the indices of every remote frame and remote frame response in the given list of messages.
+
     latest_remote_frame = None
     latest_remote_frame_index = None
 
@@ -77,7 +78,7 @@ def analyze_messages(messages):
     Calls the information gathering functions in a centralized manner
 
     :param messages: A list of CAN bus Message objects.
-    :returns: A dictionary where the keys are descriptions of the information in the values
+    :return: A dictionary where the keys are descriptions of the information in the values
     """
     remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
 
