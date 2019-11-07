@@ -157,7 +157,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
 
             print(f"Saved {metric_type} metrics to {path}")
 
-        except hugin.pyhugin87.HuginException:
+        except hugin.HuginException:
             print(f"Failed generating results for {model} at {path}")
 
             metrics = get_error_metrics()
