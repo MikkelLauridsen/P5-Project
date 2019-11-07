@@ -1,12 +1,19 @@
 """
-Running this file analyses certain aspects of the data to allow for decision making through increased information.
+A collection of functions that analyse different aspects of the data. This analysis allows for decision making through
+increased information and supports both the report and the implementation.
 
 Aspects being analysed:
-Mean time between normal messages: The average time between normal message pairs (not remote frame or response).
-Mean time between split messages: The average time between normal message pairs with a remote frame or response between.
+
+For finding the correct remote frame removal method:
+Mean time between normal messages.
+Mean time between split messages.
+
+For finding the new attack-free/impersonation-attack split after remote frame removal:
+Sum of removed time intervals.
+Index of message before time cut-off.
 """
 import numpy as np
-import datareader_csv
+from datareader_csv import load_messages
 
 
 def get_mean_time_between_normal_messages(messages, remote_frame_and_response_indices):
@@ -48,6 +55,41 @@ def get_mean_time_between_split_messages(messages, remote_frame_and_response_ind
     return np.mean(times_between_messages) if len(times_between_messages) > 0 else 0
 
 
+def get_sum_of_removed_intervals(messages, time):
+    """
+    Finds the sum of the intervals that would be removed in the list of messages before the given timestamp.
+
+    :param messages: A list of CAN bus Message objects.
+    :param time: The time specifying how many seconds of the file the sum should account for.
+    :return: The sum of the intervals that would be removed.
+    """
+    removed_intervals = []
+    remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
+
+    # Getting the timestamp that specifies the cutoff.
+    timestamp = messages[0].timestamp + time
+
+    # Going through each remote frame and response with a timestamp below the specified limit.
+    for index in remote_frame_and_response_indices:
+        if messages[index].timestamp > timestamp:
+            break
+        else:
+            removed_intervals.append(messages[index].timestamp - messages[index - 1].timestamp)
+
+    # Return the sum
+    return sum(removed_intervals)
+
+
+def get_index_before_time(messages, time):
+    """Finds the index of the message that is immediately before the point where the given time has passed."""
+    # Getting the timestamp that specifies the cutoff.
+    timestamp = messages[0].timestamp + time
+
+    for index, message in enumerate(messages):
+        if message.timestamp > timestamp:
+            return index - 1
+
+
 def __get_remote_frame_and_response_indices(messages):
     # Finding the indices of every remote frame and remote frame response in the given list of messages.
 
@@ -73,13 +115,13 @@ def __get_remote_frame_and_response_indices(messages):
     return remote_frame_or_response_indices
 
 
-def analyze_messages(messages):
+def analyze_messages():
     """
     Calls the information gathering functions in a centralized manner
 
-    :param messages: A list of CAN bus Message objects.
     :return: A dictionary where the keys are descriptions of the information in the values
     """
+    messages = load_messages("data/csv/Attack_free_dataset.csv")
     remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
 
     information = {
@@ -87,18 +129,27 @@ def analyze_messages(messages):
             get_mean_time_between_normal_messages(messages, remote_frame_and_response_indices),
         "Mean time between split messages: ":
             get_mean_time_between_split_messages(messages, remote_frame_and_response_indices),
+        "Sum of removed intervals in '170907_impersonation.csv'":
+            get_sum_of_removed_intervals(load_messages("data/csv/170907_impersonation.csv"), 250),
+        "Sum of removed intervals in '170907_impersonation_2.csv'":
+            get_sum_of_removed_intervals(load_messages("data/csv/170907_impersonation_2.csv"), 250),
+        "Sum of removed intervals in 'Impersonation_attack_dataset.csv'":
+            get_sum_of_removed_intervals(load_messages("data/csv/Impersonation_attack_dataset.csv"), 250),
+        "Index of split in '170907_impersonation.csv'":
+            get_index_before_time(load_messages("data/csv/170907_impersonation.csv"), 250 - 23.434627056121826),
+        "Index of split in '170907_impersonation_2.csv'":
+            get_index_before_time(load_messages("data/csv/170907_impersonation.csv"), 250 - 20.980855226516724),
+        "Index of split in 'Impersonation_attack_dataset.csv'":
+            get_index_before_time(load_messages("data/csv/170907_impersonation.csv"), 250 - 2.1056361198425293)
     }
 
     return information
 
 
 if __name__ == "__main__":
-    file_messages = datareader_csv.load_messages("data/csv/Attack_free_dataset.csv")
-
-    print(analyze_messages(file_messages))
+    print(analyze_messages())
 
     # Without removing remote frames: 0.00042314722179202243
     # Removing remote frames without closing the holes: 0.00047852379197671924
     # Removing remote frames and closing the holes: 0.0004403009096925493
-
     # Average time between split messages: 0.0009379362399745852
