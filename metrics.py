@@ -52,7 +52,7 @@ class Result:
     imp_split: bool
     dos_type: str
     baseline: bool
-    subset: str
+    subset: []
     is_test: bool
     metrics: {}
     times: {}
@@ -72,8 +72,7 @@ class Result:
 
 def filter_results(results, periods=None, strides=None, models=None,
                    imp_splits=None, dos_types=None, parameter_types=None, subsets=None):
-    """
-    Creates a list of filtered results from the specified list.
+    """Creates a list of filtered results from the specified list.
 
     :param results: a list of Result objects.
     :param periods: a list of window sizes (int ms).
