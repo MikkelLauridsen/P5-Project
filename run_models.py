@@ -124,7 +124,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
             model, parameters == {},
             subset, is_test=is_test)
 
-        print(f"skipped existing {metric_type} metrics at {path}")
+        print(f"Skipped existing {metric_type} metrics at {path}")
     else:
         try:
             X_train_mod = __create_feature_subset(X_train, subset)

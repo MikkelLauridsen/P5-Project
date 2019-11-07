@@ -11,5 +11,5 @@ setup(
     author_email='',
     description='',
     ext_modules=cythonize("features.pyx"),
-    install_requires=['Cython']
+    install_requires=['Cython', 'matplotlib']
 )
