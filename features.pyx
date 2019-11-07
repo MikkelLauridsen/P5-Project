@@ -301,7 +301,7 @@ def calculate_kurtosis_id_frequency(messages):
 # constructs a list of time periods between messages with this ID.
 # Afterwards, calculates the means of elements of these lists, separately.
 # Finally, calculates and returns the kurtosis of these means.
-def calculate_kurtosis_mean_id_intervals(array.array messages):
+def calculate_kurtosis_mean_id_intervals(messages):
     id_timestamp_intervals = __find_id_intervals(messages)
 
     interval_means = []
