@@ -162,7 +162,7 @@ class TestIdBasedDatasets(TestCase):
         actual_offset_message_3 = messages[2].timestamp - offset
 
         # Action
-        expected_offset_result = datasets.neutralize_offset(messages)
+        expected_offset_result = datasets.__neutralize_offset(messages)
 
         # Assert
         self.assertEqual(expected_offset_result, messages)
@@ -216,7 +216,7 @@ class TestIdBasedDatasets(TestCase):
         actual_concat_messages_result = messages_1 + messages_2_duplicate
 
         # Action
-        expected_result = datasets.concat_messages(messages_1, messages_2)
+        expected_result = datasets.__concat_messages(messages_1, messages_2)
 
         # Assert
         self.assertEqual(expected_result, actual_concat_messages_result)

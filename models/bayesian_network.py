@@ -1,5 +1,4 @@
 import hugin.pyhugin87 as hugin
-import datapoint as dp
 from sklearn.base import BaseEstimator
 
 
