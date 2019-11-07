@@ -241,7 +241,7 @@ def calculate_num_id_transitions(messages):
 
 
 # Finds and returns the number of unique IDs in 'messages'
-def calculate_num_ids(array.array messages):
+def calculate_num_ids(messages):
     ids_seen = set()
 
     for message in messages:
