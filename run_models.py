@@ -3,8 +3,9 @@ import os
 import time
 import concurrent.futures as conf
 import models.model_utility as utility
+import hugin.pyhugin87 as hugin
 from models.model_utility import get_scaled_training_validation
-from metrics import get_metrics, get_metrics_path
+from metrics import get_metrics, get_metrics_path, get_error_metrics
 from datapoint import datapoint_attributes
 from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
@@ -125,35 +126,41 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
 
         print(f"skipped existing {metric_type} metrics at {path}")
     else:
-        X_train_mod = __create_feature_subset(X_train, subset)
-        X_test_mod = __create_feature_subset(X_test, subset)
+        try:
+            X_train_mod = __create_feature_subset(X_train, subset)
+            X_test_mod = __create_feature_subset(X_test, subset)
 
-        classifier = utility.get_classifier(model, parameters, subset)
-        classifier.fit(X_train_mod, y_train)
+            classifier = utility.get_classifier(model, parameters, subset)
+            classifier.fit(X_train_mod, y_train)
 
-        before = time.perf_counter_ns()
-        y_predict = classifier.predict(X_test_mod)
-        time_model = (time.perf_counter_ns() - before) / len(X_test_mod)
+            before = time.perf_counter_ns()
+            y_predict = classifier.predict(X_test_mod)
+            time_model = (time.perf_counter_ns() - before) / len(X_test_mod)
 
-        # Calculate scores on test set.
-        metrics = get_metrics(y_test, y_predict)
+            # Calculate scores on test set.
+            metrics = get_metrics(y_test, y_predict)
 
-        save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_test=is_test)
-        time_feature = 0.0
+            save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_test=is_test)
+            time_feature = 0.0
 
-        # Find sum of feature times.
-        for feature in feature_time_dict.keys():
-            if feature in subset:
-                time_feature += feature_time_dict[feature]
+            # Find sum of feature times.
+            for feature in feature_time_dict.keys():
+                if feature in subset:
+                    time_feature += feature_time_dict[feature]
 
-        save_time(
-            time_model, time_feature,
-            period_ms, stride_ms,
-            imp_split, dos_type,
-            model, parameters,
-            subset, is_test=is_test)
+            save_time(
+                time_model, time_feature,
+                period_ms, stride_ms,
+                imp_split, dos_type,
+                model, parameters,
+                subset, is_test=is_test)
 
-        print(f"Saved {metric_type} metrics to {path}")
+            print(f"Saved {metric_type} metrics to {path}")
+
+        except hugin.pyhugin87.HuginException:
+            print(f"Failed generating results for {model} at {path}")
+
+            metrics = get_error_metrics()
 
     return metrics
 

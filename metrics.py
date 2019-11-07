@@ -117,6 +117,20 @@ def print_metrics(metrics):
         print(line)
 
 
+def get_error_metrics():
+    """Returns a dictionary of metrics of the form
+    {'**class**': (precision, recall, tnr, fpr, fnr, balanced_accuracy, f1)},
+    where each metric has score 0.0."""
+
+    metrics = {}
+    keys = ['normal', 'dos', 'fuzzy', 'impersonation', 'total']
+
+    for key in keys:
+        metrics[key] = Metrics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    return metrics
+
+
 def get_metrics(y_actual, y_predict):
     """Returns a dictionary of metrics of the form
     {'**class**': (precision, recall, tnr, fpr, fnr, balanced_accuracy, f1)}.
