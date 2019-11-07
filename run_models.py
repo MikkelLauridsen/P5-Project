@@ -10,8 +10,8 @@ from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
 
 
-def generate_validation_results(windows=[100], strides=[100], imp_splits=[True],
-                                dos_types=['modified'], models={'mlp': {}}, eliminations=0):
+def generate_validation_results(windows=None, strides=None, imp_splits=None,
+                                dos_types=None, models=None, eliminations=0):
     """
     Generates and saves metrics for all combinations of specified parameters using the validation set.
     If metrics for a given combination already exist, this combination is skipped.
@@ -24,6 +24,12 @@ def generate_validation_results(windows=[100], strides=[100], imp_splits=[True],
     :param eliminations: The number of features eliminated in step-wise elimination
     :return:
     """
+
+    windows = [100] if windows is None else windows
+    strides = [100] if strides is None else strides
+    imp_splits = [True] if imp_splits is None else imp_splits
+    dos_types = ['modified'] if dos_types is None else dos_types
+    models = {'mlp': {}} if models is None else models
 
     # Calculate number of jobs to be conducted.
     inner_loop_size = __get_stepwise_size(eliminations) * len(models) if eliminations > 0 else len(models)
@@ -214,7 +220,7 @@ def __create_feature_subset(X, subset):
 
 
 if __name__ == "__main__":
-    models = {
+    selected_models = {
         'bn': {},
         'nbc': {},
         'mlp': {
@@ -256,5 +262,5 @@ if __name__ == "__main__":
         strides=[100, 50, 20, 10],
         imp_splits=[False],
         dos_types=['modified'],
-        models=models,
+        models=selected_models,
         eliminations=4)

@@ -23,8 +23,8 @@ def split_feature_label(datapoints):
         for attr in datapoint.datapoint_attributes:
             if attr == "time_ms":
                 pass
-            elif attr == "is_injected":
-                y.append(point.is_injected)
+            elif attr == "class_label":
+                y.append(point.class_label)
             else:
                 features.append(getattr(point, attr))
 

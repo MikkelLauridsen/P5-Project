@@ -13,14 +13,14 @@ if __name__ == '__main__':
 
     X_1, y = split_feature_label(datapoints1)
     X_2, _ = split_feature_label(datapoints2)
-    X, _ = scale_features(X_1, X_2)  # throw away test data after scaling
-    X = list(X)  # convert X and y to lists
+    X, _ = scale_features(X_1, X_2)  # Throw away test data after scaling
+    X = list(X)  # Convert X and y to lists
     y = list(y)
 
     column_labels = list(datapoint_attributes)[2:]
     column_labels = [f"{label} {column_labels.index(label)}" for label in column_labels]
 
-    # get correlations of each feature in dataset
+    # Get correlations of each feature in dataset
     data = pd.DataFrame(X, columns=column_labels)
     corrmat = data.corr(method='spearman')
     figure = plt.figure(figsize=(22, 15))
@@ -28,6 +28,6 @@ if __name__ == '__main__':
     plt.colorbar()
     plt.title(f"Correlations at {period_ms}ms windows and {stride_ms}ms overlap", fontsize=20)
     plt.xticks(range(data.shape[1]), list(range(22)), fontsize=14)
-    # add feature names as y-axis labels
+    # Add feature names as y-axis labels
     plt.yticks([-0.5] + list(range(data.shape[1])) + [data.shape[1] - 0.5], [""] + column_labels + [""], fontsize=14)
     plt.show()
