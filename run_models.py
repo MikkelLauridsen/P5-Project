@@ -226,43 +226,45 @@ def __create_feature_subset(X, subset):
     return X_mod
 
 
+selected_models = {
+    'bn': {},
+    'nbc': {},
+    'mlp': {
+        'activation': 'logistic',
+        'alpha': 0.0001,
+        'hidden_layer_sizes': (16, 3),
+        'learning_rate': 'adaptive',
+        'max_iter': 600,
+        'solver': 'lbfgs'},
+
+    'svm': {
+        'C': 1000,
+        'gamma': 0.1,
+        'kernel': 'rbf'},
+
+    'knn': {
+        'metric': 'manhattan',
+        'n_neighbors': 8,
+        'weights': 'distance'},
+
+    'lr': {
+        'C': 3593.813663804626,
+        'penalty': 'l2'},
+
+    'dt': {
+        'criterion': 'entropy',
+        'max_depth': 13,
+        'min_samples_split': 3},
+
+    'rf': {
+        'bootstrap': True,
+        'criterion': 'gini',
+        'max_depth': 11,
+        'n_estimators': 110}
+}
+
 if __name__ == "__main__":
-    selected_models = {
-        'bn': {},
-        'nbc': {},
-        'mlp': {
-            'activation': 'logistic',
-            'alpha': 0.0001,
-            'hidden_layer_sizes': (16, 3),
-            'learning_rate': 'adaptive',
-            'max_iter': 600,
-            'solver': 'lbfgs'},
 
-        'svm': {
-            'C': 1000,
-            'gamma': 0.1,
-            'kernel': 'rbf'},
-
-        'knn': {
-            'metric': 'manhattan',
-            'n_neighbors': 8,
-            'weights': 'distance'},
-
-        'lr': {
-            'C': 3593.813663804626,
-            'penalty': 'l2'},
-
-        'dt': {
-            'criterion': 'entropy',
-            'max_depth': 13,
-            'min_samples_split': 3},
-
-        'rf': {
-            'bootstrap': True,
-            'criterion': 'gini',
-            'max_depth': 11,
-            'n_estimators': 110}
-    }
 
     generate_validation_results(
         windows=[100, 50, 20, 10],

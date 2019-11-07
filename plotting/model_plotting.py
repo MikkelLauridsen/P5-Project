@@ -1,3 +1,4 @@
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import run_models
 import os
@@ -5,45 +6,9 @@ from datareader_csv import load_metrics
 from datapoint import datapoint_attributes
 import datareader_csv
 import metrics
+from run_models import selected_models
 
-__models = {
-    'bn': {},
-
-    'nbc': {},
-
-    'mlp': {
-        'activation': 'logistic',
-        'alpha': 0.0001,
-        'hidden_layer_sizes': (16, 3),
-        'learning_rate': 'adaptive',
-        'max_iter': 300,
-        'solver': 'lbfgs'},
-
-    'svm': {
-        'C': 1000,
-        'gamma': 0.1,
-        'kernel': 'rbf'},
-
-    'knn': {
-        'metric': 'manhattan',
-        'n_neighbors': 8,
-        'weights': 'distance'},
-
-    'lr': {
-        'C': 3593.813663804626,
-        'penalty': 'l2'},
-
-    'dt': {
-        'criterion': 'entropy',
-        'max_depth': 13,
-        'min_samples_split': 3},
-
-    'rf': {
-        'bootstrap': True,
-        'criterion': 'gini',
-        'max_depth': 11,
-        'n_estimators': 110}
-}
+__models = selected_models
 
 
 def __generate_results(windows, strides, imp_splits, dos_types, models):
@@ -231,45 +196,82 @@ def plot_model_window_times(windows, imp_split=True, dos_type='modified'):
     )
 
 
-def plot_all_results(imp_split='imp_full', dos_type='modified'):
+def plot_all_results(angle=0, models=__models.keys(), windows=None, strides=None, labeling='model'):
     """
-    Loads all currently calculated results and plots them with F1 score on the y-axis and time on the x-axis.
-    :param imp_split: Boolean indicating if impersonation should be split
-    :param dos_type: Value indicating if original or modified DoS should be loaded.
-    Valid values are 'original' and 'modified'
+    Loads all currently calculated results and plots them based on F1 score, model time and feature time.
+    :param angle: The angle of the plot
+    :param models: A list of model labels to plot. Pass None to use all models
+    :param windows: A list of window sizes to plot. Pass None to use all sizes
+    :param strides: A list of stride sizes to plot. Pass None to use all sizes
+    :param labeling: A string to indicate how to label the datapoints. Valid values are:
+                     'model', 'window', 'stride, 'feature_count'
     :return:
     """
-
     results = datareader_csv.load_all_results()
+    results = metrics.filter_results(results, models=models, periods=windows, strides=strides, dos_types='modified')
 
-    for model in __models.keys():
-        # Get all datapoints belonging to this model
-        model_results = metrics.filter_results(results, periods=[100], models=[model])
+    fig = plt.figure()
+    ax: Axes3D = fig.add_subplot(111, projection='3d')
 
-        y = [result.metrics["total"].f1 for result in model_results]
-        x = [result.times["total_time"] / 1000000 for result in model_results]
+    # Dict associating labels with points
+    points = {}
 
-        # Plot moddel
-        plt.scatter(x, y, label=model, s=5)
+    for result in results:
+        # Get label based on labeling parameter
+        label = {
+            'model': result.model,
+            'window': result.period_ms,
+            'stride': result.stride_ms,
+            'feature_count': len(result.subset)
+        }[labeling]
+
+        # Store point in dictionary based on label
+        point = (
+            result.times["feature_time"] / 1000000,
+            result.times["model_time"] / 1000000,
+            result.metrics["total"].f1
+        )
+        points.setdefault(label, [])
+        points[label].append(point)
+
+    for label in points.keys():
+        x = [point[0] for point in points[label]]
+        y = [point[1] for point in points[label]]
+        z = [point[2] for point in points[label]]
+        ax.scatter(x, y, z, label=label, s=10)
+
+    # Set plot limits
+    ax.set_ylim3d(0, 0.3)
+    ax.set_zlim3d(0.6, 1)
 
     # Setup and show plots
-    plt.xlabel("Time (ms)")
-    plt.ylabel("F1 score")
+    ax.set_xlabel("Feature time (ms)")
+    ax.set_ylabel("Model time (ms)")
+    ax.set_zlabel("F1 score")
+    ax.view_init(20, angle)
     plt.legend(loc='lower right')
-    plt.title("Correlation between F1 score and model+feature time\n" + __get_desc(imp_split, dos_type))
+    plt.title("Correlation between F1 score and times \nPoint colors = " + labeling.replace("_", " "))
     plt.show()
 
 
 if __name__ == '__main__':
     os.chdir("..")
 
-    _windows = [10, 25, 50, 100]
-    _strides = [200, 100, 50, 25, 10]
+    _models = __models.keys()
+    _windows = [100, 50, 10]
+    _strides = [100, 50, 10]
+    angle1 = 10
+    angle2 = 80
 
-    plot_all_results()
-    plot_windows(_windows, imp_split=False, dos_type='modified')
-    plot_strides(_strides, imp_split=False, dos_type='modified')
-    plot_feature_stride_times(_strides, imp_split=False, dos_type='modified')
-    plot_feature_window_times(_windows, imp_split=False, dos_type='modified')
-    plot_model_window_times(_windows, imp_split=False, dos_type='modified')
-    plot_model_stride_times(_strides, imp_split=False, dos_type='modified')
+    labelings = ['model', 'window', 'stride', 'feature_count']
+
+    for labeling in labelings:
+        plot_all_results(angle1, _models, _windows, _strides, labeling)
+        plot_all_results(angle2, _models, _windows, _strides, labeling)
+
+    #plot_windows(_windows, imp_split=False, dos_type='modified')
+    #plot_strides(_strides, imp_split=False, dos_type='modified')
+    #plot_feature_stride_times(_strides, imp_split=False, dos_type='modified')
+    #plot_feature_window_times(_windows, imp_split=False, dos_type='modified')
+    #plot_model_window_times(_windows, imp_split=False, dos_type='modified')
+    #plot_model_stride_times(_strides, imp_split=False, dos_type='modified')
