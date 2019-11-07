@@ -115,39 +115,45 @@ def __get_remote_frame_and_response_indices(messages):
     return remote_frame_or_response_indices
 
 
-def analyze_messages():
+def analyze_data():
     """
     Calls the information gathering functions in a centralized manner
 
     :return: A dictionary where the keys are descriptions of the information in the values
     """
-    messages = load_messages("data/csv/Attack_free_dataset.csv")
-    remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
+    attack_free_1 = load_messages("data/csv/Attack_free_dataset.csv", verbose=True)
+    remote_frame_and_response_indices = __get_remote_frame_and_response_indices(attack_free_1)
+
+    impersonation_1 = load_messages("data/csv/170907_impersonation.csv", verbose=True)
+    impersonation_2 = load_messages("data/csv/170907_impersonation_2.csv", verbose=True)
+    impersonation_3 = load_messages("data/csv/Impersonation_attack_dataset.csv", verbose=True)
 
     information = {
-        "Mean time between normal messages: ":
-            get_mean_time_between_normal_messages(messages, remote_frame_and_response_indices),
-        "Mean time between split messages: ":
-            get_mean_time_between_split_messages(messages, remote_frame_and_response_indices),
+        "Mean time between normal messages":
+            get_mean_time_between_normal_messages(attack_free_1, remote_frame_and_response_indices),
+        "Mean time between split messages":
+            get_mean_time_between_split_messages(attack_free_1, remote_frame_and_response_indices),
         "Sum of removed intervals in '170907_impersonation.csv'":
-            get_sum_of_removed_intervals(load_messages("data/csv/170907_impersonation.csv"), 250),
+            get_sum_of_removed_intervals(impersonation_1, 250),
         "Sum of removed intervals in '170907_impersonation_2.csv'":
-            get_sum_of_removed_intervals(load_messages("data/csv/170907_impersonation_2.csv"), 250),
+            get_sum_of_removed_intervals(impersonation_2, 250),
         "Sum of removed intervals in 'Impersonation_attack_dataset.csv'":
-            get_sum_of_removed_intervals(load_messages("data/csv/Impersonation_attack_dataset.csv"), 250),
+            get_sum_of_removed_intervals(impersonation_3, 250),
         "Index of split in '170907_impersonation.csv'":
-            get_index_before_time(load_messages("data/csv/170907_impersonation.csv"), 250 - 23.434627056121826),
+            get_index_before_time(impersonation_1, 250 - 23.434627056121826),
         "Index of split in '170907_impersonation_2.csv'":
-            get_index_before_time(load_messages("data/csv/170907_impersonation.csv"), 250 - 20.980855226516724),
+            get_index_before_time(impersonation_2, 250 - 20.980855226516724),
         "Index of split in 'Impersonation_attack_dataset.csv'":
-            get_index_before_time(load_messages("data/csv/170907_impersonation.csv"), 250 - 2.1056361198425293)
+            get_index_before_time(impersonation_3, 250 - 2.1056361198425293)
     }
 
     return information
 
 
 if __name__ == "__main__":
-    print(analyze_messages())
+    information = analyze_data()
+    for key, value in information.items():
+        print(f"{key}: {value}")
 
     # Without removing remote frames: 0.00042314722179202243
     # Removing remote frames without closing the holes: 0.00047852379197671924
