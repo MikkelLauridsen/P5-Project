@@ -15,17 +15,17 @@ class DataPoint(dataobject):
     class_label: str
     mean_id_interval: float
     variance_id_frequency: float
-    num_id_transitions: int  # Deselected
-    num_ids: int  # Deselected
-    num_msgs: int  # Deselected
+    # num_id_transitions: int  # Deselected
+    # num_ids: int  # Deselected
+    # num_msgs: int  # Deselected
     mean_id_intervals_variance: float
     mean_data_bit_count: float
     variance_data_bit_count: float
-    mean_variance_data_bit_count_id: float  # Deselected
+    # mean_variance_data_bit_count_id: float  # Deselected
     kurtosis_id_interval: float
     kurtosis_id_frequency: float
     skewness_id_frequency: float
-    kurtosis_mean_id_intervals: float  # Deselected
+    # kurtosis_mean_id_intervals: float  # Deselected
     kurtosis_variance_data_bit_count_id: float
     skewness_id_interval_variances: float
 
