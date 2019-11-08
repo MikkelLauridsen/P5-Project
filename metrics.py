@@ -168,7 +168,10 @@ def get_metrics(y_actual, y_predict):
         metrics[key] = Metrics(*__get_metrics_tuple(counts[0], counts[1], counts[2], counts[3]))
 
     # Calculate overall score as a weighted average of the
-    metrics['total'] = Metrics(*__get_weighted_metrics_tuple(metrics, sample_sizes))
+    weighted = Metrics(*__get_weighted_metrics_tuple(metrics, sample_sizes))
+    macro = Metrics(*__get_macro_metrics_tuple(metrics))
+    metrics['weighted'] = weighted
+    metrics['macro'] = macro
 
     return metrics
 
@@ -247,3 +250,16 @@ def __get_weighted_metrics_tuple(metrics, sample_sizes):
     length = math.fsum(sample_sizes.values())
 
     return [metric / length for metric in micros]
+
+
+def __get_macro_metrics_tuple(metrics):
+    # Finds the macro average of class scores in specified metric dictionary
+    micros = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    # For each class, add weighted metrics to the list of summed metrics (micros)
+    for label in metrics.keys():
+        micros = list(map(add, micros, metrics[label]))
+
+    num_classes = len(metrics.keys())
+
+    return [metric / num_classes for metric in micros]

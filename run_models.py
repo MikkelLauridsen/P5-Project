@@ -194,7 +194,7 @@ def __save_stepwise_elimination(models, X_train, y_train, X_validation, y_valida
                     current_subset) for model in models.keys()}
 
                 for future in conf.as_completed(futures):
-                    score = future.result()['total'].f1
+                    score = future.result()['weighted'].f1
 
                     if score > best_score:
                         best_score = score
@@ -265,11 +265,18 @@ selected_models = {
 
 if __name__ == "__main__":
 
-
     generate_validation_results(
         windows=[100, 50, 20, 10],
         strides=[100, 50, 20, 10],
         imp_splits=[False],
         dos_types=['modified'],
+        models=selected_models,
+        eliminations=4)
+
+    generate_validation_results(
+        windows=[100, 50, 20, 10],
+        strides=[100, 50, 20, 10],
+        imp_splits=[True],
+        dos_types=['original'],
         models=selected_models,
         eliminations=4)
