@@ -8,7 +8,7 @@ import models.model_utility
 
 
 def lr(parameters):  # baseline parameters
-    return LogisticRegression().set_params(**parameters)
+    return LogisticRegression(solver='lbfgs', multi_class='auto', max_iter=5000).set_params(**parameters)
 
 
 def lr_hyperparameter(X_train, y_train):
