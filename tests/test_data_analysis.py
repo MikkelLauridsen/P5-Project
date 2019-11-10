@@ -27,3 +27,8 @@ class TestDataAnalysis(TestCase):
         actual_result = data_analysis.get_sum_of_removed_intervals(self.messages, 0.013)
 
         self.assertEqual(0.000667, round(actual_result, 6))
+
+    def test_get_index_before_time(self):
+        actual_result = data_analysis.get_index_before_time(self.messages, 0.0015)
+
+        self.assertEqual(6, actual_result)
