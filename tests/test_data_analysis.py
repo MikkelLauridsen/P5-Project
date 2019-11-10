@@ -6,10 +6,9 @@ import datareader_csv
 
 
 class TestDataAnalysis(TestCase):
-    def setUp(self) -> None:
-        os.chdir("..")
+    os.chdir("..")
 
-        self.messages = datareader_csv.load_messages("data/csv/Attack_free_dataset.csv", limit=100)
+    messages = datareader_csv.load_messages("data/csv/Attack_free_dataset.csv", limit=100)
 
     def test_get_mean_time_between_normal_messages(self):
         # Using a subset of the messages read from the Attack_free_dataset file.
