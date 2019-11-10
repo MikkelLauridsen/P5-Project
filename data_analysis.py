@@ -16,7 +16,7 @@ import numpy as np
 from datareader_csv import load_messages
 
 
-def get_mean_time_between_normal_messages(messages, remote_frame_and_response_indices):
+def get_mean_time_between_normal_messages(messages):
     """
     Finds the mean time between normal message neighbours, ignoring remote frames and remote frame responses.
 
@@ -24,6 +24,8 @@ def get_mean_time_between_normal_messages(messages, remote_frame_and_response_in
     :param remote_frame_and_response_indices: A list of indices specifying where to find remote frames and responses.
     :return: The mean time between normal message pairs.
     """
+    remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
+
     # The times between two normal messages.
     times_between_messages = []
 
@@ -38,7 +40,7 @@ def get_mean_time_between_normal_messages(messages, remote_frame_and_response_in
     return np.mean(times_between_messages)
 
 
-def get_mean_time_between_split_messages(messages, remote_frame_and_response_indices):
+def get_mean_time_between_split_messages(messages):
     """
     Returns the mean time between message pairs that have a remote frame or remote frame response between them.
 
@@ -46,6 +48,8 @@ def get_mean_time_between_split_messages(messages, remote_frame_and_response_ind
     :param remote_frame_and_response_indices: A list of indices specifying where to find remote frames and responses.
     :return: 0 if there are no remote frames and responses and the mean of split normal message pairs if there is.
     """
+    remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
+
     times_between_messages = []
 
     # Using the list of non-normal indices to find all neighbours of remote frames and remote frame responses.
@@ -122,7 +126,6 @@ def analyze_data():
     :return: A dictionary where the keys are descriptions of the information in the values
     """
     attack_free_1 = load_messages("data/csv/Attack_free_dataset.csv", verbose=True)
-    remote_frame_and_response_indices = __get_remote_frame_and_response_indices(attack_free_1)
 
     impersonation_1 = load_messages("data/csv/170907_impersonation.csv", verbose=True)
     impersonation_2 = load_messages("data/csv/170907_impersonation_2.csv", verbose=True)
@@ -130,9 +133,9 @@ def analyze_data():
 
     information = {
         "Mean time between normal messages":
-            get_mean_time_between_normal_messages(attack_free_1, remote_frame_and_response_indices),
+            get_mean_time_between_normal_messages(attack_free_1),
         "Mean time between split messages":
-            get_mean_time_between_split_messages(attack_free_1, remote_frame_and_response_indices),
+            get_mean_time_between_split_messages(attack_free_1),
         "Sum of removed intervals in '170907_impersonation.csv'":
             get_sum_of_removed_intervals(impersonation_1, 250),
         "Sum of removed intervals in '170907_impersonation_2.csv'":
