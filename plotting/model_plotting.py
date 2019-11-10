@@ -196,7 +196,7 @@ def plot_model_window_times(windows, imp_split=True, dos_type='modified'):
     )
 
 
-def plot_all_results(angle=0, models=__models.keys(), windows=None, strides=None, labeling='model'):
+def plot_all_results(angle=0, models=__models.keys(), windows=None, strides=None, labeling='model', f1_type='weighted'):
     """
     Loads all currently calculated results and plots them based on F1 score, model time and feature time.
     :param angle: The angle of the plot
@@ -205,10 +205,11 @@ def plot_all_results(angle=0, models=__models.keys(), windows=None, strides=None
     :param strides: A list of stride sizes to plot. Pass None to use all sizes
     :param labeling: A string to indicate how to label the datapoints. Valid values are:
                      'model', 'window', 'stride, 'feature_count'
+    :param f1_type: A string indicating what type of f1 score to use. Valid values are: 'weighted', 'macro'
     :return:
     """
     results = datareader_csv.load_all_results()
-    results = metrics.filter_results(results, models=models, periods=windows, strides=strides, dos_types='modified')
+    results = metrics.filter_results(results, models=models, periods=windows, strides=strides)
 
     fig = plt.figure()
     ax: Axes3D = fig.add_subplot(111, projection='3d')
@@ -222,14 +223,15 @@ def plot_all_results(angle=0, models=__models.keys(), windows=None, strides=None
             'model': result.model,
             'window': result.period_ms,
             'stride': result.stride_ms,
-            'feature_count': len(result.subset)
+            'feature_count': len(result.subset),
+            'dos_type': result.dos_type
         }[labeling]
 
         # Store point in dictionary based on label
         point = (
             result.times["feature_time"] / 1000000,
             result.times["model_time"] / 1000000,
-            result.metrics["total"].f1
+            result.metrics[f1_type].f1
         )
         points.setdefault(label, [])
         points[label].append(point)
@@ -248,7 +250,7 @@ def plot_all_results(angle=0, models=__models.keys(), windows=None, strides=None
     ax.set_xlabel("Feature time (ms)")
     ax.set_ylabel("Model time (ms)")
     ax.set_zlabel("F1 score")
-    ax.view_init(20, angle)
+    ax.view_init(10, angle)
     plt.legend(loc='lower right')
     plt.title("Correlation between F1 score and times \nPoint colors = " + labeling.replace("_", " "))
     plt.show()
@@ -258,16 +260,17 @@ if __name__ == '__main__':
     os.chdir("..")
 
     _models = __models.keys()
-    _windows = [100, 50, 10]
-    _strides = [100, 50, 10]
-    angle1 = 10
-    angle2 = 80
+    _windows = [100, 50, 20, 10]
+    _strides = [100, 50, 20, 10]
+    angle1 = 5
+    angle2 = 85
 
-    labelings = ['model', 'window', 'stride', 'feature_count']
+    labelings = ['model', 'window', 'stride', 'feature_count', 'dos_type']
+    f1_type = 'weighted'
 
     for labeling in labelings:
-        plot_all_results(angle1, _models, _windows, _strides, labeling)
-        plot_all_results(angle2, _models, _windows, _strides, labeling)
+        plot_all_results(angle1, _models, _windows, _strides, labeling, f1_type)
+        plot_all_results(angle2, _models, _windows, _strides, labeling, f1_type)
 
     #plot_windows(_windows, imp_split=False, dos_type='modified')
     #plot_strides(_strides, imp_split=False, dos_type='modified')
