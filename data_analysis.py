@@ -21,7 +21,6 @@ def get_mean_time_between_normal_messages(messages):
     Finds the mean time between normal message neighbours, ignoring remote frames and remote frame responses.
 
     :param messages: A list of CAN bus Message objects.
-    :param remote_frame_and_response_indices: A list of indices specifying where to find remote frames and responses.
     :return: The mean time between normal message pairs.
     """
     remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
@@ -45,7 +44,6 @@ def get_mean_time_between_split_messages(messages):
     Returns the mean time between message pairs that have a remote frame or remote frame response between them.
 
     :param messages: A list of CAN bus Message objects.
-    :param remote_frame_and_response_indices: A list of indices specifying where to find remote frames and responses.
     :return: 0 if there are no remote frames and responses and the mean of split normal message pairs if there is.
     """
     remote_frame_and_response_indices = __get_remote_frame_and_response_indices(messages)
