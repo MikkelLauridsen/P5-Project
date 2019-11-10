@@ -1,7 +1,7 @@
-from unittest import TestCase
-import data_analysis
-import pandas as pd
 import os
+from unittest import TestCase
+
+import data_analysis
 import datareader_csv
 
 
@@ -22,3 +22,8 @@ class TestDataAnalysis(TestCase):
         actual_result = data_analysis.get_mean_time_between_split_messages(self.messages)
 
         self.assertEqual(0.00041562, round(actual_result, 8))
+
+    def test_get_sum_of_removed_intervals(self):
+        actual_result = data_analysis.get_sum_of_removed_intervals(self.messages, 0.013)
+
+        self.assertEqual(0.000667, round(actual_result, 6))
