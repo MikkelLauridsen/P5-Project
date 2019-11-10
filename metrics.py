@@ -122,7 +122,7 @@ def get_error_metrics():
     where each metric has score 0.0."""
 
     metrics = {}
-    keys = ['normal', 'dos', 'fuzzy', 'impersonation', 'total']
+    keys = ['normal', 'dos', 'fuzzy', 'impersonation', 'weighted', 'macro']
 
     for key in keys:
         metrics[key] = Metrics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
