@@ -99,11 +99,12 @@ def filter_results(results, periods=None, strides=None, models=None, imp_splits=
 
             discard = False
 
-            for label in features:
-                if label not in result.subset:
-                    discard = True
+            if features is not None:
+                for label in features:
+                    if label not in result.subset:
+                        discard = True
 
-                    break
+                        break
 
             if not discard:
                 kept_results.append(result)
