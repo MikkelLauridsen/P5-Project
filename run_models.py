@@ -265,18 +265,45 @@ selected_models = {
 
 if __name__ == "__main__":
 
+    # Setup models without svm
+    selected_models_1 = selected_models.copy()
+    del selected_models_1['svm']
+
+    # Setup models with only svm
+    selected_models_2 = {'svm': selected_models['svm']}
+
+    # Generate results excluding svm
     generate_validation_results(
         windows=[100, 50, 20, 10],
         strides=[100, 50, 20, 10],
         imp_splits=[False],
         dos_types=['modified'],
-        models=selected_models,
+        models=selected_models_1,
         eliminations=4)
 
+    # Generate results for svm model with only larger stride
+    generate_validation_results(
+        windows=[100, 50, 20, 10],
+        strides=[100, 50],
+        imp_splits=[False],
+        dos_types=['modified'],
+        models=selected_models_2,
+        eliminations=4)
+
+    # Generate results excluding svm
     generate_validation_results(
         windows=[100, 50, 20, 10],
         strides=[100, 50, 20, 10],
         imp_splits=[True],
         dos_types=['original'],
-        models=selected_models,
+        models=selected_models_1,
+        eliminations=4)
+
+    # Generate results for svm model with only larger stride
+    generate_validation_results(
+        windows=[100, 50, 20, 10],
+        strides=[100, 50],
+        imp_splits=[True],
+        dos_types=['original'],
+        models=selected_models_2,
         eliminations=4)
