@@ -70,18 +70,19 @@ class Result:
         self.times = times
 
 
-def filter_results(results, periods=None, strides=None, models=None,
-                   imp_splits=None, dos_types=None, parameter_types=None, subsets=None):
+def filter_results(results, periods=None, strides=None, models=None, imp_splits=None,
+                   dos_types=None, parameter_types=None, subsets=None, features=None):
     """Creates a list of filtered results from the specified list.
 
     :param results: a list of Result objects.
     :param periods: a list of window sizes (int ms).
     :param strides: a list of step-sizes (int ms).
-    :param models: a list of model labels ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
+    :param models: a list of model labels ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm').
     :param imp_splits: a list of flags indicating whether the dataset used had split impersonation labels.
-    :param dos_types: a list of DoS type labels ('modified', 'original')
-    :param parameter_types: a list of flags indicating whether the model baseline was used
-    :param subsets: a list of feature label lists, indicating the acceptable subsets used [[**labels**],..]
+    :param dos_types: a list of DoS type labels ('modified', 'original').
+    :param parameter_types: a list of flags indicating whether the model baseline was used.
+    :param subsets: a list of feature label lists, indicating the acceptable subsets used [[**labels**],..].
+    :param features: a list of feature labels, designating features which must be in all subsets.
     :return: returns a new list containing the filtered results.
     """
 
@@ -96,7 +97,17 @@ def filter_results(results, periods=None, strides=None, models=None,
                 (parameter_types is None or result.baseline in parameter_types) and \
                 (subsets is None or result.subset in subsets):
 
-            kept_results.append(result)
+            discard = False
+
+            if features is not None:
+                for label in features:
+                    if label not in result.subset:
+                        discard = True
+
+                        break
+
+            if not discard:
+                kept_results.append(result)
 
     return kept_results
 
