@@ -238,9 +238,8 @@ selected_models = {
         'solver': 'lbfgs'},
 
     'svm': {
-        'C': 1000,
-        'gamma': 0.1,
-        'kernel': 'rbf'},
+        'C': 10,
+        'kernel': 'linear'},
 
     'knn': {
         'metric': 'manhattan',
