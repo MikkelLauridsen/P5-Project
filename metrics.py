@@ -208,7 +208,7 @@ def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline,
     metric_type = "score" if is_time is False else "time"
     name = f"mixed_{result_type}_{metric_type}_{period_ms}ms_{stride_ms}ms"
 
-    labels = list(datapoint.datapoint_attributes)[2:]
+    labels = datapoint.datapoint_features.copy()
 
     for label in subset:
         name += f"_{labels.index(label)}"

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import run_models
 import os
 from datareader_csv import load_metrics
-from datapoint import datapoint_attributes
+from datapoint import datapoint_features
 import datareader_csv
 import metrics
 from run_models import selected_models
@@ -73,7 +73,7 @@ def plot_windows(windows, imp_split=True, dos_type='modified'):
     def value_func(window, model):
         __generate_results([window], [window], [imp_split], [dos_type], {model: __models[model]})
         metrics = load_metrics(window, window, imp_split, dos_type, model, __models[model] == {},
-                               list(datapoint_attributes)[2:])
+                               datapoint_features)
         return metrics["total"].f1
 
     __plot_elements(
@@ -94,7 +94,7 @@ def plot_strides(strides, imp_split=True, dos_type='modified'):
     """
     def value_func(stride, model):
         metrics = load_metrics(100, stride, imp_split, dos_type, model, __models[model] == {},
-                               list(datapoint_attributes)[2:])
+                               datapoint_features)
         return metrics["total"].f1
 
     __generate_results([100], strides, [imp_split], [dos_type], __models)
@@ -117,7 +117,7 @@ def plot_feature_stride_times(strides, imp_split=True, dos_type='modified'):
     """
     def value_func(stride, model):
         times = datareader_csv.load_times(100, stride, imp_split, dos_type, model, __models[model] == {},
-                                          list(datapoint_attributes)[2:])
+                                          datapoint_features)
         return times["feature_time"] / 1000000
 
     __generate_results([100], strides, [imp_split], [dos_type], __models)
@@ -140,7 +140,7 @@ def plot_feature_window_times(windows, imp_split=True, dos_type='modified'):
     """
     def value_func(window, model):
         times = datareader_csv.load_times(window, 100, imp_split, dos_type, model, __models[model] == {},
-                                          list(datapoint_attributes)[2:])
+                                          datapoint_features)
         return times["feature_time"] / 1000000
 
     __generate_results(windows, [100], [imp_split], [dos_type], __models)
@@ -162,7 +162,7 @@ def plot_model_stride_times(strides, imp_split=True, dos_type='modified'):
     """
     def value_func(stride, model):
         times = datareader_csv.load_times(100, stride, imp_split, dos_type, model, __models[model] == {},
-                                          list(datapoint_attributes)[2:])
+                                          datapoint_features)
         return times["model_time"] / 1000000
 
     __generate_results([100], strides, [imp_split], [dos_type], __models)
@@ -184,7 +184,7 @@ def plot_model_window_times(windows, imp_split=True, dos_type='modified'):
     """
     def value_func(window, model):
         times = datareader_csv.load_times(window, 100, imp_split, dos_type, model, __models[model] == {},
-                                          list(datapoint_attributes)[2:])
+                                          datapoint_features)
         return times["model_time"] / 1000000
 
     __generate_results(windows, [100], [imp_split], [dos_type], __models)

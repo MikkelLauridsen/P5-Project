@@ -5,7 +5,7 @@ import datapoint
 import message
 import os
 from metrics import Metrics, Result, get_metrics_path
-from datapoint import datapoint_attributes
+from datapoint import datapoint_features
 
 
 def __load_data(filepath, parse_func, start, limit, verbose=False):
@@ -182,7 +182,7 @@ def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subse
 def __load_result(path):
     # Loads results from the file at the specified path and returns a corresponding Result object
 
-    labels = list(datapoint_attributes)[2:]  # List of all feature labels
+    labels = datapoint_features  # List of all feature labels
 
     # Split path on '\' and find the index of 'result' in the resulting list
     substrings = (path[:-4]).split("\\")

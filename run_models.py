@@ -6,7 +6,7 @@ import models.model_utility as utility
 import hugin.pyhugin87 as hugin
 from models.model_utility import get_scaled_training_validation
 from metrics import get_metrics, get_metrics_path, get_error_metrics
-from datapoint import datapoint_attributes
+from datapoint import datapoint_features
 from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
 
@@ -61,7 +61,7 @@ def generate_validation_results(windows=None, strides=None, imp_splits=None,
                             imp_split, dos_type)
                     else:
                         # Use the full feature poll.
-                        subset = list(datapoint_attributes)[2:]
+                        subset = datapoint_features
 
                         for model in models.keys():
                             create_and_save_results(
@@ -79,7 +79,7 @@ def generate_validation_results(windows=None, strides=None, imp_splits=None,
 def __get_stepwise_size(max_features):
     # Returns the number of feature subsets to be tested.
 
-    n = len(list(datapoint_attributes)[2:])
+    n = len(datapoint_features)
     size = 0
 
     for i in range(max_features):
@@ -170,7 +170,7 @@ def __save_stepwise_elimination(models, X_train, y_train, X_validation, y_valida
     # Runs step-wise elimination on specified parameters and saves the results of each subset model combination.
 
     # Get feature labels.
-    labels = (list(datapoint_attributes)[2:]).copy()
+    labels = datapoint_features.copy()
     working_set = labels.copy()
 
     for i in range(max_features):
@@ -209,8 +209,8 @@ def __create_feature_subset(X, subset):
     # Returns a modified copy of input list of feature values,
     # which only contains values of features in the specified subset.
 
-    indices = [list(datapoint_attributes)[2:].index(f) for f in subset]
-    length = len(list(datapoint_attributes)[2:])
+    indices = [datapoint_features.index(f) for f in subset]
+    length = len(datapoint_features)
 
     X_mod = []
 
