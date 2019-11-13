@@ -275,8 +275,8 @@ def plot_barchart_results(results, plot_type='f1_macro'):
         'f1_impersonation': (lambda r: r.metrics['impersonation'].f1, "F1 impersonation"),
         'f1_dos':           (lambda r: r.metrics['dos'].f1,           "F1 DoS"),
         'f1_fuzzy':         (lambda r: r.metrics['fuzzy'].f1,         "F1 fuzzy"),
-        'model_time':       (lambda r: r.times['model_time'] / 1000,  "Model prediction time (ms)"),
-        'feature_time':     (lambda r: r.times['feature_time'],       "Feature calculation time (ms)"),
+        'model_time':       (lambda r: r.times['model_time'] / 1e6,   "Model prediction time (ms)"),
+        'feature_time':     (lambda r: r.times['feature_time'] / 1e6, "Feature calculation time (ms)"),
     }.get(plot_type)
 
     for result in results:
