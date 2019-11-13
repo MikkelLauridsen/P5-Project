@@ -71,7 +71,8 @@ class Result:
 
 
 def filter_results(results, periods=None, strides=None, models=None, imp_splits=None,
-                   dos_types=None, parameter_types=None, subsets=None, features=None):
+                   dos_types=None, parameter_types=None, subsets=None, features=None,
+                   is_test=False):
     """Creates a list of filtered results from the specified list.
 
     :param results: a list of Result objects.
@@ -83,6 +84,7 @@ def filter_results(results, periods=None, strides=None, models=None, imp_splits=
     :param parameter_types: a list of flags indicating whether the model baseline was used.
     :param subsets: a list of feature label lists, indicating the acceptable subsets used [[**labels**],..].
     :param features: a list of feature labels, designating features which must be in all subsets.
+    :param is_test: a flag indicating whether the results are based on the validation or test sets
     :return: returns a new list containing the filtered results.
     """
 
@@ -95,7 +97,8 @@ def filter_results(results, periods=None, strides=None, models=None, imp_splits=
                 (imp_splits is None or result.imp_split in imp_splits) and \
                 (dos_types is None or result.dos_type in dos_types) and \
                 (parameter_types is None or result.baseline in parameter_types) and \
-                (subsets is None or result.subset in subsets):
+                (subsets is None or result.subset in subsets) and \
+                (result.is_test == is_test):
 
             discard = False
 
