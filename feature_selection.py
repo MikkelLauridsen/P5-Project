@@ -1,7 +1,7 @@
 import pandas as pd
 from datasets import load_or_create_datasets
 from models.model_utility import scale_features, split_feature_label
-from datapoint import datapoint_attributes
+from datapoint import datapoint_features
 import matplotlib.pyplot as plt
 
 
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     X = list(X)  # Convert X and y to lists
     y = list(y)
 
-    column_labels = list(datapoint_attributes)[2:]
+    column_labels = datapoint_features
     column_labels = [f"{label} {column_labels.index(label)}" for label in column_labels]
 
     # Get correlations of each feature in dataset

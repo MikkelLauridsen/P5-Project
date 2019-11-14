@@ -70,18 +70,23 @@ class Result:
         self.times = times
 
 
-def filter_results(results, periods=None, strides=None, models=None,
-                   imp_splits=None, dos_types=None, parameter_types=None, subsets=None):
+def filter_results(results, periods=None, strides=None, models=None, imp_splits=None,
+                   dos_types=None, parameter_types=None, subsets=None, features=None,
+                   without_features=None, f1_threshold=None, is_test=False):
     """Creates a list of filtered results from the specified list.
 
     :param results: a list of Result objects.
     :param periods: a list of window sizes (int ms).
     :param strides: a list of step-sizes (int ms).
-    :param models: a list of model labels ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm')
+    :param models: a list of model labels ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm').
     :param imp_splits: a list of flags indicating whether the dataset used had split impersonation labels.
-    :param dos_types: a list of DoS type labels ('modified', 'original')
-    :param parameter_types: a list of flags indicating whether the model baseline was used
-    :param subsets: a list of feature label lists, indicating the acceptable subsets used [[**labels**],..]
+    :param dos_types: a list of DoS type labels ('modified', 'original').
+    :param parameter_types: a list of flags indicating whether the model baseline was used.
+    :param subsets: a list of feature label lists, indicating the acceptable subsets used [[**labels**],..].
+    :param features: a list of feature labels, designating features which must be in all subsets.
+    :param without_features: a list of feature labels, designating features which may not be in the subsets.
+    :param f1_threshold: a tuple of a metric type and a least F1-value (float).
+    :param is_test: a flag indicating whether the results are based on the validation or test sets
     :return: returns a new list containing the filtered results.
     """
 
@@ -94,9 +99,28 @@ def filter_results(results, periods=None, strides=None, models=None,
                 (imp_splits is None or result.imp_split in imp_splits) and \
                 (dos_types is None or result.dos_type in dos_types) and \
                 (parameter_types is None or result.baseline in parameter_types) and \
-                (subsets is None or result.subset in subsets):
+                (subsets is None or result.subset in subsets) and \
+                (f1_threshold is None or result.metrics[f1_threshold[0]].f1 >= f1_threshold[1]) and \
+                (result.is_test == is_test):
 
-            kept_results.append(result)
+            discard = False
+
+            if features is not None:
+                for label in features:
+                    if label not in result.subset:
+                        discard = True
+
+                        break
+
+            if without_features is not None:
+                for label in without_features:
+                    if label in result.subset:
+                        discard = True
+
+                        break
+
+            if not discard:
+                kept_results.append(result)
 
     return kept_results
 
@@ -122,7 +146,7 @@ def get_error_metrics():
     where each metric has score 0.0."""
 
     metrics = {}
-    keys = ['normal', 'dos', 'fuzzy', 'impersonation', 'total']
+    keys = ['normal', 'dos', 'fuzzy', 'impersonation', 'weighted', 'macro']
 
     for key in keys:
         metrics[key] = Metrics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -197,7 +221,7 @@ def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline,
     metric_type = "score" if is_time is False else "time"
     name = f"mixed_{result_type}_{metric_type}_{period_ms}ms_{stride_ms}ms"
 
-    labels = list(datapoint.datapoint_attributes)[2:]
+    labels = datapoint.datapoint_features.copy()
 
     for label in subset:
         name += f"_{labels.index(label)}"

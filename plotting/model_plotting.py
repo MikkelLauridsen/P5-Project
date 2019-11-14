@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 import run_models
 import os
 from datareader_csv import load_metrics
-from datapoint import datapoint_attributes
+from datapoint import datapoint_features
 import datareader_csv
 import metrics
 from run_models import selected_models
+import numpy as np
 
 __models = selected_models
 
@@ -73,7 +74,7 @@ def plot_windows(windows, imp_split=True, dos_type='modified'):
     def value_func(window, model):
         __generate_results([window], [window], [imp_split], [dos_type], {model: __models[model]})
         metrics = load_metrics(window, window, imp_split, dos_type, model, __models[model] == {},
-                               list(datapoint_attributes)[2:])
+                               datapoint_features)
         return metrics["total"].f1
 
     __plot_elements(
@@ -94,7 +95,7 @@ def plot_strides(strides, imp_split=True, dos_type='modified'):
     """
     def value_func(stride, model):
         metrics = load_metrics(100, stride, imp_split, dos_type, model, __models[model] == {},
-                               list(datapoint_attributes)[2:])
+                               datapoint_features)
         return metrics["total"].f1
 
     __generate_results([100], strides, [imp_split], [dos_type], __models)
@@ -117,7 +118,7 @@ def plot_feature_stride_times(strides, imp_split=True, dos_type='modified'):
     """
     def value_func(stride, model):
         times = datareader_csv.load_times(100, stride, imp_split, dos_type, model, __models[model] == {},
-                                          list(datapoint_attributes)[2:])
+                                          datapoint_features)
         return times["feature_time"] / 1000000
 
     __generate_results([100], strides, [imp_split], [dos_type], __models)
@@ -140,7 +141,7 @@ def plot_feature_window_times(windows, imp_split=True, dos_type='modified'):
     """
     def value_func(window, model):
         times = datareader_csv.load_times(window, 100, imp_split, dos_type, model, __models[model] == {},
-                                          list(datapoint_attributes)[2:])
+                                          datapoint_features)
         return times["feature_time"] / 1000000
 
     __generate_results(windows, [100], [imp_split], [dos_type], __models)
@@ -162,7 +163,7 @@ def plot_model_stride_times(strides, imp_split=True, dos_type='modified'):
     """
     def value_func(stride, model):
         times = datareader_csv.load_times(100, stride, imp_split, dos_type, model, __models[model] == {},
-                                          list(datapoint_attributes)[2:])
+                                          datapoint_features)
         return times["model_time"] / 1000000
 
     __generate_results([100], strides, [imp_split], [dos_type], __models)
@@ -184,7 +185,7 @@ def plot_model_window_times(windows, imp_split=True, dos_type='modified'):
     """
     def value_func(window, model):
         times = datareader_csv.load_times(window, 100, imp_split, dos_type, model, __models[model] == {},
-                                          list(datapoint_attributes)[2:])
+                                          datapoint_features)
         return times["model_time"] / 1000000
 
     __generate_results(windows, [100], [imp_split], [dos_type], __models)
@@ -196,7 +197,8 @@ def plot_model_window_times(windows, imp_split=True, dos_type='modified'):
     )
 
 
-def plot_all_results(angle=0, models=__models.keys(), windows=None, strides=None, labeling='model'):
+def plot_all_results(results, angle=0, models=__models.keys(), windows=None, strides=None, labeling='model',
+                     f1_type='weighted', title=None):
     """
     Loads all currently calculated results and plots them based on F1 score, model time and feature time.
     :param angle: The angle of the plot
@@ -205,52 +207,88 @@ def plot_all_results(angle=0, models=__models.keys(), windows=None, strides=None
     :param strides: A list of stride sizes to plot. Pass None to use all sizes
     :param labeling: A string to indicate how to label the datapoints. Valid values are:
                      'model', 'window', 'stride, 'feature_count'
+    :param f1_type: A string indicating what type of f1 score to use. Valid values are: 'weighted', 'macro'
     :return:
     """
-    results = datareader_csv.load_all_results()
-    results = metrics.filter_results(results, models=models, periods=windows, strides=strides, dos_types='modified')
 
-    fig = plt.figure()
-    ax: Axes3D = fig.add_subplot(111, projection='3d')
+    def get_subplot(fig, pos, angle):
+        ax: Axes3D = fig.add_subplot(pos, projection='3d')
 
-    # Dict associating labels with points
-    points = {}
+        # Dict associating labels with points
+        points = {}
+        for result in results:
+            # Get label based on labeling parameter
+            label = {
+                'model': result.model,
+                'window': result.period_ms,
+                'stride': result.stride_ms,
+                'feature_count': len(result.subset),
+                'dos_type': result.dos_type
+            }[labeling]
+
+            # Store point in dictionary based on label
+            x = result.times["feature_time"] / 1000000
+            y = result.times["model_time"] / 1000000
+            z = result.metrics[f1_type].f1
+            point = (x, y, z)
+            points.setdefault(label, [])
+            points[label].append(point)
+
+        for label in points.keys():
+            x = [point[0] for point in points[label]]
+            y = [point[1] for point in points[label]]
+            z = [point[2] for point in points[label]]
+            ax.scatter(x, y, z, label=label, s=5)
+
+        # Set plot limits
+        ax.set_ylim3d(0, 0.3)
+        ax.set_zlim3d(0.6, 1)
+
+        # Setup and show plots
+        ax.set_xlabel("Feature time (ms)")
+        ax.set_ylabel("Model time (ms)")
+        ax.set_zlabel("F1 score")
+        ax.view_init(10, angle)
+
+    results = metrics.filter_results(results, models=models, periods=windows, strides=strides)
+
+    fig = plt.figure(figsize=(12.8, 4.8))
+    get_subplot(fig, 121, angle)
+    get_subplot(fig, 122, 90-angle)
+
+    if title is None:
+        title = "Correlation between F1 score and times\nPoint colors = " + labeling.replace("_", " ")
+
+    plt.legend(loc='lower right')
+    plt.suptitle(title)
+    plt.show()
+
+
+def plot_barchart_results(results, plot_type='f1_macro'):
+    ys = []
+    models = []
+
+    plot_type_info = {
+        'f1_macro':         (lambda r: r.metrics['macro'].f1,         "F1 macro average"),
+        'f1_weighted':      (lambda r: r.metrics['weighted'].f1,      "F1 weighted average"),
+        'f1_normal':        (lambda r: r.metrics['normal'].f1,        "F1 normal"),
+        'f1_impersonation': (lambda r: r.metrics['impersonation'].f1, "F1 impersonation"),
+        'f1_dos':           (lambda r: r.metrics['dos'].f1,           "F1 DoS"),
+        'f1_fuzzy':         (lambda r: r.metrics['fuzzy'].f1,         "F1 fuzzy"),
+        'model_time':       (lambda r: r.times['model_time'] / 1e6,   "Model prediction time (ms)"),
+        'feature_time':     (lambda r: r.times['feature_time'] / 1e6, "Feature calculation time (ms)"),
+    }.get(plot_type)
 
     for result in results:
-        # Get label based on labeling parameter
-        label = {
-            'model': result.model,
-            'window': result.period_ms,
-            'stride': result.stride_ms,
-            'feature_count': len(result.subset)
-        }[labeling]
+        y = plot_type_info[0](result)
+        ys.append(y)
+        models.append(result.model)
 
-        # Store point in dictionary based on label
-        point = (
-            result.times["feature_time"] / 1000000,
-            result.times["model_time"] / 1000000,
-            result.metrics["total"].f1
-        )
-        points.setdefault(label, [])
-        points[label].append(point)
+    xs = np.arange(len(ys))
 
-    for label in points.keys():
-        x = [point[0] for point in points[label]]
-        y = [point[1] for point in points[label]]
-        z = [point[2] for point in points[label]]
-        ax.scatter(x, y, z, label=label, s=10)
-
-    # Set plot limits
-    ax.set_ylim3d(0, 0.3)
-    ax.set_zlim3d(0.6, 1)
-
-    # Setup and show plots
-    ax.set_xlabel("Feature time (ms)")
-    ax.set_ylabel("Model time (ms)")
-    ax.set_zlabel("F1 score")
-    ax.view_init(20, angle)
-    plt.legend(loc='lower right')
-    plt.title("Correlation between F1 score and times \nPoint colors = " + labeling.replace("_", " "))
+    plt.bar(xs, ys, align='center')
+    plt.title(plot_type_info[1])
+    plt.xticks(xs, models)
     plt.show()
 
 
@@ -258,16 +296,26 @@ if __name__ == '__main__':
     os.chdir("..")
 
     _models = __models.keys()
-    _windows = [100, 50, 10]
-    _strides = [100, 50, 10]
-    angle1 = 10
-    angle2 = 80
+    _windows = [100, 50, 20, 10]
+    _strides = [100, 50, 20, 10]
+    angle = 15
 
-    labelings = ['model', 'window', 'stride', 'feature_count']
+    labelings = ['model', 'window', 'stride', 'feature_count', 'dos_type']
+    f1_type = 'macro'
+
+    results = datareader_csv.load_all_results()
+    results = metrics.filter_results(results, dos_types='modified')
 
     for labeling in labelings:
-        plot_all_results(angle1, _models, _windows, _strides, labeling)
-        plot_all_results(angle2, _models, _windows, _strides, labeling)
+        plot_all_results(results, angle, _models, _windows, _strides, labeling, f1_type)
+
+    results = datareader_csv.load_all_results()
+    test_results = metrics.filter_results(results, is_test=True)
+
+    bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time', 'feature_time']
+
+    for type in bar_types:
+        plot_barchart_results(test_results, type)
 
     #plot_windows(_windows, imp_split=False, dos_type='modified')
     #plot_strides(_strides, imp_split=False, dos_type='modified')
