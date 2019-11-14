@@ -72,7 +72,7 @@ class Result:
 
 def filter_results(results, periods=None, strides=None, models=None, imp_splits=None,
                    dos_types=None, parameter_types=None, subsets=None, features=None,
-                   without_features=None, is_test=False):
+                   without_features=None, f1_threshold=None, is_test=False):
     """Creates a list of filtered results from the specified list.
 
     :param results: a list of Result objects.
@@ -85,6 +85,7 @@ def filter_results(results, periods=None, strides=None, models=None, imp_splits=
     :param subsets: a list of feature label lists, indicating the acceptable subsets used [[**labels**],..].
     :param features: a list of feature labels, designating features which must be in all subsets.
     :param without_features: a list of feature labels, designating features which may not be in the subsets.
+    :param f1_threshold: a tuple of a metric type and a least F1-value (float).
     :param is_test: a flag indicating whether the results are based on the validation or test sets
     :return: returns a new list containing the filtered results.
     """
@@ -99,6 +100,7 @@ def filter_results(results, periods=None, strides=None, models=None, imp_splits=
                 (dos_types is None or result.dos_type in dos_types) and \
                 (parameter_types is None or result.baseline in parameter_types) and \
                 (subsets is None or result.subset in subsets) and \
+                (f1_threshold is None or result.metrics[f1_threshold[0]].f1 >= f1_threshold[1]) and \
                 (result.is_test == is_test):
 
             discard = False
