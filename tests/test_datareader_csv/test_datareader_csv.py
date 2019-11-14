@@ -36,3 +36,10 @@ class TestDatareaderCSV(TestCase):
         self.assertEqual(self.message_expected.rtr, message_actual.rtr)
         self.assertEqual(self.message_expected.dlc, message_actual.dlc)
         self.assertEqual(self.message_expected.data, message_actual.data)
+
+    def test_load_datapoints(self):
+        datapoint_actual = load_datapoints("datapoint.csv")[0]
+
+        # Using almost equal to avoid the problems with floating point numbers.
+        for attr in datapoint_attributes:
+            self.assertAlmostEqual(getattr(self.datapoint_expected, attr), getattr(datapoint_actual, attr))
