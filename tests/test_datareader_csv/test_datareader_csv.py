@@ -1,7 +1,7 @@
 from unittest import TestCase
 from datareader_csv import load_messages, load_datapoints
 from message import Message
-from datapoint import DataPoint
+from datapoint import DataPoint, datapoint_attributes
 
 
 class TestDatareaderCSV(TestCase):
@@ -19,9 +19,20 @@ class TestDatareaderCSV(TestCase):
         kurtosis_variance_data_bit_count_id = 15.457159141707956
         skewness_id_interval_variances = 0.694951701467612
 
-        self.message = Message(0.000224, 809, 0, 8, bytearray(b'\x07\xa7\x7f\x8c\x11/\x00\x10'))
+        self.message_expected = Message(0.000224, 809, 0, 8, bytearray(b'\x07\xa7\x7f\x8c\x11/\x00\x10'))
 
-        self.datapoint = DataPoint(time_ms, class_label, mean_id_interval, variance_id_frequency,
-                                   mean_id_intervals_variance, mean_data_bit_count, variance_data_bit_count,
-                                   kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
-                                   kurtosis_variance_data_bit_count_id, skewness_id_interval_variances)
+        self.datapoint_expected = DataPoint(time_ms, class_label, mean_id_interval, variance_id_frequency,
+                                            mean_id_intervals_variance, mean_data_bit_count, variance_data_bit_count,
+                                            kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
+                                            kurtosis_variance_data_bit_count_id, skewness_id_interval_variances)
+
+    def test_load_messages(self):
+        message_actual = load_messages("message.csv")[0]
+
+        # Using almost equal to avoid the problems with floating point numbers.
+        self.assertAlmostEqual(self.message_expected.timestamp, message_actual.timestamp)
+
+        self.assertEqual(self.message_expected.id, message_actual.id)
+        self.assertEqual(self.message_expected.rtr, message_actual.rtr)
+        self.assertEqual(self.message_expected.dlc, message_actual.dlc)
+        self.assertEqual(self.message_expected.data, message_actual.data)
