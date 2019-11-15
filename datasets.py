@@ -336,6 +336,24 @@ def __get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, set_
     return directory + name + ".csv", directory
 
 
+def get_transitioning_dataset(period_ms=100, stride_ms=100, verbose=False):
+    """Returns a list of datapoints,
+    based on the concatenation of a test-based attack-free and impersonation raw dataset,
+    and the timestamp of the transition."""
+    attack_free_messages = __neutralize_offset(datareader_csv.load_attack_free1(verbose=verbose))
+    imp_messages = __neutralize_offset(datareader_csv.load_impersonation_1(verbose=verbose))[524052:]
+
+    attack_free_messages = __percentage_subset(attack_free_messages, 85, 100)
+    imp_messages = __percentage_subset(imp_messages, 85, 100)
+    transition_index = len(attack_free_messages)
+    messages = __concat_messages(attack_free_messages, imp_messages)
+    transition_timestamp = messages[transition_index].timestamp
+
+    datapoints, _ = __messages_to_datapoints(messages, period_ms, 'normal', stride_ms)
+
+    return datapoints, transition_timestamp
+
+
 def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True, dos_type='original',
                             force_create=False, verbose=False, in_parallel=True):
     """Returns the training and validation sets associated with input argument combination.
