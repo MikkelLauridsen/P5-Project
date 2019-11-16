@@ -373,9 +373,13 @@ def plot_feature_barcharts(times_dict):
 if __name__ == '__main__':
     os.chdir("..")
 
+    # Options
+    dos_type = 'modified'  # 'modified' or 'original'
+    imp_type = 'imp_split'  # 'imp_split' or 'imp_full'
+
     results = datareader_csv.load_all_results()
-    validation_results = metrics.filter_results(results, dos_types=['modified'], is_test=False)
-    test_results = metrics.filter_results(results, dos_types=['modified'], is_test=True)
+    validation_results = metrics.filter_results(results, dos_types=[dos_type], is_test=False)
+    test_results = metrics.filter_results(results, dos_types=[dos_type], is_test=True)
 
     bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
                  'feature_time']
@@ -386,7 +390,7 @@ if __name__ == '__main__':
     for res in test_results:
         print(res.__dict__)
 
-    durations_path = "data\\feature\\imp_split\\original\\mixed_validation_time_100ms_100ms.csv"
+    durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
     feature_times = datareader_csv.load_feature_durations(durations_path)
     del feature_times['time_ms']
     del feature_times['class_label']
@@ -399,6 +403,7 @@ if __name__ == '__main__':
     plot_features_f1s(feature_results, datapoint_features, 5, 2, plot_type='include')
     plot_features_f1s(feature_results, datapoint_features, 5, 2, plot_type='exclude')
 
+    # Options
     _models = __models.keys()
     _windows = [100, 50, 20, 10]
     _strides = [100, 50, 20, 10]
