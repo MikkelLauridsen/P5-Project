@@ -46,16 +46,19 @@ datapoint_features = datapoint_attributes[2:]
 datapoint_attribute_descriptions = {
     "mean_id_interval": "Mean id interval",
     "variance_id_frequency": "Variance id frequency",
-    "num_id_transitions": "# id transitions",
-    "num_ids": "# ids",
-    "num_msgs": "# messages",
-    "mean_data_bit_count": "Mean data bit-counts",
-    "variance_data_bit_count": "Variance data bit-counts",
-    "mean_variance_data_bit_count_id": "Mean variance data bit-count ids",
+    "num_id_transitions": "Number of id transitions",
+    "num_ids": "Number of messages",
+    "num_msgs": "Number of ids",
+    "mean_id_intervals_variance":  "Mean id intervals variance",
+    "mean_data_bit_count": "Mean data field bit-count",
+    "variance_data_bit_count": "Data field bit-count variance",
+    "mean_variance_data_bit_count_id": "Mean data field bit-count id variance",
     "mean_probability_bits": "Mean probability bits",
-    "kurtosis_variance_data_bit_count_id": "Kurtosis variance data bit-count",
+    "kurtosis_id_interval": "Kurtosis id interval",
     "kurtosis_id_frequency": "Kurtosis id frequencies",
     "skewness_id_frequency": "Skewness id frequencies",
+    "kurtosis_mean_id_intervals": "Kurtosis mean id intervals",
+    "kurtosis_variance_data_bit_count_id": "Kurtosis data field bit-count id variance",
     "skewness_id_interval_variances": "Skewness id interval variances"
 }
 

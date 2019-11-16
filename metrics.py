@@ -2,6 +2,8 @@ import math
 import datapoint
 from operator import add
 
+import datareader_csv
+
 
 class Metrics:
     precision: float
@@ -229,6 +231,21 @@ def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline,
     dir = f"result/{baseline_name}/{model}/{imp_name}/{dos_type}/"
 
     return dir + name + ".csv", dir
+
+
+def get_result_feature_breakdown(result: Result, type='validation'):
+    """
+    Gets a dict mapping feature labels to feature times. This is loaded according to a specific Result
+    :param result: The result to load feature times to
+    :param type: The type of feature times to load. Valid values are 'validation' and 'test'
+    :return:
+    """
+    imp_name = "imp_split" if result.imp_split else "imp_full"
+    name = f"mixed_{type}_time_{result.period_ms}ms_{result.stride_ms}ms"
+    directory = f"data/feature/{imp_name}/{result.dos_type}/"
+
+    path = directory + name + ".csv"
+    return datareader_csv.load_feature_durations(path)
 
 
 def __increment_equal(label, class_counters):

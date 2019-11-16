@@ -1,9 +1,10 @@
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import run_models
 import os
 from datareader_csv import load_metrics
-from datapoint import datapoint_features
+from datapoint import datapoint_features, datapoint_attribute_descriptions
 import datareader_csv
 import metrics
 from run_models import selected_models
@@ -197,6 +198,50 @@ def plot_model_window_times(windows, imp_split=True, dos_type='modified'):
     )
 
 
+def plot_features_f1s(results, feature_labels, n_rows=1, n_columns=1, f1_type='macro', plot_type='include'):
+
+    def get_subplot(fig, feature, index):
+        ax: Axes3D = fig.add_subplot(n_rows, n_columns, index + 1)
+
+        feature_results = results
+        if plot_type == 'include':
+            feature_results = metrics.filter_results(results, features=[feature])
+        elif plot_type == 'exclude':
+            feature_results = metrics.filter_results(results, without_features=[feature])
+        else:
+            raise ValueError("Invalid plot_type parameter")
+
+        points = {}
+        for result in feature_results:
+            label = len(result.subset)
+            y = result.metrics[f1_type].f1
+            x = result.times['feature_time'] / 1e6
+
+            points.setdefault(label, [])
+            points[label].append((x, y))
+
+        labels = list(points.keys())
+        labels.sort()
+        labels.reverse()
+        for label in labels:
+            x = [point[0] for point in points[label]]
+            y = [point[1] for point in points[label]]
+
+            ax.scatter(x, y, label=label, s=5)
+
+        ax.legend(loc='lower right')
+        ax.set_title(datapoint_attribute_descriptions[feature])
+
+        return ax
+
+    fig = plt.figure(figsize=(6.4 * n_columns, 4.8 * n_rows))
+
+    for i, feature in enumerate(feature_labels):
+        get_subplot(fig, feature, i)
+
+    plt.show()
+
+
 def plot_all_results(results, angle=0, models=__models.keys(), windows=None, strides=None, labeling='model',
                      f1_type='weighted', title=None):
     """
@@ -268,7 +313,7 @@ def plot_barchart_results(results, plot_type='f1_macro'):
     ys = []
     models = []
 
-    plot_type_info = {
+    y_func, title = {
         'f1_macro':         (lambda r: r.metrics['macro'].f1,         "F1 macro average"),
         'f1_weighted':      (lambda r: r.metrics['weighted'].f1,      "F1 weighted average"),
         'f1_normal':        (lambda r: r.metrics['normal'].f1,        "F1 normal"),
@@ -277,23 +322,82 @@ def plot_barchart_results(results, plot_type='f1_macro'):
         'f1_fuzzy':         (lambda r: r.metrics['fuzzy'].f1,         "F1 fuzzy"),
         'model_time':       (lambda r: r.times['model_time'] / 1e6,   "Model prediction time (ms)"),
         'feature_time':     (lambda r: r.times['feature_time'] / 1e6, "Feature calculation time (ms)"),
-    }.get(plot_type)
+    }[plot_type]
 
     for result in results:
-        y = plot_type_info[0](result)
-        ys.append(y)
+        ys.append(y_func(result))
         models.append(result.model)
 
-    xs = np.arange(len(ys))
+    plt.bar(models, ys)
+    plt.title(title)
+    plt.show()
 
-    plt.bar(xs, ys, align='center')
-    plt.title(plot_type_info[1])
-    plt.xticks(xs, models)
+
+def plot_barchart_feature_results(results):
+    bars = {}  # List of tuples with: (index, y value, bottom, label)
+    for i, result in enumerate(results):
+        feature_durations = metrics.get_result_feature_breakdown(result)
+
+        current_bottom = 0
+        for feature in result.subset:
+            duration = feature_durations[feature] / 1e6
+            bars.setdefault(feature, [])
+            bars[feature].append((result.model, duration, current_bottom, feature))
+            current_bottom += duration
+
+    for feature, bars in bars.items():
+        ind = [bar[0] for bar in bars]
+        durations = [bar[1] for bar in bars]
+        bottoms = [bar[2] for bar in bars]
+
+        plt.bar(ind, durations, bottom=bottoms, align='center', label=feature)
+
+    plt.title("Feature time breakdown of selected models (ms)")
+    plt.legend()
+    plt.show()
+
+
+def plot_feature_barcharts(times_dict):
+    features = []
+    times = []
+    for feature, time in times_dict.items():
+        times.append(time / 1e6)
+        features.append(datapoint_attribute_descriptions[feature])
+
+    plt.bar(features, times)
+    plt.xticks(rotation=-80)
+    plt.title("Average feature calculation times.")
     plt.show()
 
 
 if __name__ == '__main__':
     os.chdir("..")
+
+    results = datareader_csv.load_all_results()
+    validation_results = metrics.filter_results(results, dos_types=['modified'], is_test=False)
+    test_results = metrics.filter_results(results, dos_types=['modified'], is_test=True)
+
+    bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
+                 'feature_time']
+    for type in bar_types:
+        plot_barchart_results(test_results, type)
+
+    plot_barchart_feature_results(test_results)
+    for res in test_results:
+        print(res.__dict__)
+
+    durations_path = "data\\feature\\imp_split\\original\\mixed_validation_time_100ms_100ms.csv"
+    feature_times = datareader_csv.load_feature_durations(durations_path)
+    del feature_times['time_ms']
+    del feature_times['class_label']
+    plot_feature_barcharts(feature_times)
+
+    feature_results = metrics.filter_results(validation_results)
+    plot_features_f1s(feature_results, datapoint_features[0:1], 1, 1)
+    plot_features_f1s(feature_results, datapoint_features[1:], 3, 3)
+
+    plot_features_f1s(feature_results, datapoint_features, 5, 2, plot_type='include')
+    plot_features_f1s(feature_results, datapoint_features, 5, 2, plot_type='exclude')
 
     _models = __models.keys()
     _windows = [100, 50, 20, 10]
@@ -303,19 +407,8 @@ if __name__ == '__main__':
     labelings = ['model', 'window', 'stride', 'feature_count', 'dos_type']
     f1_type = 'macro'
 
-    results = datareader_csv.load_all_results()
-    results = metrics.filter_results(results, dos_types='modified')
-
     for labeling in labelings:
-        plot_all_results(results, angle, _models, _windows, _strides, labeling, f1_type)
-
-    results = datareader_csv.load_all_results()
-    test_results = metrics.filter_results(results, is_test=True)
-
-    bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time', 'feature_time']
-
-    for type in bar_types:
-        plot_barchart_results(test_results, type)
+        plot_all_results(validation_results, angle, _models, _windows, _strides, labeling, f1_type)
 
     #plot_windows(_windows, imp_split=False, dos_type='modified')
     #plot_strides(_strides, imp_split=False, dos_type='modified')

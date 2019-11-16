@@ -71,7 +71,7 @@ def load_feature_durations(filepath):
     Loads the average time of feature calculation from the specified filepath.
 
     :param filepath: The filepath where the data should be read from.
-    :return: A list containing the average times it took to calculate features.
+    :return: A dict containing the average times it took to calculate features.
     """
     feature_durations = {}
 
