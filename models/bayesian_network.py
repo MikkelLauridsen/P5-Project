@@ -5,6 +5,7 @@ from sklearn.base import BaseEstimator
 class BayesianNetwork(BaseEstimator):
     __domain: hugin.DataSet
     __attr_names: []
+    classes_: [] = ["normal", "dos", "fuzzy", "impersonation"]
 
     def __init__(self, subset):
         self.__domain = hugin.Domain()
@@ -17,10 +18,16 @@ class BayesianNetwork(BaseEstimator):
         self.__learn_structure_and_tables(training_set)
 
     def predict(self, features_list):
-        labels = ["normal" for feature_list in features_list]  # Create fictional labels. This is ignored in prediction
+        labels = ["normal" for _ in features_list]  # Create fictional labels. This is ignored in prediction
         test_set = self.__feature_list_to_dataset(features_list, labels, self.__attr_names)
 
         return self.__get_predictions(test_set)
+
+    def predict_proba(self, features_list):
+        labels = ["normal" for _ in features_list]  # Create fictional labels. This is ignored in prediction
+        test_set = self.__feature_list_to_dataset(features_list, labels, self.__attr_names)
+
+        return self.__get_probabilities(test_set)
 
     def save_network(self, name="bayesian_network.hkb"):
         # Save network to view in hugin
@@ -49,14 +56,14 @@ class BayesianNetwork(BaseEstimator):
 
         return dataset
 
-    def __get_predictions(self, dataset):
+    def __get_probabilities(self, dataset):
         self.__domain.set_number_of_cases(0)
         num_cases = dataset.get_number_of_rows()
 
         # Add dataset cases to domain
         self.__domain.add_cases(dataset, 0, num_cases)
 
-        predictions = []
+        probabilites = []
         for i in range(num_cases):
             self.__domain.reset_inference_engine()
 
@@ -74,7 +81,15 @@ class BayesianNetwork(BaseEstimator):
             impersonation_belief = injected_node.get_belief(3)
 
             # Find state of class_label node with largest value
-            beliefs = [normal_belief, fuzzy_belief, dos_belief, impersonation_belief]
+            probabilites.append([normal_belief, fuzzy_belief, dos_belief, impersonation_belief])
+
+        return probabilites
+
+    def __get_predictions(self, dataset):
+        probabilities = self.__get_probabilities(dataset)
+
+        predictions = []
+        for beliefs in probabilities:
             largest_index = beliefs.index(max(beliefs))
 
             if largest_index == 0:
