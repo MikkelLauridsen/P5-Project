@@ -357,20 +357,6 @@ def plot_barchart_feature_results(results):
     plt.show()
 
 
-def plot_feature_barcharts(times_dict):
-    features = []
-    times = []
-    for feature, time in times_dict.items():
-        times.append(time / 1e6)
-        features.append(datapoint_attribute_descriptions[feature])
-
-    plt.bar(features, times)
-    plt.xticks(rotation=-90, fontsize=7.5)
-    plt.title("Average feature calculation times")
-    plt.ylabel("Time (ms)")
-    plt.show()
-
-
 if __name__ == '__main__':
     os.chdir("..")
 
@@ -390,12 +376,6 @@ if __name__ == '__main__':
     plot_barchart_feature_results(test_results)
     for res in test_results:
         print(res.__dict__)
-
-    durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
-    feature_times = datareader_csv.load_feature_durations(durations_path)
-    del feature_times['time_ms']
-    del feature_times['class_label']
-    plot_feature_barcharts(feature_times)
 
     feature_results = metrics.filter_results(validation_results)
     plot_features_f1s(feature_results, datapoint_features[0:1], 1, 1)
