@@ -362,7 +362,7 @@ if __name__ == '__main__':
 
     # Options
     dos_type = 'modified'  # 'modified' or 'original'
-    imp_type = 'imp_split'  # 'imp_split' or 'imp_full'
+    imp_type = 'imp_full'  # 'imp_split' or 'imp_full'
 
     results = datareader_csv.load_all_results()
     validation_results = metrics.filter_results(results, dos_types=[dos_type], is_test=False)
