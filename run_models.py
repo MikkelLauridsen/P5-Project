@@ -1,14 +1,21 @@
 """Functions for generating results by running the models with different settings."""
 import os
 import time
+import numpy as np
 import concurrent.futures as conf
+
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.metrics import classification_report
+
 import models.model_utility as utility
 import hugin.pyhugin87 as hugin
+from sklearn.preprocessing import StandardScaler
 from models.model_utility import get_scaled_training_validation
-from metrics import get_metrics, get_metrics_path, get_error_metrics
+from metrics import get_metrics, get_metrics_path, get_error_metrics, print_metrics
 from datapoint import datapoint_features
 from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
+from datasets import get_transitioning_dataset, get_mixed_test
 
 
 def generate_validation_results(windows=None, strides=None, imp_splits=None,
@@ -262,8 +269,38 @@ selected_models = {
         'n_estimators': 110}
 }
 
-if __name__ == "__main__":
 
+def get_transition_class_probabilities(configuration):
+    classifier = CalibratedClassifierCV(utility.get_classifier(configuration.model, selected_models[configuration.model], configuration.subset), cv=5)
+    dataset, transition = get_transitioning_dataset(configuration.period_ms, configuration.stride_ms, verbose=True)
+    X_train, y_train, X_validation, y_validation, _ = get_scaled_training_validation(
+        configuration.period_ms, configuration.stride_ms,
+        configuration.imp_split, configuration.dos_type)
+
+    X_train = list(X_train) + list(X_validation)
+    y_train = list(y_train) + list(y_validation)
+
+    classifier.fit(X_train, y_train)
+
+    X, _ = utility.split_feature_label(dataset)
+
+    scaler = StandardScaler()
+    scaler.fit(X)
+    X = scaler.transform(X)
+
+    predictions = classifier.predict_proba(X).tolist()
+    timestamps = [window.time_ms for window in dataset]
+    imp_predictions = []
+
+    imp_index = classifier.classes_.tolist().index('impersonation')
+
+    for prediction in predictions:
+        imp_predictions.append(prediction[imp_index])
+
+    return imp_predictions, timestamps, transition
+
+
+if __name__ == "__main__":
     # Setup models without svm
     selected_models_1 = selected_models.copy()
     del selected_models_1['svm']

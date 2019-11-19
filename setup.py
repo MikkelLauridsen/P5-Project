@@ -11,5 +11,5 @@ setup(
     author_email='',
     description='',
     ext_modules=cythonize("features.pyx"),
-    install_requires=['Cython', 'matplotlib', 'scikit-learn', 'numpy']
+    install_requires=['Cython', 'matplotlib', 'scikit-learn', 'numpy', 'pandas']
 )

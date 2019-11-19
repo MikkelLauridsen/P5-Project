@@ -92,7 +92,7 @@ def __write_datapoints_csv(datapoints, period_ms, stride_ms, impersonation_split
 def __concat_messages(msgs1, msgs2):
     # Joins two lists of messages,
     # by offsetting the timestamps of messages in the second list.
-    offset = msgs1[len(msgs1) - 1].timestamp
+    offset = msgs1[len(msgs1) - 1].timestamp - msgs2[0].timestamp
 
     for msg in msgs2:
         msg.timestamp += offset
@@ -340,14 +340,14 @@ def get_transitioning_dataset(period_ms=100, stride_ms=100, verbose=False):
     """Returns a list of datapoints,
     based on the concatenation of a test-based attack-free and impersonation raw dataset,
     and the timestamp of the transition."""
-    attack_free_messages = __neutralize_offset(datareader_csv.load_attack_free1(verbose=verbose))
+    attack_free_messages = __neutralize_offset(datareader_csv.load_attack_free2(verbose=verbose))
     imp_messages = __neutralize_offset(datareader_csv.load_impersonation_1(verbose=verbose))[524052:]
 
-    attack_free_messages = __percentage_subset(attack_free_messages, 85, 100)
-    imp_messages = __percentage_subset(imp_messages, 85, 100)
+    attack_free_messages = __percentage_subset(attack_free_messages, 99.9, 100.0)
+    imp_messages = __percentage_subset(imp_messages, 85.0, 85.9)
     transition_index = len(attack_free_messages)
     messages = __concat_messages(attack_free_messages, imp_messages)
-    transition_timestamp = messages[transition_index].timestamp
+    transition_timestamp = messages[transition_index].timestamp * 1000.0  # Convert to ms
 
     datapoints, _ = __messages_to_datapoints(messages, period_ms, 'normal', stride_ms)
 
