@@ -365,8 +365,9 @@ def plot_feature_barcharts(times_dict):
         features.append(datapoint_attribute_descriptions[feature])
 
     plt.bar(features, times)
-    plt.xticks(rotation=-80)
-    plt.title("Average feature calculation times.")
+    plt.xticks(rotation=-90, fontsize=7.5)
+    plt.title("Average feature calculation times")
+    plt.ylabel("Time (ms)")
     plt.show()
 
 
