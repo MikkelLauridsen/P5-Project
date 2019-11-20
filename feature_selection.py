@@ -26,7 +26,7 @@ if __name__ == '__main__':
     figure = plt.figure(figsize=(22, 15))
     plt.matshow(corrmat, fignum=figure.number)
     plt.colorbar().ax.tick_params(labelsize=20, length=10)
-    plt.title(f"Correlations at {period_ms}ms windows and {stride_ms}ms overlap", fontsize=30)
+    # plt.title(f"Correlations at {period_ms}ms windows and {stride_ms}ms overlap", fontsize=30)
     plt.xticks(range(data.shape[1]), list(range(22)), fontsize=20)
     plt.tick_params(length=10, bottom=False)
     # Add feature names as y-axis labels
