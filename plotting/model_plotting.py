@@ -7,6 +7,7 @@ from datareader_csv import load_metrics
 from datapoint import datapoint_features, datapoint_attribute_descriptions
 import datareader_csv
 import metrics
+from model_selection import get_best_for_models
 from run_models import selected_models
 import numpy as np
 
@@ -370,8 +371,49 @@ def plot_feature_barcharts(times_dict):
     plt.show()
 
 
+def __class_to_color(cls):
+    # Gets a color from a class label
+    return {
+        "normal": "#246EB6",
+        "dos": "#B62121",
+        "fuzzy": "#0A813E",
+        "impersonation": "#FF7A0E"
+    }.get(cls, "#000000")
+
+
+def plot_transition_dataset(imp_split=True, dos_type='original'):
+    results = datareader_csv.load_all_results()
+    results = metrics.filter_results(results, dos_types=[dos_type], imp_splits=[imp_split])
+
+    best_results = get_best_for_models(results, selected_models.keys(), w_ft=0, w_mt=0, w_f1=1, f1_type='macro')
+
+    for configuration in best_results:
+        if configuration.model != 'mlp':
+            continue
+
+        probabilities, timestamps, class_labels = run_models.get_transition_class_probabilities(configuration)
+
+        colors = [__class_to_color(cls) for cls in class_labels]
+        legends = [(__class_to_color("normal"), "attack free state"),
+                   (__class_to_color("dos"), "DoS attack state"),
+                   (__class_to_color("fuzzy"), "Fuzzy attack state"),
+                   (__class_to_color("impersonation"), "Impersonation attack state")]
+
+        patches = []
+
+        for legend in legends:
+            patches += [mpatches.Patch(color=legend[0], label=legend[1])]
+
+        plt.scatter(timestamps, probabilities, s=5, c=colors)
+        plt.legend(handles=patches)
+        plt.title(configuration.model)
+        plt.show()
+
+
 if __name__ == '__main__':
     os.chdir("..")
+
+    plot_transition_dataset(False, 'modified')
 
     # Options
     dos_type = 'modified'  # 'modified' or 'original'

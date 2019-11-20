@@ -1,5 +1,8 @@
+import math
+
 import datareader_csv
 import metrics
+from datapoint import datapoint_features
 from models.model_utility import get_scaled_test, get_scaled_training_validation
 from run_models import selected_models, create_and_save_results
 
@@ -69,9 +72,57 @@ def get_best_for_models(results, models, w_ft=-0.25, w_mt=-10, w_f1=3.5, f1_type
     return best_results
 
 
+def get_feature_statistics(results):
+    to_be_deleted = []
+
+    for result in results:
+        if len(result.subset) != 6:
+            to_be_deleted.append(result)
+
+    for result in to_be_deleted:
+        pass#del results[results.index(result)]
+
+    length = len(results)
+    feature_labels = datapoint_features
+    statistics = {}
+
+    for label in feature_labels:
+        result_with = metrics.filter_results(results, features=[label])
+        result_without = metrics.filter_results(results, without_features=[label])
+
+        with_length = len(result_with)
+        without_length = len(result_without)
+        prevalence = with_length / length
+
+        if prevalence != 0:
+            avg_f1_dos = math.fsum([result.metrics['dos'].f1 for result in result_with]) / with_length
+            avg_f1_fuzzy = math.fsum([result.metrics['fuzzy'].f1 for result in result_with]) / with_length
+            avg_f1_imp = math.fsum([result.metrics['impersonation'].f1 for result in result_with]) / with_length
+        else:
+            avg_f1_dos = 0
+            avg_f1_fuzzy = 0
+            avg_f1_imp = 0
+
+        avg_f1_without_dos = math.fsum([result.metrics['dos'].f1 for result in result_without]) / without_length
+        avg_f1_without_fuzzy = math.fsum([result.metrics['fuzzy'].f1 for result in result_without]) / without_length
+        avg_f1_without_imp = math.fsum([result.metrics['impersonation'].f1 for result in result_without]) / without_length
+        avg_f1_diff_dos = avg_f1_without_dos - avg_f1_dos
+        avg_f1_diff_fuzzy = avg_f1_without_fuzzy - avg_f1_fuzzy
+        avg_f1_diff_imp = avg_f1_without_imp - avg_f1_imp
+
+        statistics[label] = [prevalence, avg_f1_diff_dos, avg_f1_diff_fuzzy, avg_f1_diff_imp]
+
+    return statistics
+
+
 if __name__ == '__main__':
     results = datareader_csv.load_all_results()
-    results = metrics.filter_results(results, dos_types='modified')
+    results = metrics.filter_results(results, dos_types=['original'], imp_splits=[True], periods=[100])
+
+    statistics = get_feature_statistics(results)
+
+    for statistic in statistics.keys():
+        print("{}: {:.2f}, {:.2f}, {:.2f}, {:.2f}".format(statistic, statistics[statistic][0], statistics[statistic][1], statistics[statistic][2], statistics[statistic][3]))
 
     best_results = get_best_for_models(results, selected_models.keys())
     run_on_test(best_results)
