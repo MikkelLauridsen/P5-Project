@@ -59,7 +59,8 @@ cdef double __calculate_skewness(array.array values):
     if len(values) == 0:
         return 0
 
-    sorted_values = list(values).sort()
+    sorted_values = list(values)
+    sorted_values.sort()
 
     mean = math.fsum(values) / len(values)
     median = sorted_values[math.floor(len(values) / 2)] # sort values, such that the median can be found
