@@ -4,6 +4,21 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import datasets as ds
 import datapoint
+import datareader_csv
+
+
+def plot_feature_barcharts(times_dict):
+    features = []
+    times = []
+    for feature, time in times_dict.items():
+        times.append(time / 1e6)
+        features.append(datapoint.datapoint_attribute_descriptions[feature])
+
+    plt.bar(features, times)
+    plt.xticks(rotation=-90, fontsize=7.5)
+    plt.title("Average feature calculation times")
+    plt.ylabel("Time (ms)")
+    plt.show()
 
 
 def __class_to_color(cls):
@@ -83,3 +98,13 @@ if __name__ == "__main__":
 
     # Plot features
     plot_all_features(training_points)
+
+    # Options
+    dos_type = 'modified'  # 'modified' or 'original'
+    imp_type = 'imp_full'  # 'imp_split' or 'imp_full'
+
+    durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
+    feature_times = datareader_csv.load_feature_durations(durations_path)
+    del feature_times['time_ms']
+    del feature_times['class_label']
+    plot_feature_barcharts(feature_times)

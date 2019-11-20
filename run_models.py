@@ -201,7 +201,7 @@ def __save_stepwise_elimination(models, X_train, y_train, X_validation, y_valida
                     current_subset) for model in models.keys()}
 
                 for future in conf.as_completed(futures):
-                    score = future.result()['weighted'].f1
+                    score = future.result()['macro'].f1
 
                     if score > best_score:
                         best_score = score

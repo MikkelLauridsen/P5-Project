@@ -7,7 +7,6 @@ from datareader_csv import load_metrics
 from datapoint import datapoint_features, datapoint_attribute_descriptions
 import datareader_csv
 import metrics
-from model_selection import get_best_for_models
 from run_models import selected_models
 import numpy as np
 
@@ -358,66 +357,12 @@ def plot_barchart_feature_results(results):
     plt.show()
 
 
-def plot_feature_barcharts(times_dict):
-    features = []
-    times = []
-    for feature, time in times_dict.items():
-        times.append(time / 1e6)
-        features.append(datapoint_attribute_descriptions[feature])
-
-    plt.bar(features, times)
-    plt.xticks(rotation=-80)
-    plt.title("Average feature calculation times.")
-    plt.show()
-
-
-def __class_to_color(cls):
-    # Gets a color from a class label
-    return {
-        "normal": "#246EB6",
-        "dos": "#B62121",
-        "fuzzy": "#0A813E",
-        "impersonation": "#FF7A0E"
-    }.get(cls, "#000000")
-
-
-def plot_transition_dataset(imp_split=True, dos_type='original'):
-    results = datareader_csv.load_all_results()
-    results = metrics.filter_results(results, dos_types=[dos_type], imp_splits=[imp_split])
-
-    best_results = get_best_for_models(results, selected_models.keys(), w_ft=0, w_mt=0, w_f1=1, f1_type='macro')
-
-    for configuration in best_results:
-        if configuration.model != 'mlp':
-            continue
-
-        probabilities, timestamps, class_labels = run_models.get_transition_class_probabilities(configuration)
-
-        colors = [__class_to_color(cls) for cls in class_labels]
-        legends = [(__class_to_color("normal"), "attack free state"),
-                   (__class_to_color("dos"), "DoS attack state"),
-                   (__class_to_color("fuzzy"), "Fuzzy attack state"),
-                   (__class_to_color("impersonation"), "Impersonation attack state")]
-
-        patches = []
-
-        for legend in legends:
-            patches += [mpatches.Patch(color=legend[0], label=legend[1])]
-
-        plt.scatter(timestamps, probabilities, s=5, c=colors)
-        plt.legend(handles=patches)
-        plt.title(configuration.model)
-        plt.show()
-
-
 if __name__ == '__main__':
     os.chdir("..")
 
-    plot_transition_dataset(False, 'modified')
-
     # Options
     dos_type = 'modified'  # 'modified' or 'original'
-    imp_type = 'imp_split'  # 'imp_split' or 'imp_full'
+    imp_type = 'imp_full'  # 'imp_split' or 'imp_full'
 
     results = datareader_csv.load_all_results()
     validation_results = metrics.filter_results(results, dos_types=[dos_type], is_test=False)
@@ -431,12 +376,6 @@ if __name__ == '__main__':
     plot_barchart_feature_results(test_results)
     for res in test_results:
         print(res.__dict__)
-
-    durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
-    feature_times = datareader_csv.load_feature_durations(durations_path)
-    del feature_times['time_ms']
-    del feature_times['class_label']
-    plot_feature_barcharts(feature_times)
 
     feature_results = metrics.filter_results(validation_results)
     plot_features_f1s(feature_results, datapoint_features[0:1], 1, 1)
