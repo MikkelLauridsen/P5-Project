@@ -59,10 +59,8 @@ cdef double __calculate_skewness(array.array values):
     if len(values) == 0:
         return 0
 
-    list(values).sort()  # sort values, such that the median can be found
-
     mean = math.fsum(values) / len(values)
-    median = values[math.floor(len(values) / 2)]
+    median = list(values).sort()[math.floor(len(values) / 2)] # sort values, such that the median can be found
     variance = __calculate_variance(values)
 
     if variance == 0:
