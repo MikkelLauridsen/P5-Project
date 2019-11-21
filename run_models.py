@@ -1,21 +1,19 @@
 """Functions for generating results by running the models with different settings."""
 import os
 import time
-import numpy as np
 import concurrent.futures as conf
 
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.metrics import classification_report
 
 import models.model_utility as utility
 import hugin.pyhugin87 as hugin
 from sklearn.preprocessing import StandardScaler
 from models.model_utility import get_scaled_training_validation
-from metrics import get_metrics, get_metrics_path, get_error_metrics, print_metrics
+from metrics import get_metrics, get_metrics_path, get_error_metrics
 from datapoint import datapoint_features
 from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
-from datasets import get_transitioning_dataset, get_mixed_test
+from datasets import get_transitioning_dataset
 
 
 def generate_validation_results(windows=None, strides=None, imp_splits=None,
@@ -241,7 +239,7 @@ selected_models = {
         'solver': 'lbfgs'},
 
     'svm': {
-        'C': 10,
+        'C': 1,
         'kernel': 'linear'},
 
     'knn': {
@@ -297,45 +295,20 @@ def get_transition_class_probabilities(configuration):
 
 
 if __name__ == "__main__":
-    # Setup models without svm
-    selected_models_1 = selected_models.copy()
-    del selected_models_1['svm']
-
-    # Setup models with only svm
-    selected_models_2 = {'svm': selected_models['svm']}
-
-    # Generate results excluding svm
+    # Generate for the modified dataset
     generate_validation_results(
         windows=[100, 50, 20, 10],
-        strides=[100, 50, 20, 10],
+        strides=[10, 20, 50, 100],
         imp_splits=[False],
         dos_types=['modified'],
-        models=selected_models_1,
+        models=selected_models,
         eliminations=4)
 
-    # Generate results for svm model with only larger stride
-    generate_validation_results(
-        windows=[100, 50, 20, 10],
-        strides=[100, 50],
-        imp_splits=[False],
-        dos_types=['modified'],
-        models=selected_models_2,
-        eliminations=4)
-
-    # Generate results excluding svm
+    # Generate results for the original dataset
     generate_validation_results(
         windows=[100, 50, 20, 10],
         strides=[100, 50, 20, 10],
         imp_splits=[True],
         dos_types=['original'],
-        models=selected_models_1,
-        eliminations=4)
-
-    # Generate results for svm model with only larger stride
-    generate_validation_results(
-        windows=[100, 50, 20, 10],
-        strides=[100, 50],
-        imp_splits=[True],
-        dos_types=['original'],
-        models=selected_models_2,
+        models=selected_models,
         eliminations=4)
