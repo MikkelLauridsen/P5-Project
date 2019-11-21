@@ -56,29 +56,28 @@ def generate_validation_results(windows=None, strides=None, imp_splits=None,
                     print(f"starting jobs {current_job} through {current_job + inner_loop_size} of "
                           f"{job_count} -- {(current_job / job_count) * 100.0}%")
 
-                    if eliminations > 0:
-                        # Conduct stepwise-elimination to test different feature subsets.
-                        __save_stepwise_elimination(
-                            models,
-                            X_train, y_train,
-                            X_validation, y_validation,
-                            eliminations,
-                            feature_time_dict,
-                            period_ms, stride_ms,
-                            imp_split, dos_type)
-                    else:
-                        # Use the full feature poll.
-                        subset = datapoint_features
-
+                    with conf.ProcessPoolExecutor() as executor:
                         for model in models.keys():
-                            create_and_save_results(
-                                model, models[model],
-                                X_train, y_train,
-                                X_validation, y_validation,
-                                feature_time_dict,
-                                period_ms, stride_ms,
-                                imp_split, dos_type,
-                                subset)
+                            if eliminations > 0:
+                                executor.submit(
+                                    __save_stepwise_elimination,
+                                    model, models[model],
+                                    X_train, y_train,
+                                    X_validation, y_validation,
+                                    eliminations,
+                                    feature_time_dict,
+                                    period_ms, stride_ms,
+                                    imp_split, dos_type)
+                            else:
+                                executor.submit(
+                                    create_and_save_results,
+                                    model, models[model],
+                                    X_train, y_train,
+                                    X_validation, y_validation,
+                                    feature_time_dict,
+                                    period_ms, stride_ms,
+                                    imp_split, dos_type,
+                                    datapoint_features)
 
                     current_job += inner_loop_size
 
@@ -172,7 +171,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
     return metrics
 
 
-def __save_stepwise_elimination(models, X_train, y_train, X_validation, y_validation, max_features,
+def __save_stepwise_elimination(model, parameters, X_train, y_train, X_validation, y_validation, max_features,
                                 feature_time_dict, period_ms, stride_ms, imp_split, dos_type):
     # Runs step-wise elimination on specified parameters and saves the results of each subset model combination.
 
@@ -189,23 +188,20 @@ def __save_stepwise_elimination(models, X_train, y_train, X_validation, y_valida
             current_subset = working_set.copy()
             del current_subset[current_subset.index(label)]
 
-            with conf.ProcessPoolExecutor() as executor:
-                futures = {executor.submit(
-                    create_and_save_results,
-                    model, models[model],
-                    X_train, y_train,
-                    X_validation, y_validation,
-                    feature_time_dict,
-                    period_ms, stride_ms,
-                    imp_split, dos_type,
-                    current_subset) for model in models.keys()}
+            metrics = create_and_save_results(
+                model, parameters,
+                X_train, y_train,
+                X_validation, y_validation,
+                feature_time_dict,
+                period_ms, stride_ms,
+                imp_split, dos_type,
+                current_subset)
 
-                for future in conf.as_completed(futures):
-                    score = future.result()['macro'].f1
+            score = metrics['macro'].f1
 
-                    if score > best_score:
-                        best_score = score
-                        best_label = label
+            if score > best_score:
+                best_score = score
+                best_label = label
 
         # Remove the feature label which yields the best result when eliminated from the pool.
         del working_set[working_set.index(best_label)]

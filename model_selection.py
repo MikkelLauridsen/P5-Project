@@ -117,7 +117,7 @@ def get_feature_statistics(results):
 
 if __name__ == '__main__':
     results = datareader_csv.load_all_results()
-    results = metrics.filter_results(results, dos_types=['original'], imp_splits=[True], periods=[100])
+    results = metrics.filter_results(results, dos_types=['modified'], imp_splits=[False], periods=[100])
 
     statistics = get_feature_statistics(results)
 
