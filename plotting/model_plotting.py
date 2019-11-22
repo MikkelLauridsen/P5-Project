@@ -1,6 +1,5 @@
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import run_models
 import os
 from datareader_csv import load_metrics
@@ -8,7 +7,8 @@ from datapoint import datapoint_features, datapoint_attribute_descriptions
 import datareader_csv
 import metrics
 from run_models import selected_models
-import numpy as np
+import model_selection
+import datasets
 
 __models = selected_models
 
@@ -350,10 +350,66 @@ def plot_barchart_feature_results(results):
         durations = [bar[1] for bar in bars]
         bottoms = [bar[2] for bar in bars]
 
-        plt.bar(ind, durations, bottom=bottoms, align='center', label=feature)
+        plt.bar(ind, durations, bottom=bottoms, align='center', label=datapoint_attribute_descriptions[feature])
 
     plt.title("Feature time breakdown of selected models (ms)")
+    plt.legend(fontsize="small")
+    plt.show()
+
+
+def plot_feature_barcharts(times_dict):
+    features = []
+    times = []
+    for feature, time in times_dict.items():
+        times.append(time / 1e6)
+        features.append(datapoint_attribute_descriptions[feature])
+
+    plt.bar(features, times)
+    plt.xticks(rotation=-80)
+    plt.title("Average feature calculation times.")
+    plt.show()
+
+
+def __get_in_range(xs, ys, min_x, max_x):
+    xs_new = []
+    ys_new = []
+
+    for x, y in zip(xs, ys):
+        if min_x <= x <= max_x:
+            xs_new.append(x)
+            ys_new.append(y)
+
+    return xs_new, ys_new
+
+
+def plot_transition_dataset(results, model_labels):
+    best_results = model_selection.get_best_for_models(results, model_labels, 0, 0, 1)
+
+    transition = 0
+    max_timestamp = 0
+    min_timestamp = None
+
+    for configuration in best_results:
+        if configuration.model == 'bn':
+            continue
+
+        probabilities, timestamps, transition = run_models.get_transition_class_probabilities(configuration)
+
+        timestamps, probabilities = __get_in_range(timestamps, probabilities, transition - 1000, transition + 1000)
+        plt.plot(timestamps, probabilities, label=configuration.model)
+
+        if min_timestamp is None:
+            min_timestamp = timestamps[0]
+
+        max_timestamp = max([max_timestamp] + timestamps)
+        min_timestamp = min([min_timestamp] + timestamps)
+
+    plt.plot([min_timestamp, transition, transition, max_timestamp], [0, 0, 1, 1], label="Ground truth")
+    plt.plot([min_timestamp, max_timestamp], [0.5, 0.5], label="Threshold")
+
     plt.legend()
+    plt.ylabel("Impersonation probability")
+    plt.xlabel("Time (ms)")
     plt.show()
 
 
@@ -364,9 +420,14 @@ if __name__ == '__main__':
     dos_type = 'modified'  # 'modified' or 'original'
     imp_type = 'imp_full'  # 'imp_split' or 'imp_full'
 
+    _models = list(__models.keys())
+    del _models[0]
+
     results = datareader_csv.load_all_results()
     validation_results = metrics.filter_results(results, dos_types=[dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[dos_type], is_test=True)
+
+    #plot_transition_dataset(validation_results, _models)
 
     bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
                  'feature_time']
@@ -376,6 +437,12 @@ if __name__ == '__main__':
     plot_barchart_feature_results(test_results)
     for res in test_results:
         print(res.__dict__)
+
+    durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
+    feature_times = datareader_csv.load_feature_durations(durations_path)
+    del feature_times['time_ms']
+    del feature_times['class_label']
+    plot_feature_barcharts(feature_times)
 
     feature_results = metrics.filter_results(validation_results)
     plot_features_f1s(feature_results, datapoint_features[0:1], 1, 1)
