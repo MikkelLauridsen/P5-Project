@@ -307,7 +307,7 @@ if __name__ == "__main__":
     # Generate results for the original dataset
     generate_validation_results(
         windows=[100, 50, 20, 10],
-        strides=[100, 50, 20, 10],
+        strides=[10, 20, 50, 100],
         imp_splits=[True],
         dos_types=['original'],
         models=selected_models,
