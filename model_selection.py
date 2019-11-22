@@ -1,6 +1,7 @@
 import datareader_csv
 import metrics
 from models.model_utility import get_scaled_test, get_scaled_training_validation
+import plotting.model_plotting as model_plotting
 from run_models import selected_models, create_and_save_results
 
 
@@ -70,8 +71,18 @@ def get_best_for_models(results, models, w_ft=-0.25, w_mt=-10, w_f1=3.5, f1_type
 
 
 if __name__ == '__main__':
-    results = datareader_csv.load_all_results()
-    results = metrics.filter_results(results, dos_types='modified')
+    dos_type = 'modified'
+    imp_split = False
 
-    best_results = get_best_for_models(results, selected_models.keys())
+    results = datareader_csv.load_all_results()
+    results = metrics.filter_results(results, dos_types=[dos_type], imp_splits=[False])
+
+    best_results = get_best_for_models(results, selected_models.keys(), 0, 0, 1, 'macro')
     run_on_test(best_results)
+
+    bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
+                 'feature_time']
+    for type in bar_types:
+        model_plotting.plot_barchart_results(best_results, type)
+
+    model_plotting.plot_barchart_feature_results(best_results)

@@ -88,20 +88,20 @@ def __setup_scatter(xaxis, yaxis, xlabel, ylabel, class_label, show=True):
 if __name__ == "__main__":
     os.chdir("..")
 
+    # Options
+    dos_type = 'modified'  # 'modified' or 'original'
+    imp_type = 'imp_full'  # 'imp_split' or 'imp_full'
+
     # Get datasets
     training_points, validation_points, _ = ds.load_or_create_datasets(
         period_ms=100,
         stride_ms=100,
-        imp_split=True,
-        dos_type='original',
+        imp_split=imp_type == 'imp_split',
+        dos_type=dos_type,
         in_parallel=True)
 
     # Plot features
-    plot_all_features(training_points)
-
-    # Options
-    dos_type = 'modified'  # 'modified' or 'original'
-    imp_type = 'imp_full'  # 'imp_split' or 'imp_full'
+    #plot_all_features(training_points)
 
     durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
     feature_times = datareader_csv.load_feature_durations(durations_path)
