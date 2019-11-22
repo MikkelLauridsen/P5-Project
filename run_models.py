@@ -1,21 +1,19 @@
 """Functions for generating results by running the models with different settings."""
 import os
 import time
-import numpy as np
 import concurrent.futures as conf
 
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.metrics import classification_report
 
 import models.model_utility as utility
 import hugin.pyhugin87 as hugin
 from sklearn.preprocessing import StandardScaler
 from models.model_utility import get_scaled_training_validation
-from metrics import get_metrics, get_metrics_path, get_error_metrics, print_metrics
+from metrics import get_metrics, get_metrics_path, get_error_metrics
 from datapoint import datapoint_features
 from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
-from datasets import get_transitioning_dataset, get_mixed_test
+from datasets import get_transitioning_dataset
 
 
 def generate_validation_results(windows=None, strides=None, imp_splits=None,
@@ -56,29 +54,28 @@ def generate_validation_results(windows=None, strides=None, imp_splits=None,
                     print(f"starting jobs {current_job} through {current_job + inner_loop_size} of "
                           f"{job_count} -- {(current_job / job_count) * 100.0}%")
 
-                    if eliminations > 0:
-                        # Conduct stepwise-elimination to test different feature subsets.
-                        __save_stepwise_elimination(
-                            models,
-                            X_train, y_train,
-                            X_validation, y_validation,
-                            eliminations,
-                            feature_time_dict,
-                            period_ms, stride_ms,
-                            imp_split, dos_type)
-                    else:
-                        # Use the full feature poll.
-                        subset = datapoint_features
-
+                    with conf.ProcessPoolExecutor() as executor:
                         for model in models.keys():
-                            create_and_save_results(
-                                model, models[model],
-                                X_train, y_train,
-                                X_validation, y_validation,
-                                feature_time_dict,
-                                period_ms, stride_ms,
-                                imp_split, dos_type,
-                                subset)
+                            if eliminations > 0:
+                                executor.submit(
+                                    __save_stepwise_elimination,
+                                    model, models[model],
+                                    X_train, y_train,
+                                    X_validation, y_validation,
+                                    eliminations,
+                                    feature_time_dict,
+                                    period_ms, stride_ms,
+                                    imp_split, dos_type)
+                            else:
+                                executor.submit(
+                                    create_and_save_results,
+                                    model, models[model],
+                                    X_train, y_train,
+                                    X_validation, y_validation,
+                                    feature_time_dict,
+                                    period_ms, stride_ms,
+                                    imp_split, dos_type,
+                                    datapoint_features)
 
                     current_job += inner_loop_size
 
@@ -172,7 +169,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
     return metrics
 
 
-def __save_stepwise_elimination(models, X_train, y_train, X_validation, y_validation, max_features,
+def __save_stepwise_elimination(model, parameters, X_train, y_train, X_validation, y_validation, max_features,
                                 feature_time_dict, period_ms, stride_ms, imp_split, dos_type):
     # Runs step-wise elimination on specified parameters and saves the results of each subset model combination.
 
@@ -189,23 +186,20 @@ def __save_stepwise_elimination(models, X_train, y_train, X_validation, y_valida
             current_subset = working_set.copy()
             del current_subset[current_subset.index(label)]
 
-            with conf.ProcessPoolExecutor() as executor:
-                futures = {executor.submit(
-                    create_and_save_results,
-                    model, models[model],
-                    X_train, y_train,
-                    X_validation, y_validation,
-                    feature_time_dict,
-                    period_ms, stride_ms,
-                    imp_split, dos_type,
-                    current_subset) for model in models.keys()}
+            metrics = create_and_save_results(
+                model, parameters,
+                X_train, y_train,
+                X_validation, y_validation,
+                feature_time_dict,
+                period_ms, stride_ms,
+                imp_split, dos_type,
+                current_subset)
 
-                for future in conf.as_completed(futures):
-                    score = future.result()['macro'].f1
+            score = metrics['macro'].f1
 
-                    if score > best_score:
-                        best_score = score
-                        best_label = label
+            if score > best_score:
+                best_score = score
+                best_label = label
 
         # Remove the feature label which yields the best result when eliminated from the pool.
         del working_set[working_set.index(best_label)]
@@ -245,7 +239,7 @@ selected_models = {
         'solver': 'lbfgs'},
 
     'svm': {
-        'C': 10,
+        'C': 1,
         'kernel': 'linear'},
 
     'knn': {
@@ -301,45 +295,20 @@ def get_transition_class_probabilities(configuration):
 
 
 if __name__ == "__main__":
-    # Setup models without svm
-    selected_models_1 = selected_models.copy()
-    del selected_models_1['svm']
-
-    # Setup models with only svm
-    selected_models_2 = {'svm': selected_models['svm']}
-
-    # Generate results excluding svm
+    # Generate for the modified dataset
     generate_validation_results(
         windows=[100, 50, 20, 10],
-        strides=[100, 50, 20, 10],
+        strides=[10, 20, 50, 100],
         imp_splits=[False],
         dos_types=['modified'],
-        models=selected_models_1,
+        models=selected_models,
         eliminations=4)
 
-    # Generate results for svm model with only larger stride
-    generate_validation_results(
-        windows=[100, 50, 20, 10],
-        strides=[100, 50],
-        imp_splits=[False],
-        dos_types=['modified'],
-        models=selected_models_2,
-        eliminations=4)
-
-    # Generate results excluding svm
+    # Generate results for the original dataset
     generate_validation_results(
         windows=[100, 50, 20, 10],
         strides=[100, 50, 20, 10],
         imp_splits=[True],
         dos_types=['original'],
-        models=selected_models_1,
-        eliminations=4)
-
-    # Generate results for svm model with only larger stride
-    generate_validation_results(
-        windows=[100, 50, 20, 10],
-        strides=[100, 50],
-        imp_splits=[True],
-        dos_types=['original'],
-        models=selected_models_2,
+        models=selected_models,
         eliminations=4)

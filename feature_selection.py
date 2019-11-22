@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     X_1, y = split_feature_label(datapoints1)
     X_2, _ = split_feature_label(datapoints2)
-    X, _ = scale_features(X_1, X_2)  # Throw away test data after scaling
+    X, _ = scale_features(X_1, X_2)  # Throw away validation data after scaling
     X = list(X)  # Convert X and y to lists
     y = list(y)
 
