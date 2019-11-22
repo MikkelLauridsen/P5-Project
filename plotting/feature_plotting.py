@@ -5,17 +5,24 @@ import matplotlib.pyplot as plt
 import datasets as ds
 import datapoint
 import datareader_csv
+import operator
 
 
 def plot_feature_barcharts(times_dict):
     features = []
     times = []
-    for feature, time in times_dict.items():
+
+    # Sorting the times dict by the value.
+    sorted_times_dict = sorted(times_dict.items(), key=operator.itemgetter(1))
+
+    sorted_times_dict.reverse()
+
+    for feature, time in sorted_times_dict:
         times.append(time / 1e6)
         features.append(datapoint.datapoint_attribute_descriptions[feature])
 
-    plt.bar(features, times)
-    plt.xticks(rotation=-90, fontsize=7.5)
+    plt.barh(features, times)
+    plt.xticks(fontsize=7.5)
     plt.title("Average feature calculation times")
     plt.ylabel("Time (ms)")
     plt.show()
