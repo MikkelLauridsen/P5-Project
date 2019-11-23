@@ -228,8 +228,11 @@ def __create_feature_subset(X, subset):
 
 
 selected_models = {
-    'bn': {},
+    'bn': {
+        'significance_level': 0.5},
+
     'nbc': {},
+
     'mlp': {
         'activation': 'logistic',
         'alpha': 0.0001,

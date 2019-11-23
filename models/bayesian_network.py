@@ -1,15 +1,23 @@
+import os
+
 import hugin.pyhugin87 as hugin
 from sklearn.base import BaseEstimator
+import datapoint
 
 
 class BayesianNetwork(BaseEstimator):
     __domain: hugin.DataSet
     __attr_names: []
+    __output_node: hugin.Node
+    __input_nodes: []
+    __significance_level: float
     classes_: [] = ["normal", "dos", "fuzzy", "impersonation"]
 
-    def __init__(self, subset):
+    def __init__(self, subset, significance_level=0.05):
         self.__domain = hugin.Domain()
-        self.__attr_names = subset.copy()
+        self.__attr_names = subset
+        self.__input_nodes = []
+        self.__significance_level = significance_level
 
     def fit(self, X_train, y_train):
         training_set = self.__feature_list_to_dataset(X_train, y_train, self.__attr_names)
@@ -28,6 +36,17 @@ class BayesianNetwork(BaseEstimator):
         test_set = self.__feature_list_to_dataset(features_list, labels, self.__attr_names)
 
         return self.__get_probabilities(test_set)
+
+    def set_params(self, **params):
+        self.__significance_level = params.get('significance_level', self.__significance_level)
+        self.__attr_names = params.get('subset', self.__attr_names)
+        return self
+
+    def get_params(self, deep=True):
+        return {
+            'significance_level': self.__significance_level,
+            'subset': self.__attr_names
+        }
 
     def save_network(self, name="bayesian_network.hkb"):
         # Save network to view in hugin
@@ -105,6 +124,7 @@ class BayesianNetwork(BaseEstimator):
 
     # Constructs the nodes of a network from a given dataset
     def __construct_network_nodes(self, dataset):
+        self.__domain.set_significance_level(self.__significance_level)
 
         # Insert node for class_label. This is the only discrete node, and is therefore handled separately
         output_node = hugin.Node(self.__domain, kind=hugin.KIND.DISCRETE)
@@ -116,6 +136,7 @@ class BayesianNetwork(BaseEstimator):
         output_node.set_state_label(2, "fuzzy")
         output_node.set_state_label(3, "impersonation")
         output_node.get_experience_table()
+        self.__output_node = output_node
 
         # Add input nodes (one for each column in dataset). These are all continuous
         for name_index in range(dataset.get_number_of_columns()):
@@ -129,17 +150,43 @@ class BayesianNetwork(BaseEstimator):
             node.set_name(name)
             node.set_label(name)
             node.get_experience_table()
+            self.__input_nodes.append(node)
 
     def __learn_structure_and_tables(self, dataset):
         # Add learning data from dataset to domain
         self.__domain.add_cases(dataset, 0, dataset.get_number_of_rows())
+        self.__input_nodes[0].retract_findings()
 
         # Learn structure and condition tables
         self.__domain.learn_structure()
+        #self.__domain.learn_tree_structure(self.__input_nodes[0], self.__output_node)
         self.__domain.compile()
         self.__domain.save_to_memory()
         self.__domain.learn_tables()
 
 
-def bn(subset):
-    return BayesianNetwork(subset)
+def bn(params={}):
+    return BayesianNetwork(datapoint.datapoint_features).set_params(**params)
+
+
+if __name__ == '__main__':
+    from models.model_utility import get_standard_feature_split
+    from sklearn.model_selection import GridSearchCV
+
+    os.chdir("..")
+
+    parameter_space = {
+        'subset': [datapoint.datapoint_features],
+        'significance_level': [0.99, 0.001, 0.1, 0.5, 0.05, 0.01]
+    }
+
+    X_train, y_train = get_standard_feature_split()
+
+    # Find the hyperparameter values
+    grid_s = GridSearchCV(bn(), parameter_space, cv=2, n_jobs=1, scoring="f1_macro", verbose=10)
+    grid_s.fit(X_train, y_train)
+
+    grid_s.best_estimator_.save_network("network.hkb")
+
+    print(grid_s.best_params_)
+    print(grid_s.best_score_)
