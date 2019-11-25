@@ -121,12 +121,12 @@ if __name__ == '__main__':
     imp_split = False
 
     results = datareader_csv.load_all_results()
-    results = metrics.filter_results(results, dos_types=['modified'], imp_splits=[False], periods=[100])
+    results = metrics.filter_results(results, dos_types=[dos_type], imp_splits=[imp_split], periods=[100])
 
-    statistics = get_feature_statistics(results)
+    # statistics = get_feature_statistics(results)
 
-    for statistic in statistics.keys():
-        print("{}: {:.2f}, {:.2f}, {:.2f}, {:.2f}".format(statistic, statistics[statistic][0], statistics[statistic][1], statistics[statistic][2], statistics[statistic][3]))
+    # for statistic in statistics.keys():
+    #     print("{}: {:.2f}, {:.2f}, {:.2f}, {:.2f}".format(statistic, statistics[statistic][0], statistics[statistic][1], statistics[statistic][2], statistics[statistic][3]))
 
     best_results = get_best_for_models(results, selected_models.keys(), 0, 0, 1, 'macro')
     run_on_test(best_results)

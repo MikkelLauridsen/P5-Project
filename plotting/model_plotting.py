@@ -1,3 +1,5 @@
+import functools
+
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import run_models
@@ -8,7 +10,7 @@ import datareader_csv
 import metrics
 from run_models import selected_models
 import model_selection
-import datasets
+import numpy as np
 
 __models = selected_models
 
@@ -430,6 +432,41 @@ def plot_feature_barcharts(times_dict):
     plt.show()
 
 
+def plot_barchart_subsets(results: [metrics.Result], f1_type='macro'):
+    def subset_hash(subset):
+        return hash(functools.reduce(lambda a, b: a + "," + str(b), subset))
+
+    # Sets of seen models and subset
+    models = set()
+    subsets = set()
+
+    # Organize models and scores
+    scores = {}
+    for result in results:
+        model = result.model
+        subset = subset_hash(result.subset)
+        models.add(model)
+        subsets.add(subset)
+
+        scores.setdefault(model, {})
+        scores[model][subset] = result.metrics[f1_type].f1
+
+    bar_width = 0.1
+    origins = np.arange(len(models))
+
+    # Create set of bars for each subset
+    for i, subset in enumerate(subsets):
+        positions = [ind + i * bar_width for ind in origins]
+        subset_scores = [scores[model].get(subset, 0) for model in models]
+
+        plt.bar(positions, subset_scores, width=bar_width, label=subset)
+
+    plt.ylabel("F1 Score")
+    plt.xticks(origins, list(models))
+    plt.legend()
+    plt.show()
+
+
 def __get_in_range(xs, ys, min_x, max_x):
     xs_new = []
     ys_new = []
@@ -477,8 +514,8 @@ if __name__ == '__main__':
     os.chdir("..")
 
     # Options
-    dos_type = 'modified'  # 'modified' or 'original'
-    imp_type = 'imp_full'  # 'imp_split' or 'imp_full'
+    dos_type = 'original'  # 'modified' or 'original'
+    imp_type = 'imp_split'  # 'imp_split' or 'imp_full'
 
     _models = list(__models.keys())
     del _models[0]
@@ -487,14 +524,16 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[dos_type], is_test=True)
 
+    plot_barchart_subsets(validation_results)
+
     #plot_transition_dataset(validation_results, _models)
 
     # Bar plots
-    #bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
-    #             'feature_time']
-    #for type in bar_types:
-    #    plot_barchart_results(test_results, type)
-    #plot_barchart_feature_results(test_results)
+    bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
+                 'feature_time']
+    for type in bar_types:
+        plot_barchart_results(test_results, type)
+    plot_barchart_feature_results(test_results)
 
     durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
     feature_times = datareader_csv.load_feature_durations(durations_path)
