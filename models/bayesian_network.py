@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
     parameter_space = {
         'subset': [datapoint.datapoint_features],
-        'significance_level': [0.99, 0.001, 0.1, 0.5, 0.05, 0.01]
+        'significance_level': [0.5, 0.1, 0.05, 0.01, 0.001]
     }
 
     X_train, y_train = get_standard_feature_split()
