@@ -242,7 +242,7 @@ def plot_features_f1s(results, feature_labels, n_rows=1, n_columns=1, f1_type='m
     plt.show()
 
 
-def plot_all_results(results, angle=0, models=__models.keys(), windows=None, strides=None, labeling='model',
+def plot_all_results_3d(results, angle=0, models=__models.keys(), windows=None, strides=None, labeling='model',
                      f1_type='weighted', title=None):
     """
     Loads all currently calculated results and plots them based on F1 score, model time and feature time.
@@ -300,6 +300,66 @@ def plot_all_results(results, angle=0, models=__models.keys(), windows=None, str
     fig = plt.figure(figsize=(12.8, 4.8))
     get_subplot(fig, 121, angle)
     get_subplot(fig, 122, 90-angle)
+
+    if title is None:
+        title = "Correlation between F1 score and times\nPoint colors = " + labeling.replace("_", " ")
+
+    plt.legend(loc='lower right')
+    plt.suptitle(title)
+    plt.show()
+
+
+def plot_all_results_2d(results, models=__models.keys(), windows=None, strides=None, labeling='model',
+                     f1_type='weighted', title=None):
+
+    def get_subplot(fig, pos, is_model_time):
+        ax = fig.add_subplot(pos)
+
+        # Dict associating labels with points
+        points = {}
+        for result in results:
+            # Get label based on labeling parameter
+            label = {
+                'model': result.model,
+                'window': result.period_ms,
+                'stride': result.stride_ms,
+                'feature_count': len(result.subset),
+                'dos_type': result.dos_type
+            }[labeling]
+
+            # Store point in dictionary based on label
+            if is_model_time:
+                x = result.times["model_time"] / 1000000
+            else:
+                x = result.times["feature_time"] / 1000000
+
+            y = result.metrics[f1_type].f1
+            point = (x, y)
+            points.setdefault(label, [])
+            points[label].append(point)
+
+        for label in points.keys():
+            x = [point[0] for point in points[label]]
+            y = [point[1] for point in points[label]]
+            ax.scatter(x, y, label=label, s=5)
+
+        # Setup and show plots
+        if is_model_time:
+            ax.set_xlabel("Model time (ms)")
+        else:
+            ax.set_xlabel("Feature time (ms)")
+        ax.set_ylabel("F1 score")
+
+        if is_model_time:
+            ax.set_title("\nModel time")
+        else:
+            ax.set_title("\nFeature time")
+
+    results = metrics.filter_results(results, models=models, periods=windows, strides=strides)
+
+    fig = plt.figure(figsize=(12.8, 4.8))
+    get_subplot(fig, 121, True)
+    get_subplot(fig, 122, False)
 
     if title is None:
         title = "Correlation between F1 score and times\nPoint colors = " + labeling.replace("_", " ")
@@ -429,14 +489,12 @@ if __name__ == '__main__':
 
     #plot_transition_dataset(validation_results, _models)
 
-    bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
-                 'feature_time']
-    for type in bar_types:
-        plot_barchart_results(test_results, type)
-
-    plot_barchart_feature_results(test_results)
-    for res in test_results:
-        print(res.__dict__)
+    # Bar plots
+    #bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
+    #             'feature_time']
+    #for type in bar_types:
+    #    plot_barchart_results(test_results, type)
+    #plot_barchart_feature_results(test_results)
 
     durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
     feature_times = datareader_csv.load_feature_durations(durations_path)
@@ -461,7 +519,9 @@ if __name__ == '__main__':
     f1_type = 'macro'
 
     for labeling in labelings:
-        plot_all_results(validation_results, angle, _models, _windows, _strides, labeling, f1_type)
+        plot_all_results_2d(validation_results, _models, _windows, _strides, labeling, f1_type)
+        plot_all_results_3d(validation_results, angle, _models, _windows, _strides, labeling, f1_type)
+
 
     #plot_windows(_windows, imp_split=False, dos_type='modified')
     #plot_strides(_strides, imp_split=False, dos_type='modified')
