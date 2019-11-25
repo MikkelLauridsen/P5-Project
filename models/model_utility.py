@@ -84,7 +84,8 @@ def get_classifier(model, parameters, subset):
     elif model == 'dt':
         return dt(parameters)
     elif model == 'bn':
-        return bn(subset)
+        parameters['subset'] = subset
+        return bn(parameters)
     else:
         raise ValueError
 

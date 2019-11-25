@@ -155,7 +155,6 @@ class BayesianNetwork(BaseEstimator):
     def __learn_structure_and_tables(self, dataset):
         # Add learning data from dataset to domain
         self.__domain.add_cases(dataset, 0, dataset.get_number_of_rows())
-        self.__input_nodes[0].retract_findings()
 
         # Learn structure and condition tables
         self.__domain.learn_structure()
