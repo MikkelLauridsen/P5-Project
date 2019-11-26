@@ -432,7 +432,7 @@ def plot_feature_barcharts(times_dict):
     plt.show()
 
 
-def plot_barchart_subsets(results: [metrics.Result], f1_type='macro'):
+def plot_barchart_subsets(results: [metrics.Result], labels=None, f1_type='macro'):
     def subset_hash(subset):
         return hash(functools.reduce(lambda a, b: a + "," + str(b), subset))
 
@@ -459,7 +459,8 @@ def plot_barchart_subsets(results: [metrics.Result], f1_type='macro'):
         positions = [ind + i * bar_width for ind in origins]
         subset_scores = [scores[model].get(subset, 0) for model in models]
 
-        plt.bar(positions, subset_scores, width=bar_width, label=subset)
+        label = labels[i] if labels is not None else i
+        plt.bar(positions, subset_scores, width=bar_width, label=label)
 
     plt.ylabel("F1 Score")
     plt.xticks(origins, list(models))
@@ -524,7 +525,7 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[dos_type], is_test=True)
 
-    plot_barchart_subsets(validation_results)
+    plot_barchart_subsets(validation_results, ["A", "B", "C", "D"])
 
     #plot_transition_dataset(validation_results, _models)
 
