@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import run_models
 import os
 from datareader_csv import load_metrics
-from datapoint import datapoint_features, datapoint_attribute_descriptions
+from datapoint import datapoint_features, datapoint_attribute_descriptions, index_to_feature_label
 import datareader_csv
 import metrics
 from run_models import selected_models
@@ -432,39 +432,48 @@ def plot_feature_barcharts(times_dict):
     plt.show()
 
 
-def plot_barchart_subsets(results: [metrics.Result], labels=None, f1_type='macro'):
+def plot_barchart_subsets(results: [metrics.Result], models=None, subsets=None, labels=None, title="", bar_width=0.2, f1_type='macro'):
     def subset_hash(subset):
         return hash(functools.reduce(lambda a, b: a + "," + str(b), subset))
 
-    # Sets of seen models and subset
-    models = set()
-    subsets = set()
+    known_models = set()
+    known_subsets = set()
+    # Find known_models if models are unspecified
+    if models is None:
+        for result in results:
+            model = result.model
+            known_models.add(model)
+    else:
+        known_models = models
+
+    # Find known_subsets if subsets are unspecified
+    if subsets is None:
+        for result in results:
+            subset = subset_hash(result.subset)
+            known_subsets.add(subset)
+    else:
+        known_subsets = [subset_hash(subset) for subset in subsets]
 
     # Organize models and scores
     scores = {}
     for result in results:
-        model = result.model
-        subset = subset_hash(result.subset)
-        models.add(model)
-        subsets.add(subset)
+        scores.setdefault(result.model, {})
+        scores[result.model][subset_hash(result.subset)] = result.metrics[f1_type].f1
 
-        scores.setdefault(model, {})
-        scores[model][subset] = result.metrics[f1_type].f1
-
-    bar_width = 0.1
-    origins = np.arange(len(models))
+    origins = np.arange(len(known_models))
 
     # Create set of bars for each subset
-    for i, subset in enumerate(subsets):
+    for i, subset in enumerate(known_subsets):
         positions = [ind + i * bar_width for ind in origins]
-        subset_scores = [scores[model].get(subset, 0) for model in models]
+        subset_scores = [scores[model].get(subset, 0) for model in known_models]
 
-        label = labels[i] if labels is not None else i
+        label = labels[i] if labels is not None else "Subset " + str(i)
         plt.bar(positions, subset_scores, width=bar_width, label=label)
 
     plt.ylabel("F1 Score")
-    plt.xticks(origins, list(models))
-    plt.legend()
+    plt.xticks([pos + bar_width*len(known_subsets)/2 - bar_width/2 for pos in origins], list(known_models))
+    plt.legend(loc='lower right')
+    plt.title(title)
     plt.show()
 
 
@@ -525,7 +534,15 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[dos_type], is_test=True)
 
-    plot_barchart_subsets(validation_results, ["A", "B", "C", "D"])
+    # Subset plotting stuff
+    barchart_subsets_results = metrics.filter_results(validation_results, [100])
+    subset1 = [index_to_feature_label(index) for index in [1, 10, 11]]
+    subset2 = [index_to_feature_label(index) for index in [0, 5, 9, 12, 14]]
+    subset3 = [index_to_feature_label(index) for index in [6, 7, 8, 13]]
+    subsets = [subset1, subset2, subset3]
+    labels = ["Message frequency", "Message interval", "Message data-field"]
+    title = f"Relation between performance and feature groups with 100ms windows"
+    plot_barchart_subsets(barchart_subsets_results, None, subsets, labels, title)
 
     #plot_transition_dataset(validation_results, _models)
 
