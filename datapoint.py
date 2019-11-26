@@ -14,15 +14,15 @@ class DataPoint(dataobject):
     time_ms: float
     class_label: str
     mean_id_interval: float
-    # variance_id_frequency: float              # Disabled for              modified
-    # num_id_transitions: int                   # Disabled for original and modified
-    # num_ids: int                              # Disabled for original and modified
+    #variance_id_frequency: float              # Disabled for              modified
+    #num_id_transitions: int                   # Disabled for original and modified
+    #num_ids: int                              # Disabled for original and modified
     num_msgs: int                             # Disabled for original
     mean_id_intervals_variance: float
     mean_data_bit_count: float
     variance_data_bit_count: float
-    # mean_variance_data_bit_count_id: float    # Disabled for original and modified
-    # kurtosis_id_interval: float               # Disabled for              modified
+    #mean_variance_data_bit_count_id: float    # Disabled for original and modified
+    #kurtosis_id_interval: float               # Disabled for              modified
     kurtosis_id_frequency: float
     skewness_id_frequency: float
     kurtosis_mean_id_intervals: float         # Disabled for original
@@ -41,6 +41,11 @@ class DataPoint(dataobject):
 # List of the attributes of DataPoint
 datapoint_attributes = list(DataPoint.__annotations__.keys())
 datapoint_features = datapoint_attributes[2:]
+
+
+def index_to_feature_label(index):
+    return datapoint_features[index]
+
 
 # Descriptions of features. These are displayed on the plots.
 datapoint_attribute_descriptions = {
