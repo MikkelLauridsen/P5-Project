@@ -32,8 +32,8 @@ selected_models = {
 
     'mlp': {
         'activation': 'logistic',
-        'alpha': 0.0001,
-        'hidden_layer_sizes': (16, 3),
+        'alpha': 0.001,
+        'hidden_layer_sizes': (16, 16),
         'learning_rate': 'adaptive',
         'max_iter': 600,
         'solver': 'lbfgs'
