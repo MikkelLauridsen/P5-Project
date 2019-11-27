@@ -5,7 +5,8 @@ import metrics
 from datapoint import datapoint_features
 from models.model_utility import get_scaled_test, get_scaled_training_validation
 import plotting.model_plotting as model_plotting
-from run_models import selected_models, create_and_save_results
+from run_models import create_and_save_results
+import configuration as conf
 
 
 def run_on_test(configurations):
@@ -27,7 +28,7 @@ def run_on_test(configurations):
 
         create_and_save_results(
             configuration.model,
-            selected_models[configuration.model],
+            conf.selected_models[configuration.model],
             X_train, y_train,
             X_test, y_test,
             feature_time_dict,
@@ -80,9 +81,6 @@ def get_feature_statistics(results):
         if len(result.subset) != 6:
             to_be_deleted.append(result)
 
-    for result in to_be_deleted:
-        pass#del results[results.index(result)]
-
     length = len(results)
     feature_labels = datapoint_features
     statistics = {}
@@ -117,18 +115,15 @@ def get_feature_statistics(results):
 
 
 if __name__ == '__main__':
-    dos_type = 'modified'
-    imp_split = False
-
     results = datareader_csv.load_all_results()
-    results = metrics.filter_results(results, dos_types=[dos_type], imp_splits=[imp_split], periods=[100])
+    results = metrics.filter_results(results, dos_types=[conf.dos_type], imp_splits=[conf.imp_split], periods=[100])
 
     # statistics = get_feature_statistics(results)
 
     # for statistic in statistics.keys():
     #     print("{}: {:.2f}, {:.2f}, {:.2f}, {:.2f}".format(statistic, statistics[statistic][0], statistics[statistic][1], statistics[statistic][2], statistics[statistic][3]))
 
-    best_results = get_best_for_models(results, selected_models.keys(), 0, 0, 1, 'macro')
+    best_results = get_best_for_models(results, conf.selected_models.keys(), -1, -1, 0, 'macro')
     run_on_test(best_results)
 
     bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',

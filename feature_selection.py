@@ -6,6 +6,7 @@ from datasets import load_or_create_datasets
 from models.model_utility import scale_features, split_feature_label
 from datapoint import datapoint_features, datapoint_attribute_descriptions
 import matplotlib.pyplot as plt
+import configuration as conf
 
 from plotting import feature_plotting
 
@@ -13,10 +14,7 @@ if __name__ == '__main__':
     period_ms = 100
     stride_ms = 100
 
-    dos_type = 'original'  # 'modified' or 'original'
-    imp_type = 'imp_split'  # 'imp_split' or 'imp_full'
-
-    datapoints1, datapoints2, _ = load_or_create_datasets(imp_split=imp_type == 'imp_split', dos_type=dos_type, force_create=True)
+    datapoints1, datapoints2, _ = load_or_create_datasets(imp_split=conf.imp_split, dos_type=conf.dos_type, force_create=True)
 
     X_1, y = split_feature_label(datapoints1)
     X_2, _ = split_feature_label(datapoints2)
@@ -51,7 +49,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Feature durations
-    durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
+    durations_path = f"data\\feature\\{conf.imp_type}\\{conf.dos_type}\\mixed_validation_time_100ms_100ms.csv"
     feature_times = datareader_csv.load_feature_durations(durations_path)
     del feature_times['time_ms']
     del feature_times['class_label']

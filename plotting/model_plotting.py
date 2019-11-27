@@ -8,11 +8,11 @@ from datareader_csv import load_metrics
 from datapoint import datapoint_features, datapoint_attribute_descriptions, index_to_feature_label
 import datareader_csv
 import metrics
-from run_models import selected_models
 import model_selection
 import numpy as np
+import configuration as conf
 
-__models = selected_models
+__models = conf.selected_models
 
 
 def __generate_results(windows, strides, imp_splits, dos_types, models):
@@ -523,16 +523,12 @@ def plot_transition_dataset(results, model_labels):
 if __name__ == '__main__':
     os.chdir("..")
 
-    # Options
-    dos_type = 'original'  # 'modified' or 'original'
-    imp_type = 'imp_split'  # 'imp_split' or 'imp_full'
-
     _models = list(__models.keys())
     del _models[0]
 
     results = datareader_csv.load_all_results()
-    validation_results = metrics.filter_results(results, dos_types=[dos_type], is_test=False)
-    test_results = metrics.filter_results(results, dos_types=[dos_type], is_test=True)
+    validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
+    test_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=True)
 
     # Subset plotting stuff
     barchart_subsets_results = metrics.filter_results(validation_results, [100])
@@ -553,7 +549,7 @@ if __name__ == '__main__':
         plot_barchart_results(test_results, type)
     plot_barchart_feature_results(test_results)
 
-    durations_path = f"data\\feature\\{imp_type}\\{dos_type}\\mixed_validation_time_100ms_100ms.csv"
+    durations_path = f"data\\feature\\{conf.imp_type}\\{conf.dos_type}\\mixed_validation_time_100ms_100ms.csv"
     feature_times = datareader_csv.load_feature_durations(durations_path)
     del feature_times['time_ms']
     del feature_times['class_label']

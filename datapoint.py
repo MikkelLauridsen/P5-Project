@@ -7,25 +7,25 @@ parse_csv_row: Parses a row in a csv file and returns a corresponding DataPoint 
 get_csv_row: Returns a list containing every attribute in the given DataPoint object.
 """
 from recordclass import dataobject
+import configuration as conf
 
 
-class DataPoint(dataobject):
-    """Class representing a single window of messages from the data through its features."""
+class DataPointOriginal(dataobject):
+    """
+    Class representing a single window of messages from the data through its features.
+    This class specifies the features used for the original dataset.
+    """
+
     time_ms: float
     class_label: str
     mean_id_interval: float
-    #variance_id_frequency: float              # Disabled for              modified
-    #num_id_transitions: int                   # Disabled for original and modified
-    #num_ids: int                              # Disabled for original and modified
-    num_msgs: int                             # Disabled for original
+    variance_id_frequency: float
     mean_id_intervals_variance: float
     mean_data_bit_count: float
     variance_data_bit_count: float
-    #mean_variance_data_bit_count_id: float    # Disabled for original and modified
-    #kurtosis_id_interval: float               # Disabled for              modified
+    kurtosis_id_interval: float
     kurtosis_id_frequency: float
     skewness_id_frequency: float
-    kurtosis_mean_id_intervals: float         # Disabled for original
     kurtosis_variance_data_bit_count_id: float
     skewness_id_interval_variances: float
 
@@ -37,6 +37,35 @@ class DataPoint(dataobject):
 
         return string
 
+
+class DataPointModified(dataobject):
+    """
+    Class representing a single window of messages from the data through its features.
+    This class specifies the features used for the modified dataset.
+    """
+    time_ms: float
+    class_label: str
+    mean_id_interval: float
+    num_msgs: int
+    mean_id_intervals_variance: float
+    mean_data_bit_count: float
+    variance_data_bit_count: float
+    kurtosis_id_frequency: float
+    skewness_id_frequency: float
+    kurtosis_mean_id_intervals: float
+    kurtosis_variance_data_bit_count_id: float
+    skewness_id_interval_variances: float
+
+    def __str__(self):
+        string = ""
+
+        for attr in datapoint_attributes:
+            string += f"{attr}: {getattr(self, attr)} "
+
+        return string
+
+
+DataPoint = DataPointModified if conf.use_modified else DataPointOriginal
 
 # List of the attributes of DataPoint
 datapoint_attributes = list(DataPoint.__annotations__.keys())

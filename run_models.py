@@ -227,48 +227,8 @@ def __create_feature_subset(X, subset):
     return X_mod
 
 
-selected_models = {
-    'bn': {
-        'significance_level': 0.5},
-
-    'nbc': {},
-
-    'mlp': {
-        'activation': 'logistic',
-        'alpha': 0.0001,
-        'hidden_layer_sizes': (16, 3),
-        'learning_rate': 'adaptive',
-        'max_iter': 600,
-        'solver': 'lbfgs'},
-
-    'svm': {
-        'C': 1,
-        'kernel': 'linear'},
-
-    'knn': {
-        'metric': 'manhattan',
-        'n_neighbors': 8,
-        'weights': 'distance'},
-
-    'lr': {
-        'C': 3593.813663804626,
-        'penalty': 'l2'},
-
-    'dt': {
-        'criterion': 'entropy',
-        'max_depth': 13,
-        'min_samples_split': 3},
-
-    'rf': {
-        'bootstrap': True,
-        'criterion': 'gini',
-        'max_depth': 11,
-        'n_estimators': 110}
-}
-
-
 def get_transition_class_probabilities(configuration):
-    classifier = CalibratedClassifierCV(utility.get_classifier(configuration.model, selected_models[configuration.model], configuration.subset), cv=5)
+    classifier = CalibratedClassifierCV(utility.get_classifier(configuration.model, conf.selected_models[configuration.model], configuration.subset), cv=5)
     dataset, transition = get_transitioning_dataset(configuration.period_ms, configuration.stride_ms, verbose=True)
     X_train, y_train, X_validation, y_validation, _ = get_scaled_training_validation(
         configuration.period_ms, configuration.stride_ms,
@@ -298,20 +258,11 @@ def get_transition_class_probabilities(configuration):
 
 
 if __name__ == "__main__":
-    # Generate for the modified dataset
+    # Generate for dataset. Use configuration.py to specify type
     generate_validation_results(
         windows=[100, 50, 20, 10],
         strides=[10, 20, 50, 100],
-        imp_splits=[False],
-        dos_types=['modified'],
-        models=selected_models,
-        eliminations=4)
-
-    # Generate results for the original dataset
-    generate_validation_results(
-        windows=[100, 50, 20, 10],
-        strides=[10, 20, 50, 100],
-        imp_splits=[True],
-        dos_types=['original'],
-        models=selected_models,
+        imp_splits=[conf.imp_split],
+        dos_types=[conf.dos_type],
+        models=conf.selected_models,
         eliminations=4)
