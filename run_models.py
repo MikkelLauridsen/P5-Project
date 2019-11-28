@@ -14,6 +14,7 @@ from datapoint import datapoint_features
 from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
 from datasets import get_transitioning_dataset
+import configuration as config
 
 
 def generate_validation_results(windows=None, strides=None, imp_splits=None,
@@ -58,7 +59,7 @@ def generate_validation_results(windows=None, strides=None, imp_splits=None,
                         for model in models.keys():
                             if eliminations > 0:
                                 executor.submit(
-                                    __save_stepwise_elimination,
+                                    __save_backward_elimination,
                                     model, models[model],
                                     X_train, y_train,
                                     X_validation, y_validation,
@@ -169,22 +170,21 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
     return metrics
 
 
-def __save_stepwise_elimination(model, parameters, X_train, y_train, X_validation, y_validation, max_features,
+def __save_backward_elimination(model, parameters, X_train, y_train, X_validation, y_validation, max_features,
                                 feature_time_dict, period_ms, stride_ms, imp_split, dos_type):
     # Runs step-wise elimination on specified parameters and saves the results of each subset model combination.
 
     # Get feature labels.
-    labels = datapoint_features.copy()
-    working_set = labels.copy()
+    working_set = datapoint_features.copy()
 
-    for i in range(max_features):
+    for _ in range(max_features):
         # Save the feature label which yields the best result when eliminated from the pool.
         best_score = 0
-        best_label = ""
+        best_label_index = 0
 
-        for label in labels:
+        for i in range(len(working_set)):
             current_subset = working_set.copy()
-            del current_subset[current_subset.index(label)]
+            del current_subset[i]
 
             metrics = create_and_save_results(
                 model, parameters,
@@ -199,11 +199,10 @@ def __save_stepwise_elimination(model, parameters, X_train, y_train, X_validatio
 
             if score > best_score:
                 best_score = score
-                best_label = label
+                best_label_index = i
 
         # Remove the feature label which yields the best result when eliminated from the pool.
-        del working_set[working_set.index(best_label)]
-        del labels[labels.index(best_label)]
+        del working_set[best_label_index]
 
 
 def __create_feature_subset(X, subset):
@@ -262,7 +261,7 @@ if __name__ == "__main__":
     generate_validation_results(
         windows=[100, 50, 20, 10],
         strides=[10, 20, 50, 100],
-        imp_splits=[conf.imp_split],
-        dos_types=[conf.dos_type],
-        models=conf.selected_models,
+        imp_splits=[config.imp_split],
+        dos_types=[config.dos_type],
+        models=config.selected_models,
         eliminations=4)

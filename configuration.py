@@ -1,3 +1,4 @@
+# Do not change
 dos_type = 'modified'
 imp_type = 'imp_full'
 imp_split = False
@@ -19,9 +20,9 @@ def __set_original():
     imp_split = True
     use_modified = False
 
-
-__set_original()
-#__set_modified()
+# Change to change original/modified
+#__set_original()
+__set_modified()
 
 selected_models = {
     'bn': {
