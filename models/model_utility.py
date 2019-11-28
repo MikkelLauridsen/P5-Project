@@ -33,12 +33,17 @@ def split_feature_label(datapoints):
     return X, y
 
 
+def get_scaler(X_training):
+    scaler = StandardScaler()
+    scaler.fit(X_training)
+    return scaler
+
+
 def scale_features(X_training, X_validation):
     """Returns scaled equivalents of specified training and validation feature values,
     such that mean is 0 and variance is 1."""
     # Fit the scaler to the training features
-    scaler = StandardScaler()
-    scaler.fit(X_training)
+    scaler = get_scaler(X_training)
 
     # Transform the training and validation features with the fitted scaler
     X_training = scaler.transform(X_training)
@@ -109,7 +114,7 @@ def get_scaled_test(period_ms, stride_ms, imp_split, dos_type):
     return scaler.transform(X_test), y_test, feature_time_dict
 
 
-def get_scaled_training_validation(period_ms, stride_ms, imp_split, dos_type):
+def get_training_validation(period_ms, stride_ms, imp_split, dos_type, scale=True):
     """Returns the scaled and split equivalent of the dataset associated with specified parameters.
     If it does not exist, it is created.
 
@@ -129,7 +134,9 @@ def get_scaled_training_validation(period_ms, stride_ms, imp_split, dos_type):
 
     X_train, y_train = split_feature_label(training_data)
     X_validation, y_validation = split_feature_label(validation_data)
-    X_train, X_validation = scale_features(X_train, X_validation)
+
+    if scale:
+        X_train, X_validation = scale_features(X_train, X_validation)
 
     return X_train, y_train, X_validation, y_validation, feature_time_dict
 

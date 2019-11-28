@@ -343,8 +343,8 @@ def get_transitioning_dataset(period_ms=100, stride_ms=100, verbose=False):
     attack_free_messages = __neutralize_offset(datareader_csv.load_attack_free2(verbose=verbose))
     imp_messages = __neutralize_offset(datareader_csv.load_impersonation_1(verbose=verbose))[524052:]
 
-    attack_free_messages = __percentage_subset(attack_free_messages, 99.9, 100.0)
-    imp_messages = __percentage_subset(imp_messages, 85.0, 85.9)
+    attack_free_messages = __percentage_subset(attack_free_messages, 98.0, 98.1)
+    imp_messages = __percentage_subset(imp_messages, 89, 90)
     transition_index = len(attack_free_messages)
     messages = __concat_messages(attack_free_messages, imp_messages)
     transition_timestamp = messages[transition_index].timestamp * 1000.0  # Convert to ms

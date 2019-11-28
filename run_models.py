@@ -8,7 +8,7 @@ from sklearn.calibration import CalibratedClassifierCV
 import models.model_utility as utility
 import hugin.pyhugin87 as hugin
 from sklearn.preprocessing import StandardScaler
-from models.model_utility import get_scaled_training_validation
+from models.model_utility import get_training_validation
 from metrics import get_metrics, get_metrics_path, get_error_metrics
 from datapoint import datapoint_features
 from datareader_csv import load_metrics
@@ -48,7 +48,7 @@ def generate_validation_results(windows=None, strides=None, imp_splits=None,
             for imp_split in imp_splits:
                 for dos_type in dos_types:
                     # Get datasets for current combination of parameters.
-                    X_train, y_train, X_validation, y_validation, feature_time_dict = get_scaled_training_validation(
+                    X_train, y_train, X_validation, y_validation, feature_time_dict = get_training_validation(
                         period_ms, stride_ms,
                         imp_split, dos_type)
 
@@ -226,22 +226,24 @@ def __create_feature_subset(X, subset):
     return X_mod
 
 
-def get_transition_class_probabilities(configuration):
-    classifier = CalibratedClassifierCV(utility.get_classifier(configuration.model, conf.selected_models[configuration.model], configuration.subset), cv=5)
-    dataset, transition = get_transitioning_dataset(configuration.period_ms, configuration.stride_ms, verbose=True)
-    X_train, y_train, X_validation, y_validation, _ = get_scaled_training_validation(
+def get_transition_class_probabilities(configuration, run_stride):
+    classifier = CalibratedClassifierCV(utility.get_classifier(configuration.model, config.selected_models[configuration.model], configuration.subset), cv=5)
+    dataset, transition = get_transitioning_dataset(configuration.period_ms, run_stride, verbose=True)
+    X_train, y_train, X_validation, y_validation, _ = utility.get_training_validation(
         configuration.period_ms, configuration.stride_ms,
-        configuration.imp_split, configuration.dos_type)
+        configuration.imp_split, configuration.dos_type, False
+    )
+
+    scaler = utility.get_scaler(X_train)
 
     X_train = list(X_train) + list(X_validation)
     y_train = list(y_train) + list(y_validation)
 
+    X_train = scaler.transform(X_train)
+
     classifier.fit(X_train, y_train)
 
     X, _ = utility.split_feature_label(dataset)
-
-    scaler = StandardScaler()
-    scaler.fit(X)
     X = scaler.transform(X)
 
     predictions = classifier.predict_proba(X).tolist()

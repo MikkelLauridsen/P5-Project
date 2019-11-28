@@ -318,7 +318,7 @@ def windows_to_datapoints(windows, class_label, name):
     # maps a function to an attribute. The function must accept a list of messages.
     # missing mappings are allowed, and will give the feature a value of 0
     attribute_function_mappings = {
-        "time_ms": lambda msgs: msgs[0].timestamp * 1000,
+        "time_ms": lambda msgs: msgs[-1].timestamp * 1000,
         "class_label": lambda msgs: class_label,
         "mean_id_interval": calculate_mean_id_interval,
         "variance_id_frequency": calculate_variance_id_frequency,

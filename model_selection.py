@@ -3,7 +3,7 @@ import math
 import datareader_csv
 import metrics
 from datapoint import datapoint_features
-from models.model_utility import get_scaled_test, get_scaled_training_validation
+from models.model_utility import get_scaled_test, get_training_validation
 import plotting.model_plotting as model_plotting
 from run_models import create_and_save_results
 import configuration as conf
@@ -17,7 +17,7 @@ def run_on_test(configurations):
             configuration.imp_split,
             configuration.dos_type)
 
-        X_train, y_train, X_validation, y_validation, _ = get_scaled_training_validation(
+        X_train, y_train, X_validation, y_validation, _ = get_training_validation(
             configuration.period_ms,
             configuration.stride_ms,
             configuration.imp_split,

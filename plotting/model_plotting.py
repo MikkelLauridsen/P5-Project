@@ -489,20 +489,25 @@ def __get_in_range(xs, ys, min_x, max_x):
     return xs_new, ys_new
 
 
-def plot_transition_dataset(results, model_labels):
-    best_results = model_selection.get_best_for_models(results, model_labels, 0, 0, 1)
+def plot_transition_dataset(results, model_labels, run_stride=5):
+    best_results = model_selection.get_best_for_models(results, model_labels, 0, 0, 1, 'normal')
 
     transition = 0
     max_timestamp = 0
     min_timestamp = None
 
+    plt.figure(figsize=[6.4*1.5, 4.8])
+
     for configuration in best_results:
-        if configuration.model == 'bn':
-            continue
+        probabilities, timestamps, transition = run_models.get_transition_class_probabilities(configuration, run_stride)
 
-        probabilities, timestamps, transition = run_models.get_transition_class_probabilities(configuration)
+        timestamps, probabilities = __get_in_range(timestamps, probabilities, transition - 250, transition + 250)
+        offset = timestamps[0]
 
-        timestamps, probabilities = __get_in_range(timestamps, probabilities, transition - 1000, transition + 1000)
+        transition -= offset
+        for i in range(len(timestamps)):
+            timestamps[i] -= offset
+
         plt.plot(timestamps, probabilities, label=configuration.model)
 
         if min_timestamp is None:
@@ -512,8 +517,8 @@ def plot_transition_dataset(results, model_labels):
         min_timestamp = min([min_timestamp] + timestamps)
 
     plt.plot([min_timestamp, transition, transition, max_timestamp], [0, 0, 1, 1], label="Ground truth")
-    plt.plot([min_timestamp, max_timestamp], [0.5, 0.5], label="Threshold")
 
+    plt.title("Normal to impersonation transition probabilities")
     plt.legend()
     plt.ylabel("Impersonation probability")
     plt.xlabel("Time (ms)")
@@ -530,6 +535,8 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=True)
 
+    plot_transition_dataset(validation_results, _models)
+
     # Subset plotting stuff
     barchart_subsets_results = metrics.filter_results(validation_results, [100])
     subset1 = [index_to_feature_label(index) for index in [1, 10, 11]]
@@ -539,8 +546,6 @@ if __name__ == '__main__':
     labels = ["Message frequency", "Message interval", "Message data-field"]
     title = f"Relation between performance and feature groups with 100ms windows"
     plot_barchart_subsets(barchart_subsets_results, None, subsets, labels, title)
-
-    #plot_transition_dataset(validation_results, _models)
 
     # Bar plots
     bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
