@@ -371,19 +371,20 @@ def plot_all_results_2d(results, models=__models.keys(), windows=None, strides=N
     plt.show()
 
 
-def plot_barchart_results(results, plot_type='f1_macro'):
+def plot_barchart_results(results, plot_type='f1', metrics_type='macro'):
     ys = []
     models = []
 
     y_func, title = {
-        'f1_macro':         (lambda r: r.metrics['macro'].f1,         "F1 macro average"),
-        'f1_weighted':      (lambda r: r.metrics['weighted'].f1,      "F1 weighted average"),
-        'f1_normal':        (lambda r: r.metrics['normal'].f1,        "F1 normal"),
-        'f1_impersonation': (lambda r: r.metrics['impersonation'].f1, "F1 impersonation"),
-        'f1_dos':           (lambda r: r.metrics['dos'].f1,           "F1 DoS"),
-        'f1_fuzzy':         (lambda r: r.metrics['fuzzy'].f1,         "F1 fuzzy"),
-        'model_time':       (lambda r: r.times['model_time'] / 1e6,   "Model prediction time (ms)"),
-        'feature_time':     (lambda r: r.times['feature_time'] / 1e6, "Feature calculation time (ms)"),
+        'f1':           (lambda r: r.metrics[metrics_type].f1,                f"F1 {metrics_type}"),
+        'fpr':          (lambda r: r.metrics[metrics_type].fpr,               f"FPR {metrics_type}"),
+        'fnr':          (lambda r: r.metrics[metrics_type].fnr,               f"FNR {metrics_type}"),
+        'recall':       (lambda r: r.metrics[metrics_type].recall,            f"Recall {metrics_type}"),
+        'precision':    (lambda r: r.metrics[metrics_type].precision,         f"Precision {metrics_type}"),
+        'accuracy':     (lambda r: r.metrics[metrics_type].balanced_accuracy, f"Accuracy {metrics_type}"),
+        'model_time':   (lambda r: r.times['model_time'] / 1e6,                "Model prediction time (ms)"),
+        'feature_time': (lambda r: r.times['feature_time'] / 1e6,              "Feature calculation time (ms)"),
+
     }[plot_type]
 
     for result in results:
@@ -392,6 +393,7 @@ def plot_barchart_results(results, plot_type='f1_macro'):
 
     plt.bar(models, ys)
     plt.title(title)
+    plt.savefig(f"plots/{plot_type}_{metrics_type}")
     plt.show()
 
 
@@ -416,6 +418,7 @@ def plot_barchart_feature_results(results):
 
     plt.title("Feature time breakdown of selected models (ms)")
     plt.legend(fontsize="small")
+    plt.savefig("plots/feature_times_colored")
     plt.show()
 
 
@@ -528,8 +531,7 @@ def plot_transition_dataset(results, model_labels, run_stride=5):
 if __name__ == '__main__':
     os.chdir("..")
 
-    _models = list(__models.keys())
-    del _models[0]
+    _models = __models.keys()
 
     results = datareader_csv.load_all_results()
     validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
@@ -548,11 +550,15 @@ if __name__ == '__main__':
     plot_barchart_subsets(barchart_subsets_results, None, subsets, labels, title)
 
     # Bar plots
-    bar_types = ['f1_macro', 'f1_weighted', 'f1_normal', 'f1_impersonation', 'f1_dos', 'f1_fuzzy', 'model_time',
-                 'feature_time']
-    for type in bar_types:
-        plot_barchart_results(test_results, type)
-    plot_barchart_feature_results(test_results)
+    best_test_results = model_selection.get_best_for_models(test_results, conf.selected_models.keys(), -1, -1, 0, 'normal', True)
+    plot_types = ['f1', 'fpr', 'fnr', 'recall', 'precision', 'accuracy']
+    metrics_types = ['macro', 'normal', 'impersonation', 'dos', 'fuzzy']
+
+    for plot_type in plot_types:
+        for metrics_type in metrics_types:
+            plot_barchart_results(best_test_results, plot_type, metrics_type)
+    plot_barchart_results(best_test_results, 'model_time')
+    plot_barchart_feature_results(best_test_results)
 
     durations_path = f"data\\feature\\{conf.imp_type}\\{conf.dos_type}\\mixed_validation_time_100ms_100ms.csv"
     feature_times = datareader_csv.load_feature_durations(durations_path)
@@ -568,7 +574,6 @@ if __name__ == '__main__':
     plot_features_f1s(feature_results, datapoint_features, 5, 2, plot_type='exclude')
 
     # Options
-    _models = __models.keys()
     _windows = [100, 50, 20, 10]
     _strides = [100, 50, 20, 10]
     angle = 15
