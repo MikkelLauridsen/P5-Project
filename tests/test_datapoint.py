@@ -28,10 +28,7 @@ class TestDataPoint(TestCase):
                                    kurtosis_id_interval, kurtosis_id_frequency, skewness_id_frequency,
                                    kurtosis_variance_data_bit_count_id, skewness_id_interval_variances)
 
-        self.header = ["time_ms", "class_label", "mean_id_interval", "variance_id_frequency", "mean_id_intervals_variance",
-                       "mean_data_bit_count", "variance_data_bit_count", "kurtosis_id_interval",
-                       "kurtosis_id_frequency", "skewness_id_frequency", "kurtosis_variance_data_bit_count_id",
-                       "skewness_id_interval_variances"]
+        self.header = datapoint.datapoint_attributes
 
     def test_parse_csv_row(self):
         result = datapoint.parse_csv_row(self.data_point_row)
