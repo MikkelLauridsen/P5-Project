@@ -227,30 +227,35 @@ def __create_feature_subset(X, subset):
 
 
 def get_transition_class_probabilities(configuration, run_stride):
-    classifier = CalibratedClassifierCV(utility.get_classifier(configuration.model, config.selected_models[configuration.model], configuration.subset), cv=5)
-    dataset, transition = get_transitioning_dataset(configuration.period_ms, run_stride, verbose=True)
+    # Create dataset to train on
     X_train, y_train, X_validation, y_validation, _ = utility.get_training_validation(
         configuration.period_ms, configuration.stride_ms,
         configuration.imp_split, configuration.dos_type, False
     )
-
-    scaler = utility.get_scaler(X_train)
-
-    X_train = list(X_train) + list(X_validation)
+    X_train = __create_feature_subset(list(X_train) + list(X_validation), configuration.subset)
     y_train = list(y_train) + list(y_validation)
 
-    X_train = scaler.transform(X_train)
-
-    classifier.fit(X_train, y_train)
-
+    # Create dataset to predict on
+    dataset, transition = get_transitioning_dataset(configuration.period_ms, run_stride, verbose=True)
     X, _ = utility.split_feature_label(dataset)
+    X = __create_feature_subset(X, configuration.subset)
+
+    # Scale datasets
+    scaler = utility.get_scaler(X_train)
+    X_train = scaler.transform(X_train)
     X = scaler.transform(X)
 
-    predictions = classifier.predict_proba(X).tolist()
+    # Create and fit classifier
+    classifier = utility.get_classifier(configuration.model, config.selected_models[configuration.model], configuration.subset)
+    if configuration.model != 'bn':
+        classifier = CalibratedClassifierCV(classifier, cv=5)
+    classifier.fit(X_train, y_train)
+
+    predictions = list(classifier.predict_proba(X))
     timestamps = [window.time_ms for window in dataset]
     imp_predictions = []
 
-    imp_index = classifier.classes_.tolist().index('impersonation')
+    imp_index = list(classifier.classes_).index('impersonation')
 
     for prediction in predictions:
         imp_predictions.append(prediction[imp_index])
