@@ -17,8 +17,10 @@ cdef double __calculate_variance(array.array values):
     cdef double avg_freq, variance, deviation, val
 
     avg_freq = 0
+
     for val in values:
         avg_freq += val
+
     avg_freq /= len(values)
 
     variance = 0
@@ -41,7 +43,7 @@ cdef double __calculate_kurtosis(array.array values):
     n = len(values)
     avg = math.fsum(values) / n
     s2 = ft.reduce(lambda y, x: (x - avg) ** 2 + y, values, 0)  # find sum of squared deviations
-    s4 = ft.reduce(lambda y, x: (x - avg) ** 4 + y, values, 0)  # fund sum of deviations raised to the fourth power
+    s4 = ft.reduce(lambda y, x: (x - avg) ** 4 + y, values, 0)  # find sum of deviations raised to the fourth power
     m2 = s2 / n
     m4 = s4 / n
 
