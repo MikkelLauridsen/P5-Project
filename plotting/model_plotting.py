@@ -201,11 +201,19 @@ def plot_model_window_times(windows, imp_split=True, dos_type='modified'):
 
 
 def plot_features_f1s(results, feature_labels, n_rows=1, n_columns=1, f1_type='macro', plot_type='include'):
-
+    """
+    Plots performance of results, where a specific feature is either included or excluded
+    :param results: Results to plot
+    :param feature_labels: Feature labels to generate plots from
+    :param n_rows: Number of rows determining how to setup the plots
+    :param n_columns: Number of columns determining how to setup the plots
+    :param f1_type: F1 scoring type
+    :param plot_type: 'include' or 'exclude'. Determines what plot to make
+    :return:
+    """
     def get_subplot(fig, feature, index):
         ax: Axes3D = fig.add_subplot(n_rows, n_columns, index + 1)
 
-        feature_results = results
         if plot_type == 'include':
             feature_results = metrics.filter_results(results, features=[feature])
         elif plot_type == 'exclude':
@@ -247,7 +255,8 @@ def plot_features_f1s(results, feature_labels, n_rows=1, n_columns=1, f1_type='m
 def plot_all_results_3d(results, angle=0, models=__models.keys(), windows=None, strides=None, labeling='model',
                      f1_type='weighted', title=None):
     """
-    Loads all currently calculated results and plots them based on F1 score, model time and feature time.
+    Loads all currently calculated results and creates a 3d plot based on F1 score, model time and feature time.
+    :param results: Results to plot
     :param angle: The angle of the plot
     :param models: A list of model labels to plot. Pass None to use all models
     :param windows: A list of window sizes to plot. Pass None to use all sizes
@@ -255,6 +264,7 @@ def plot_all_results_3d(results, angle=0, models=__models.keys(), windows=None, 
     :param labeling: A string to indicate how to label the datapoints. Valid values are:
                      'model', 'window', 'stride, 'feature_count'
     :param f1_type: A string indicating what type of f1 score to use. Valid values are: 'weighted', 'macro'
+    :param title: Title of plot
     :return:
     """
 
@@ -313,6 +323,18 @@ def plot_all_results_3d(results, angle=0, models=__models.keys(), windows=None, 
 
 def plot_all_results_2d(results, models=__models.keys(), windows=None, strides=None, labeling='model',
                      f1_type='weighted', title=None):
+    """
+    Loads all currently calculated results and plots them based on F1 score, model time and feature time.
+    :param results: Results to plot
+    :param models: A list of model labels to plot. Pass None to use all models
+    :param windows: A list of window sizes to plot. Pass None to use all sizes
+    :param strides: A list of stride sizes to plot. Pass None to use all sizes
+    :param labeling: A string to indicate how to label the datapoints. Valid values are:
+                     'model', 'window', 'stride, 'feature_count'
+    :param f1_type: A string indicating what type of f1 score to use. Valid values are: 'weighted', 'macro'
+    :param title: Title of plot
+    :return:
+    """
 
     def get_subplot(fig, pos, is_model_time):
         ax = fig.add_subplot(pos)
@@ -359,6 +381,7 @@ def plot_all_results_2d(results, models=__models.keys(), windows=None, strides=N
 
     results = metrics.filter_results(results, models=models, periods=windows, strides=strides)
 
+    # Create both plots
     fig = plt.figure(figsize=(12.8, 4.8))
     get_subplot(fig, 121, True)
     get_subplot(fig, 122, False)
@@ -372,9 +395,18 @@ def plot_all_results_2d(results, models=__models.keys(), windows=None, strides=N
 
 
 def plot_barchart_results(results, plot_type='f1', metrics_type='macro'):
+    """
+    Creates various barchart plots for results.
+    :param results: Results to plot
+    :param plot_type: What type of information to plot with bars. Valid values are:
+        'f1', 'fpr', 'fnr', 'recall', 'precision', 'accuracy', 'model_time' and 'feature_time'
+    :param metrics_type: What metric type to use
+    :return:
+    """
     ys = []
     models = []
 
+    # Determine y function and title from plot type
     y_func, title = {
         'f1':           (lambda r: r.metrics[metrics_type].f1,                f"F1 {metrics_type}"),
         'fpr':          (lambda r: r.metrics[metrics_type].fpr,               f"FPR {metrics_type}"),
@@ -398,10 +430,16 @@ def plot_barchart_results(results, plot_type='f1', metrics_type='macro'):
 
 
 def plot_barchart_feature_results(results):
+    """
+    Creates a barchart showing a breakdown of what features take time to calculate for results
+    :param results: Results to plot
+    :return:
+    """
     bars = {}  # List of tuples with: (index, y value, bottom, label)
     for i, result in enumerate(results):
         feature_durations = metrics.get_result_feature_breakdown(result)
 
+        # Add a bar for each feature in the result, keeping track it height and bottom height
         current_bottom = 0
         for feature in result.subset:
             duration = feature_durations[feature] / 1e6
@@ -409,6 +447,7 @@ def plot_barchart_feature_results(results):
             bars[feature].append((result.model, duration, current_bottom, feature))
             current_bottom += duration
 
+    # Create bars for each feature
     for feature, bars in bars.items():
         ind = [bar[0] for bar in bars]
         durations = [bar[1] for bar in bars]
@@ -423,6 +462,11 @@ def plot_barchart_feature_results(results):
 
 
 def plot_feature_barcharts(times_dict):
+    """
+    Creates a barchart showinghwo long featues take to calculate
+    :param times_dict: Dictionary mapping features to times
+    :return:
+    """
     features = []
     times = []
     for feature, time in times_dict.items():
@@ -435,7 +479,20 @@ def plot_feature_barcharts(times_dict):
     plt.show()
 
 
-def plot_barchart_subsets(results: [metrics.Result], models=None, subsets=None, labels=None, title="", bar_width=0.2, f1_type='macro'):
+def plot_barchart_subsets(results, models=None, subsets=None, labels=None, title="", bar_width=0.2, f1_type='macro'):
+    """
+    Plots performance of results based on their feature subsets
+    :param results: Results to include in plot
+    :param models: Model labels to plot
+    :param subsets: Feature subsets to include
+    :param labels: Labels to use on plot legend
+    :param title: Title of plot
+    :param bar_width: Width of bars
+    :param f1_type: What metric type to use
+    :return:
+    """
+
+    # Since sets are hashable, use a simple function to hash them in order to use them as keys in dictionaries
     def subset_hash(subset):
         return hash(functools.reduce(lambda a, b: a + "," + str(b), subset))
 
@@ -480,6 +537,7 @@ def plot_barchart_subsets(results: [metrics.Result], models=None, subsets=None, 
     plt.show()
 
 
+# Gets the sublist of a list where values outside a specific range are removed
 def __get_in_range(xs, ys, min_x, max_x):
     xs_new = []
     ys_new = []
@@ -493,6 +551,16 @@ def __get_in_range(xs, ys, min_x, max_x):
 
 
 def plot_transition_dataset(results, model_labels, run_stride=5):
+    """
+    Trains models on the test dataset and plots their performance on an artificial dataset that transitions
+        from normal state to impersonation attack state.
+    :param results: The results for which to choose the best models from
+    :param model_labels: Model labels to include in plot
+    :param run_stride: The stride of the models. I.e. how long (in ms) of a duration there should be between predictions
+    :return:
+    """
+
+    # Find best result for each model
     best_results = model_selection.get_best_for_models(results, model_labels, 0, 0, 1, 'normal')
 
     transition = 0
@@ -502,15 +570,19 @@ def plot_transition_dataset(results, model_labels, run_stride=5):
     plt.figure(figsize=[6.4*1.5, 4.8])
 
     for configuration in best_results:
+        # Train models and get their probabilities on the transition dataset
         probabilities, timestamps, transition = run_models.get_transition_class_probabilities(configuration, run_stride)
 
+        # Remove probabilities outside the range of +- 250 ms from transition point
         timestamps, probabilities = __get_in_range(timestamps, probabilities, transition - 250, transition + 250)
         offset = timestamps[0]
 
+        # Offset points to start from 0
         transition -= offset
         for i in range(len(timestamps)):
             timestamps[i] -= offset
 
+        # Plot model
         plt.plot(timestamps, probabilities, label=configuration.model)
 
         if min_timestamp is None:
@@ -519,6 +591,7 @@ def plot_transition_dataset(results, model_labels, run_stride=5):
         max_timestamp = max([max_timestamp] + timestamps)
         min_timestamp = min([min_timestamp] + timestamps)
 
+    # Plot ground truth line
     plt.plot([min_timestamp, transition, transition, max_timestamp], [0, 0, 1, 1], label="Ground truth")
 
     plt.title("Normal to impersonation transition probabilities")
