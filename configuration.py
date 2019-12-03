@@ -26,7 +26,7 @@ __set_modified()
 
 selected_models = {
     'bn': {
-        'significance_level': 0.5
+        'significance_level': 0.05
     },
 
     'nbc': {},
