@@ -7,13 +7,11 @@ from sklearn.calibration import CalibratedClassifierCV
 
 import models.model_utility as utility
 import hugin.pyhugin87 as hugin
-from sklearn.preprocessing import StandardScaler
 from models.model_utility import get_training_validation
 from metrics import get_metrics, get_metrics_path, get_error_metrics
 from datapoint import datapoint_features
 from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
-from datasets import get_transitioning_dataset
 import configuration as config
 
 
@@ -226,7 +224,13 @@ def __create_feature_subset(X, subset):
     return X_mod
 
 
-def get_transition_class_probabilities(configuration, run_stride):
+def get_impersonation_probabilities(configuration, prediction_dataset):
+    """
+    Gets a list of impersonation prediction probabilites on a dataset based on a model configuration
+    :param configuration: A model configuration
+    :param prediction_datasetset: A list of datapoints to predict on
+    :return: List of predictions, list of timestamps of predictions
+    """
     # Create dataset to train on
     X_train, y_train, X_validation, y_validation, _ = utility.get_training_validation(
         configuration.period_ms, configuration.stride_ms,
@@ -236,8 +240,7 @@ def get_transition_class_probabilities(configuration, run_stride):
     y_train = list(y_train) + list(y_validation)
 
     # Create dataset to predict on
-    dataset, transition = get_transitioning_dataset(configuration.period_ms, run_stride, verbose=True)
-    X, _ = utility.split_feature_label(dataset)
+    X, _ = utility.split_feature_label(prediction_dataset)
     X = __create_feature_subset(X, configuration.subset)
 
     # Scale datasets
@@ -252,7 +255,7 @@ def get_transition_class_probabilities(configuration, run_stride):
     classifier.fit(X_train, y_train)
 
     predictions = list(classifier.predict_proba(X))
-    timestamps = [window.time_ms for window in dataset]
+    timestamps = [window.time_ms for window in prediction_dataset]
     imp_predictions = []
 
     imp_index = list(classifier.classes_).index('impersonation')
@@ -260,7 +263,7 @@ def get_transition_class_probabilities(configuration, run_stride):
     for prediction in predictions:
         imp_predictions.append(prediction[imp_index])
 
-    return imp_predictions, timestamps, transition
+    return imp_predictions, timestamps
 
 
 if __name__ == "__main__":

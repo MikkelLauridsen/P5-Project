@@ -121,6 +121,19 @@ def __percentage_subset(collection, init, end):
     return collection[init_index:end_index]
 
 
+def __time_subset(messages, index_begin, subset_time_ms):
+    # Returns a subset of a collection of messages, that span a range of subset_time ms beginning from index_begin
+    timestamp_begin = messages[index_begin].timestamp
+    index_end = index_begin
+
+    for i in range(index_begin, len(messages)):
+        if messages[i].timestamp > timestamp_begin + subset_time_ms / 1000:
+            break
+        index_end = i
+
+    return messages[index_begin:index_end], index_end
+
+
 def get_mixed_test(period_ms=100, stride_ms=100, imp_split=True, dos_type='original', verbose=False, in_parallel=True):
     """Constructs a list of test set DataPoints based on parameters.
     If this function is to be used from another file,
@@ -336,50 +349,47 @@ def __get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, set_
     return directory + name + ".csv", directory
 
 
-def get_transitioning_dataset(period_ms=100, stride_ms=100, verbose=False):
-    """Returns a list of datapoints,
-    based on the concatenation of a test-based attack-free and impersonation raw dataset,
-    and the timestamp of the transition."""
+def get_transitioning_dataset(period_ms=100, stride_ms=100, slice_sizes=[250, 250], verbose=False):
+    """
+    Return a list of datapoints, as well as the timestamps of transitions between attack free and impersonation
+    :param period_ms: Window size to use
+    :param stride_ms: Stride size to use
+    :param slice_sizes: A list of sizes (in ms) for attack free and impersonation data. First size must be attack free
+    :param verbose: Verbose parameter to pass to datareader_csv
+    :return: datapoints list, transitions list
+    """
+
+    # Load datasets
     attack_free_messages = __neutralize_offset(datareader_csv.load_attack_free2(verbose=verbose))
     imp_messages = __neutralize_offset(datareader_csv.load_impersonation_1(verbose=verbose))[524052:]
 
-    attack_free_messages = __percentage_subset(attack_free_messages, 98.0, 98.1)
-    imp_messages = __percentage_subset(imp_messages, 89, 90)
-    transition_index = len(attack_free_messages)
-    messages = __concat_messages(attack_free_messages, imp_messages)
-    transition_timestamp = messages[transition_index].timestamp * 1000.0  # Convert to ms
+    final_messages = None
+    final_transitions = []
+    attack_free_index = math.floor(len(attack_free_messages) * 0.98)  # Starting attack free index
+    imp_index = math.floor(len(imp_messages) * 0.89)  # Starting impersonation index
+    transition_index = 0
+    is_attack_free = True  # Bool to keep track of whether to current slice corresponds to a attack free or imp
 
-    datapoints, _ = __messages_to_datapoints(messages, period_ms, 'normal', stride_ms)
+    for size in slice_sizes:
+        if is_attack_free:
+            messages, attack_free_index = __time_subset(attack_free_messages, attack_free_index, size)
+        else:
+            messages, imp_index = __time_subset(imp_messages, imp_index, size)
 
-    return datapoints, transition_timestamp
+        # Append to final_messages
+        final_messages = messages if final_messages is None else __concat_messages(final_messages, messages)
 
+        # Find transition timestamp
+        transition_index = transition_index + len(messages) - 1
+        transition_timestamp = final_messages[transition_index].timestamp * 1000  # Convert to ms
+        final_transitions.append(transition_timestamp)
 
-def get_pulsating_dataset(period_ms=100, stride_ms=100, verbose=False):
-    """Returns a list of datapoints,
-    based on the concatenation of a test-based attack-free and impersonation raw dataset,
-    and a list of timestamps of the transitions."""
-    attack_free_messages = __neutralize_offset(datareader_csv.load_attack_free2(verbose=verbose))
-    imp_messages = __neutralize_offset(datareader_csv.load_impersonation_1(verbose=verbose))[524052:]
+        is_attack_free = not is_attack_free
 
-    attack_free_messages1 = __percentage_subset(attack_free_messages, 98.0, 98.1)
-    attack_free_messages2 = __percentage_subset(attack_free_messages, 98.1, 98.2)
-    imp_messages1 = __percentage_subset(imp_messages, 89, 90)
-    imp_messages2 = __percentage_subset(imp_messages, 90, 91)
+    # Calculate datapoints from found messages
+    datapoints, _ = __messages_to_datapoints(final_messages, period_ms, 'normal', stride_ms)
 
-    transition_index1 = len(attack_free_messages1)
-    transition_index2 = transition_index1 + len(imp_messages1)
-    transition_index3 = transition_index2 + len(attack_free_messages2)
-
-    messages = __concat_messages(__concat_messages(__concat_messages(
-        attack_free_messages1, imp_messages1), attack_free_messages2), imp_messages2)
-
-    transition_timestamp1 = messages[transition_index1].timestamp * 1000.0  # Convert to ms
-    transition_timestamp2 = messages[transition_index2].timestamp * 1000.0  # Convert to ms
-    transition_timestamp3 = messages[transition_index3].timestamp * 1000.0  # Convert to ms
-
-    datapoints, _ = __messages_to_datapoints(messages, period_ms, 'normal', stride_ms)
-
-    return datapoints, [transition_timestamp1, transition_timestamp2, transition_timestamp3]
+    return datapoints, final_transitions[0:-1]
 
 
 def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True, dos_type='original',

@@ -11,6 +11,7 @@ import metrics
 import model_selection
 import numpy as np
 import configuration as conf
+from datasets import get_transitioning_dataset
 
 __models = conf.selected_models
 
@@ -416,13 +417,13 @@ def plot_barchart_results(results, plot_type='f1', metrics_type='macro'):
         'accuracy':     (lambda r: r.metrics[metrics_type].balanced_accuracy, f"Accuracy {metrics_type}"),
         'model_time':   (lambda r: r.times['model_time'] / 1e6,                "Model prediction time (ms)"),
         'feature_time': (lambda r: r.times['feature_time'] / 1e6,              "Feature calculation time (ms)"),
-
     }[plot_type]
 
     for result in results:
         ys.append(y_func(result))
         models.append(result.model)
 
+    plt.ylim(0, 1)
     plt.bar(models, ys)
     plt.title(title)
     plt.savefig(f"plots/{plot_type}_{metrics_type}")
@@ -550,7 +551,7 @@ def __get_in_range(xs, ys, min_x, max_x):
     return xs_new, ys_new
 
 
-def plot_transition_dataset(results, model_labels, run_stride=5):
+def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[250, 250]):
     """
     Trains models on the test dataset and plots their performance on an artificial dataset that transitions
         from normal state to impersonation attack state.
@@ -561,24 +562,28 @@ def plot_transition_dataset(results, model_labels, run_stride=5):
     """
 
     # Find best result for each model
-    best_results = model_selection.get_best_for_models(results, model_labels, 0, 0, 1, 'normal')
+    best_results = model_selection.get_best_for_models(results, model_labels, -1, -1, 0, 'normal')
 
-    transition = 0
+    transitions = []
     max_timestamp = 0
     min_timestamp = None
 
     plt.figure(figsize=[6.4*1.5, 4.8])
 
     for configuration in best_results:
+        dataset, transitions = get_transitioning_dataset(configuration.period_ms, run_stride, slice_sizes, True)
+
         # Train models and get their probabilities on the transition dataset
-        probabilities, timestamps, transition = run_models.get_transition_class_probabilities(configuration, run_stride)
+        probabilities, timestamps = run_models.get_impersonation_probabilities(configuration, dataset)
 
         # Remove probabilities outside the range of +- 250 ms from transition point
-        timestamps, probabilities = __get_in_range(timestamps, probabilities, transition - 250, transition + 250)
+        # timestamps, probabilities = __get_in_range(timestamps, probabilities, transitions[2] - 250, transitions[2] + 250)
         offset = timestamps[0]
 
         # Offset points to start from 0
-        transition -= offset
+        for i in range(len(transitions)):
+            transitions[i] -= offset
+
         for i in range(len(timestamps)):
             timestamps[i] -= offset
 
@@ -591,8 +596,18 @@ def plot_transition_dataset(results, model_labels, run_stride=5):
         max_timestamp = max([max_timestamp] + timestamps)
         min_timestamp = min([min_timestamp] + timestamps)
 
+    # Create ground truth line
+    transition_xs = [min_timestamp]
+    for transition in transitions:
+        transition_xs += [transition, transition]
+    transition_xs.append(max_timestamp)
+
+    transition_ys = [0]
+    for i in range(len(transitions)):
+        transition_ys += [0, 1] if i % 2 == 0 else [1, 0]
+    transition_ys.append(0 if len(transitions) % 2 == 0 else 1)
     # Plot ground truth line
-    plt.plot([min_timestamp, transition, transition, max_timestamp], [0, 0, 1, 1], label="Ground truth")
+    plt.plot(transition_xs, transition_ys, label="Ground truth", linewidth=3)
 
     plt.title("Normal to impersonation transition probabilities")
     plt.legend()
@@ -610,7 +625,10 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=True)
 
-    plot_transition_dataset(validation_results, _models)
+    # _models = ['nbc']
+    plot_transition_dataset(validation_results, _models, 5, [200, 400, 200])
+    plot_transition_dataset(validation_results, _models, 5, [200, 50, 50, 50, 50, 50, 50, 50, 150])
+
 
     # Subset plotting stuff
     barchart_subsets_results = metrics.filter_results(validation_results, [100])
@@ -623,7 +641,7 @@ if __name__ == '__main__':
     plot_barchart_subsets(barchart_subsets_results, None, subsets, labels, title)
 
     # Bar plots
-    best_test_results = model_selection.get_best_for_models(test_results, conf.selected_models.keys(), -1, -1, 0, 'normal', True)
+    best_test_results = model_selection.get_best_for_models(test_results, conf.selected_models.keys(), -1, -1, 0, 'macro', True)
     plot_types = ['f1', 'fpr', 'fnr', 'recall', 'precision', 'accuracy']
     metrics_types = ['macro', 'normal', 'impersonation', 'dos', 'fuzzy']
 
