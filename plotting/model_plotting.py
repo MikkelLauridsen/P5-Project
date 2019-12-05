@@ -625,10 +625,9 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=True)
 
-    # _models = ['nbc']
-    plot_transition_dataset(validation_results, _models, 5, [200, 400, 200])
-    plot_transition_dataset(validation_results, _models, 5, [200, 50, 50, 50, 50, 50, 50, 50, 150])
-
+    # _models = ['nbc', 'rf']
+    plot_transition_dataset(validation_results, _models, 5, [300, 400, 300])
+    plot_transition_dataset(validation_results, _models, 5, [300, 50, 50, 50, 50, 50, 250])
 
     # Subset plotting stuff
     barchart_subsets_results = metrics.filter_results(validation_results, [100])
