@@ -360,12 +360,12 @@ def get_transitioning_dataset(window_ms=100, stride_ms=100, slice_sizes=[250, 25
     """
 
     # Load datasets
-    attack_free_messages = __neutralize_offset(datareader_csv.load_attack_free2(verbose=verbose))
+    attack_free_messages = __neutralize_offset(datareader_csv.load_attack_free1(verbose=verbose))
     imp_messages = __neutralize_offset(datareader_csv.load_impersonation_1(verbose=verbose))[524052:]
 
     final_messages = None
     final_transitions = []
-    attack_free_index = math.floor(len(attack_free_messages) * 0.98)  # Starting attack free index
+    attack_free_index = math.floor(len(attack_free_messages) * 0.96)  # Starting attack free index
     imp_index = math.floor(len(imp_messages) * 0.89)  # Starting impersonation index
     transition_index = 0
     is_attack_free = True  # Bool to keep track of whether to current slice corresponds to a attack free or imp
