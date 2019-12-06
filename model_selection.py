@@ -12,13 +12,13 @@ import configuration as conf
 def run_on_test(configurations):
     for configuration in configurations:
         X_test, y_test, feature_time_dict = get_scaled_test(
-            configuration.period_ms,
+            configuration.window_ms,
             configuration.stride_ms,
             configuration.imp_split,
             configuration.dos_type)
 
         X_train, y_train, X_validation, y_validation, _ = get_training_validation(
-            configuration.period_ms,
+            configuration.window_ms,
             configuration.stride_ms,
             configuration.imp_split,
             configuration.dos_type)
@@ -32,7 +32,7 @@ def run_on_test(configurations):
             X_train, y_train,
             X_test, y_test,
             feature_time_dict,
-            configuration.period_ms,
+            configuration.window_ms,
             configuration.stride_ms,
             configuration.imp_split,
             configuration.dos_type,

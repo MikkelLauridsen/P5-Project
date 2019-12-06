@@ -23,11 +23,11 @@ def save_feature_durations(feature_durations, path, directory):
             writer.writerow([feature, feature_durations[feature]])
 
 
-def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_test=False):
+def save_metrics(metrics, window_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_test=False):
     """Saves specified metrics to a file with the name associated with the remaining parameters.
 
     :param metrics: a dictionary of scores {'**class**': (precision, recall, tnr, fpr, fnr, balanced_accuracy, f1)}
-    :param period_ms: the window size (int ms)
+    :param window_ms: the window size (int ms)
     :param stride_ms: the stride size (int ms)
     :param imp_split: the impersonation type (True, False)
     :param dos_type: the DoS type ('modified', 'original')
@@ -39,7 +39,7 @@ def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, para
     """
 
     path, directory = get_metrics_path(
-        period_ms, stride_ms,
+        window_ms, stride_ms,
         imp_split, dos_type,
         model, parameters == {},
         subset, is_test=is_test)
@@ -57,13 +57,13 @@ def save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, para
             writer.writerow([key] + list(iter(metrics[key])))
 
 
-def save_time(time_model, time_feature, period_ms, stride_ms,
+def save_time(time_model, time_feature, window_ms, stride_ms,
               imp_split, dos_type, model, parameters, subset, is_test=False):
     """Saves specified time scores to a file with the name associated with the remaining parameters.
 
     :param time_model:
     :param time_feature:
-    :param period_ms: the window size (int ms)
+    :param window_ms: the window size (int ms)
     :param stride_ms: the stride size (int ms)
     :param imp_split: the impersonation type (True, False)
     :param dos_type: the DoS type ('modified', 'original')
@@ -75,7 +75,7 @@ def save_time(time_model, time_feature, period_ms, stride_ms,
     """
 
     path, directory = get_metrics_path(
-        period_ms, stride_ms,
+        window_ms, stride_ms,
         imp_split, dos_type,
         model, parameters == {},
         subset, True, is_test)

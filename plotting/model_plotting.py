@@ -278,7 +278,7 @@ def plot_all_results_3d(results, angle=0, models=__models.keys(), windows=None, 
             # Get label based on labeling parameter
             label = {
                 'model': result.model,
-                'window': result.period_ms,
+                'window': result.window_ms,
                 'stride': result.stride_ms,
                 'feature_count': len(result.subset),
                 'dos_type': result.dos_type
@@ -308,7 +308,7 @@ def plot_all_results_3d(results, angle=0, models=__models.keys(), windows=None, 
         ax.set_zlabel("F1 score")
         ax.view_init(10, angle)
 
-    results = metrics.filter_results(results, models=models, periods=windows, strides=strides)
+    results = metrics.filter_results(results, models=models, windows=windows, strides=strides)
 
     fig = plt.figure(figsize=(12.8, 4.8))
     get_subplot(fig, 121, angle)
@@ -346,7 +346,7 @@ def plot_all_results_2d(results, models=__models.keys(), windows=None, strides=N
             # Get label based on labeling parameter
             label = {
                 'model': result.model,
-                'window': result.period_ms,
+                'window': result.window_ms,
                 'stride': result.stride_ms,
                 'feature_count': len(result.subset),
                 'dos_type': result.dos_type
@@ -380,7 +380,7 @@ def plot_all_results_2d(results, models=__models.keys(), windows=None, strides=N
         else:
             ax.set_title("\nFeature time")
 
-    results = metrics.filter_results(results, models=models, periods=windows, strides=strides)
+    results = metrics.filter_results(results, models=models, windows=windows, strides=strides)
 
     # Create both plots
     fig = plt.figure(figsize=(12.8, 4.8))
@@ -571,7 +571,7 @@ def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[25
     plt.figure(figsize=[6.4*1.5, 4.8])
 
     for configuration in best_results:
-        dataset, transitions = get_transitioning_dataset(configuration.period_ms, run_stride, slice_sizes, True)
+        dataset, transitions = get_transitioning_dataset(configuration.window_ms, run_stride, slice_sizes, True)
 
         # Train models and get their probabilities on the transition dataset
         probabilities, timestamps = run_models.get_impersonation_probabilities(configuration, dataset)

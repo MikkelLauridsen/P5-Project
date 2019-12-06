@@ -41,13 +41,13 @@ def generate_validation_results(windows=None, strides=None, imp_splits=None,
     job_count = len(windows) * len(strides) * len(imp_splits) * len(dos_types) * inner_loop_size
     current_job = 0
 
-    for period_ms in windows:
+    for window_ms in windows:
         for stride_ms in strides:
             for imp_split in imp_splits:
                 for dos_type in dos_types:
                     # Get datasets for current combination of parameters.
                     X_train, y_train, X_validation, y_validation, feature_time_dict = get_training_validation(
-                        period_ms, stride_ms,
+                        window_ms, stride_ms,
                         imp_split, dos_type)
 
                     print(f"starting jobs {current_job} through {current_job + inner_loop_size} of "
@@ -63,7 +63,7 @@ def generate_validation_results(windows=None, strides=None, imp_splits=None,
                                     X_validation, y_validation,
                                     eliminations,
                                     feature_time_dict,
-                                    period_ms, stride_ms,
+                                    window_ms, stride_ms,
                                     imp_split, dos_type)
                             else:
                                 executor.submit(
@@ -72,7 +72,7 @@ def generate_validation_results(windows=None, strides=None, imp_splits=None,
                                     X_train, y_train,
                                     X_validation, y_validation,
                                     feature_time_dict,
-                                    period_ms, stride_ms,
+                                    window_ms, stride_ms,
                                     imp_split, dos_type,
                                     datapoint_features)
 
@@ -93,7 +93,7 @@ def __get_stepwise_size(max_features):
 
 
 def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test, feature_time_dict,
-                            period_ms, stride_ms, imp_split, dos_type, subset, is_test=False):
+                            window_ms, stride_ms, imp_split, dos_type, subset, is_test=False):
     """
     Runs specified model with specified parameters on specified dataset and saves the result to file.
 
@@ -104,7 +104,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
     :param X_test: Test or validation set feature values
     :param y_test: Test or validation set class labels
     :param feature_time_dict: A dictionary of {'**feature**': **time_ns**}
-    :param period_ms: Window size (int ms)
+    :param window_ms: Window size (int ms)
     :param stride_ms: Stride size (int ms)
     :param imp_split: The impersonation type (True, False)
     :param dos_type: The DoS type ('modified', 'original')
@@ -113,7 +113,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
     :return:
     """
     path, _ = get_metrics_path(
-        period_ms, stride_ms,
+        window_ms, stride_ms,
         imp_split, dos_type,
         model, parameters == {},
         subset, is_test=is_test)
@@ -122,7 +122,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
 
     if os.path.exists(path):
         metrics = load_metrics(
-            period_ms, stride_ms,
+            window_ms, stride_ms,
             imp_split, dos_type,
             model, parameters == {},
             subset, is_test=is_test)
@@ -143,7 +143,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
             # Calculate scores on test set.
             metrics = get_metrics(y_test, y_predict)
 
-            save_metrics(metrics, period_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_test=is_test)
+            save_metrics(metrics, window_ms, stride_ms, imp_split, dos_type, model, parameters, subset, is_test=is_test)
             time_feature = 0.0
 
             # Find sum of feature times.
@@ -153,7 +153,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
 
             save_time(
                 time_model, time_feature,
-                period_ms, stride_ms,
+                window_ms, stride_ms,
                 imp_split, dos_type,
                 model, parameters,
                 subset, is_test=is_test)
@@ -169,7 +169,7 @@ def create_and_save_results(model, parameters, X_train, y_train, X_test, y_test,
 
 
 def __save_backward_elimination(model, parameters, X_train, y_train, X_validation, y_validation, max_features,
-                                feature_time_dict, period_ms, stride_ms, imp_split, dos_type):
+                                feature_time_dict, window_ms, stride_ms, imp_split, dos_type):
     # Runs step-wise elimination on specified parameters and saves the results of each subset model combination.
 
     # Get feature labels.
@@ -189,7 +189,7 @@ def __save_backward_elimination(model, parameters, X_train, y_train, X_validatio
                 X_train, y_train,
                 X_validation, y_validation,
                 feature_time_dict,
-                period_ms, stride_ms,
+                window_ms, stride_ms,
                 imp_split, dos_type,
                 current_subset)
 
@@ -233,7 +233,7 @@ def get_impersonation_probabilities(configuration, prediction_dataset):
     """
     # Create dataset to train on
     X_train, y_train, X_validation, y_validation, _ = utility.get_training_validation(
-        configuration.period_ms, configuration.stride_ms,
+        configuration.window_ms, configuration.stride_ms,
         configuration.imp_split, configuration.dos_type, False
     )
     X_train = __create_feature_subset(list(X_train) + list(X_validation), configuration.subset)

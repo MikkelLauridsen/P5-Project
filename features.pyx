@@ -106,7 +106,7 @@ def __calculate_bit_count(message):
 
 
 # For each unique ID in input list of messages,
-# constructs a list of time periods between two messages with this ID.
+# constructs a list of windows between two messages with this ID.
 # Afterwards, the variance each list is found.
 # Finally, the skewness of these variances is calculated and returned.
 def calculate_skewness_id_interval_variances(messages):
@@ -140,7 +140,7 @@ def calculate_kurtosis_variance_data_bit_count_id(messages):
 
 
 # For each unique ID in input list of messages,
-# constructs a list of time periods between messages of this ID.
+# constructs a list of windows between messages of this ID.
 # Afterwards, calculates the variance of elements in each list, separately.
 # Finally, calculates and returns the mean of these variances.
 # Returned value defaults to 0 if no intervals were present in the time window.
@@ -199,7 +199,7 @@ def calculate_mean_variance_data_bit_count_id(messages):
 
 
 # Finds and returns the mean ID interval,
-# where an ID interval is the time period between two messages of the same ID.
+# where an ID interval is the time difference between two messages of the same ID.
 def calculate_mean_id_interval(messages):
     intervals = []
     last_seen_timestamps = {}
@@ -253,8 +253,8 @@ def calculate_num_ids(messages):
     return len(ids_seen)
 
 
-# Constructs a list of time periods between messages of the same ID.
-# Afterwards, calculates and returns the kurtosis of these time periods.
+# Constructs a list of time differences between messages of the same ID.
+# Afterwards, calculates and returns the kurtosis of these time differences.
 def calculate_kurtosis_id_interval(messages):
     intervals = []
     last_seen_timestamps = {}
@@ -301,7 +301,7 @@ def calculate_kurtosis_id_frequency(messages):
 
 
 # For each unique ID in input list of messages,
-# constructs a list of time periods between messages with this ID.
+# constructs a list of time differences between messages with this ID.
 # Afterwards, calculates the means of elements of these lists, separately.
 # Finally, calculates and returns the kurtosis of these means.
 def calculate_kurtosis_mean_id_intervals(messages):

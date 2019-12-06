@@ -95,17 +95,17 @@ def get_classifier(model, parameters, subset):
         raise ValueError
 
 
-def get_scaled_test(period_ms, stride_ms, imp_split, dos_type):
+def get_scaled_test(window_ms, stride_ms, imp_split, dos_type):
     """Returns the scaled and split equivalent of the dataset associated with specified parameters.
     If the dataset does not exist, it is created.
 
-    :param period_ms: the window size (int ms).
+    :param window_ms: the window size (int ms).
     :param stride_ms: the stride size (int ms).
     :param imp_split: the impersonation type (True, False).
     :param dos_type:  the DoS type ('modified', 'original').
     :return: scaled feature value list, class label list, a dictionary of feature times {'**feature**': **time_ns**}.
     """
-    test_data, feature_time_dict = datasets.get_mixed_test(period_ms, stride_ms, imp_split, dos_type, verbose=True)
+    test_data, feature_time_dict = datasets.get_mixed_test(window_ms, stride_ms, imp_split, dos_type, verbose=True)
     X_test, y_test = split_feature_label(test_data)
 
     scaler = StandardScaler()
@@ -114,11 +114,11 @@ def get_scaled_test(period_ms, stride_ms, imp_split, dos_type):
     return scaler.transform(X_test), y_test, feature_time_dict
 
 
-def get_training_validation(period_ms, stride_ms, imp_split, dos_type, scale=True):
+def get_training_validation(window_ms, stride_ms, imp_split, dos_type, scale=True):
     """Returns the scaled and split equivalent of the dataset associated with specified parameters.
     If it does not exist, it is created.
 
-    :param period_ms: the window size (int ms).
+    :param window_ms: the window size (int ms).
     :param stride_ms: the stride size (int ms).
     :param imp_split: the impersonation type (True, False).
     :param dos_type:  the DoS type ('modified', 'original').
@@ -126,7 +126,7 @@ def get_training_validation(period_ms, stride_ms, imp_split, dos_type, scale=Tru
     validation class label list, dictionary of feature durations {'**feature**': **time_ns**}.
     """
     training_data, validation_data, feature_time_dict = datasets.load_or_create_datasets(
-        period_ms,
+        window_ms,
         stride_ms,
         imp_split,
         dos_type,
@@ -145,7 +145,7 @@ def get_standard_feature_split():
     """Returns the feature split used for finding hyperparameter values in the standard case."""
     # Loading the standard dataset
     training_data, validation_data, _ = datasets.load_or_create_datasets(
-        period_ms=50, stride_ms=50,
+        window_ms=50, stride_ms=50,
         imp_split=False, dos_type='modified')
 
     # Split the data into features and labels

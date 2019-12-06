@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     # Get datasets
     training_points, validation_points, _ = ds.load_or_create_datasets(
-        period_ms=100,
+        window_ms=100,
         stride_ms=100,
         imp_split=conf.imp_split,
         dos_type=conf.dos_type,

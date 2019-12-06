@@ -13,23 +13,23 @@ import datawriter_csv
 import features
 
 
-def __messages_to_datapoints(messages, period_ms, class_label, stride_ms, name=""):
+def __messages_to_datapoints(messages, window_ms, class_label, stride_ms, name=""):
     # Converts a list of messages to a list of DataPoints
-    # where each point is comprised of 'messages' in 'period_ms' time window
+    # where each point is comprised of 'messages' in 'window_ms' time window
     # as well as a dict of feature calculation durations.
     # 'stride_ms' determines how many milliseconds are to be elapsed between creation of two DataPoints.
-    # That is, if 'stride_ms' is 50 and 'period_ms' is 100,
+    # That is, if 'stride_ms' is 50 and 'window_ms' is 100,
     # DataPoint 1 and 2 will share messages in half of their time windows.
     # 'class_label' determines whether intrusion was conducted in 'messages'
     if len(messages) == 0:
         return []
 
-    windows = __find_windows(messages, period_ms, stride_ms)
+    windows = __find_windows(messages, window_ms, stride_ms)
 
     return features.windows_to_datapoints(windows, class_label, name)
 
 
-def __find_windows(messages, period_ms, stride_ms):
+def __find_windows(messages, window_ms, stride_ms):
     # Separates a list of messages into a list of windows.
     # Here, a window is defined as a list of messages within a specified timespan
     working_set = deque()
@@ -40,7 +40,7 @@ def __find_windows(messages, period_ms, stride_ms):
 
     # construct the initial working set. That is, the deque of messages used to create the next DataPoint.
     while lowest_index < length and \
-            (messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= period_ms:
+            (messages[lowest_index].timestamp * 1000.0 - working_set[0].timestamp * 1000.0) <= window_ms:
 
         lowest_index += 1
         working_set.append(messages[lowest_index])
@@ -54,14 +54,14 @@ def __find_windows(messages, period_ms, stride_ms):
         time_expended = (working_set[len(working_set) - 1].timestamp - old_time) * 1000.0
 
         # repeatedly right-append to the working set,
-        # until the time period between the last message used for the previous DataPoint,
+        # until the time differences between the last message used for the previous DataPoint,
         # and the most recently appended message are offset by at least 'stride_ms' milliseconds.
         if time_expended >= stride_ms:
             low = working_set.popleft()
 
-            # until the left-most and right-most messages in the working set are offset by at most 'period_ms',
+            # until the left-most and right-most messages in the working set are offset by at most 'window_ms',
             # left-pop a message from the working set.
-            while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > period_ms:
+            while (messages[i].timestamp * 1000.0 - low.timestamp * 1000.0) > window_ms:
                 low = working_set.popleft()
 
             working_set.appendleft(low)
@@ -71,10 +71,10 @@ def __find_windows(messages, period_ms, stride_ms):
     return windows
 
 
-def __write_datapoints_csv(datapoints, period_ms, stride_ms, impersonation_split, dos_type, set_type):
+def __write_datapoints_csv(datapoints, window_ms, stride_ms, impersonation_split, dos_type, set_type):
     # Writes a list of DataPoints to file.
     # The file name and directory depends on the parameters.
-    csv_path, directory = __get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, set_type)
+    csv_path, directory = __get_dataset_path(window_ms, stride_ms, impersonation_split, dos_type, set_type)
 
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -134,12 +134,12 @@ def __time_subset(messages, index_begin, subset_time_ms):
     return messages[index_begin:index_end], index_end
 
 
-def get_mixed_test(period_ms=100, stride_ms=100, imp_split=True, dos_type='original', verbose=False, in_parallel=True):
+def get_mixed_test(window_ms=100, stride_ms=100, imp_split=True, dos_type='original', verbose=False, in_parallel=True):
     """Constructs a list of test set DataPoints based on parameters.
     If this function is to be used from another file,
     all code must be wrapped in an __name__ == '__main__' check if used on a Windows system.
 
-    :param period_ms: the window size (int ms).
+    :param window_ms: the window size (int ms).
     :param stride_ms: the step size (int ms).
     :param imp_split: a flag indicating whether the impersonation set has split labels.
     :param dos_type: a string indicating the type of DoS set used ('modified', 'original').
@@ -183,7 +183,7 @@ def get_mixed_test(period_ms=100, stride_ms=100, imp_split=True, dos_type='origi
 
     test_sets, feature_durations_list = __calculate_datapoints_from_sets(
         raw_test_msgs,
-        period_ms, stride_ms,
+        window_ms, stride_ms,
         in_parallel)
 
     test_points = __collapse_datasets(test_sets)
@@ -192,13 +192,13 @@ def get_mixed_test(period_ms=100, stride_ms=100, imp_split=True, dos_type='origi
     return test_points, feature_durations
 
 
-def get_mixed_training_validation(period_ms=100, stride_ms=100, imp_split=True,
+def get_mixed_training_validation(window_ms=100, stride_ms=100, imp_split=True,
                                   dos_type='original', verbose=False, in_parallel=True):
     """Constructs a training and validation set of DataPoints based on parameters.
     If this function is to be used from another file,
     all code must be wrapped in an __name__ == '__main__' check if used on a Windows system.
 
-    :param period_ms: the window size (int ms).
+    :param window_ms: the window size (int ms).
     :param stride_ms: the step size (int ms).
     :param imp_split: a flag indicating whether the impersonation set has split labels.
     :param dos_type: a string indicating the type of DoS set used ('modified', 'original').
@@ -260,10 +260,10 @@ def get_mixed_training_validation(period_ms=100, stride_ms=100, imp_split=True,
             (__percentage_subset(imp_messages2, 70, 85), "impersonation", "impersonation_2"),
             (__percentage_subset(imp_messages3, 70, 85), "impersonation", "impersonation_3")]
 
-    training_sets, _ = __calculate_datapoints_from_sets(raw_training_msgs, period_ms, stride_ms, in_parallel)
+    training_sets, _ = __calculate_datapoints_from_sets(raw_training_msgs, window_ms, stride_ms, in_parallel)
     validation_sets, feature_durations_list = __calculate_datapoints_from_sets(
         raw_validation_msgs,
-        period_ms, stride_ms,
+        window_ms, stride_ms,
         in_parallel)
 
     training_points = __collapse_datasets(training_sets)
@@ -304,7 +304,7 @@ def __collapse_datasets(datasets):
     return points
 
 
-def __calculate_datapoints_from_sets(raw_msgs, period_ms, stride_ms, in_parallel=True):
+def __calculate_datapoints_from_sets(raw_msgs, window_ms, stride_ms, in_parallel=True):
     # Returns a list of DataPoint lists, calculated from the list of lists of Messages
     datasets = []
     feature_durations = []
@@ -315,7 +315,7 @@ def __calculate_datapoints_from_sets(raw_msgs, period_ms, stride_ms, in_parallel
             futures = {executor.submit(
                 __messages_to_datapoints,
                 tup[0],
-                period_ms,
+                window_ms,
                 tup[1],
                 stride_ms,
                 tup[2]) for tup in raw_msgs}
@@ -326,7 +326,7 @@ def __calculate_datapoints_from_sets(raw_msgs, period_ms, stride_ms, in_parallel
     else:
         # Calculate features for each list in 'raw_msgs' in sequence
         for tup in raw_msgs:
-            dataset, times = __messages_to_datapoints(tup[0], period_ms, tup[1], stride_ms, tup[2])
+            dataset, times = __messages_to_datapoints(tup[0], window_ms, tup[1], stride_ms, tup[2])
             datasets.append(dataset)
             feature_durations.append(times)
 
@@ -340,19 +340,19 @@ def __offset_datapoint(point, offset):
     return point
 
 
-def __get_dataset_path(period_ms, stride_ms, impersonation_split, dos_type, set_type):
+def __get_dataset_path(window_ms, stride_ms, impersonation_split, dos_type, set_type):
     # Returns the file and directory paths associated with input argument combination
     imp_name = "imp_split" if impersonation_split else "imp_full"
-    name = f"mixed_{set_type}_{period_ms}ms_{stride_ms}ms"
+    name = f"mixed_{set_type}_{window_ms}ms_{stride_ms}ms"
     directory = f"data/feature/{imp_name}/{dos_type}/"
 
     return directory + name + ".csv", directory
 
 
-def get_transitioning_dataset(period_ms=100, stride_ms=100, slice_sizes=[250, 250], verbose=False):
+def get_transitioning_dataset(window_ms=100, stride_ms=100, slice_sizes=[250, 250], verbose=False):
     """
     Return a list of datapoints, as well as the timestamps of transitions between attack free and impersonation
-    :param period_ms: Window size to use
+    :param window_ms: Window size to use
     :param stride_ms: Stride size to use
     :param slice_sizes: A list of sizes (in ms) for attack free and impersonation data. First size must be attack free
     :param verbose: Verbose parameter to pass to datareader_csv
@@ -387,17 +387,17 @@ def get_transitioning_dataset(period_ms=100, stride_ms=100, slice_sizes=[250, 25
         is_attack_free = not is_attack_free
 
     # Calculate datapoints from found messages
-    datapoints, _ = __messages_to_datapoints(final_messages, period_ms, 'normal', stride_ms)
+    datapoints, _ = __messages_to_datapoints(final_messages, window_ms, 'normal', stride_ms)
 
     return datapoints, final_transitions[0:-1]
 
 
-def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True, dos_type='original',
+def load_or_create_datasets(window_ms=100, stride_ms=100, imp_split=True, dos_type='original',
                             force_create=False, verbose=False, in_parallel=True):
     """Returns the training and validation sets associated with input argument combination.
     If the datasets do not exist, they are created and saved in the process.
 
-    :param period_ms: the window size (int ms).
+    :param window_ms: the window size (int ms).
     :param stride_ms: the step size (int ms).
     :param imp_split: a flag indicating whether the impersonation dataset has split labels.
     :param dos_type: a string indicating the DoS dataset used ('modified', 'original').
@@ -407,9 +407,9 @@ def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True, dos_ty
     :return: a list of training DataPoints, a list of validation DataPoints, a dictionary of feature durations.
     """
 
-    training_name, _ = __get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'training')
-    validation_name, _ = __get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'validation')
-    time_path, directory = __get_dataset_path(period_ms, stride_ms, imp_split, dos_type, 'validation_time')
+    training_name, _ = __get_dataset_path(window_ms, stride_ms, imp_split, dos_type, 'training')
+    validation_name, _ = __get_dataset_path(window_ms, stride_ms, imp_split, dos_type, 'validation')
+    time_path, directory = __get_dataset_path(window_ms, stride_ms, imp_split, dos_type, 'validation_time')
 
     # Load the datasets if they exist.
     if os.path.exists(training_name) and os.path.exists(validation_name) and not force_create:
@@ -419,13 +419,13 @@ def load_or_create_datasets(period_ms=100, stride_ms=100, imp_split=True, dos_ty
     else:
         # Create and save the datasets otherwise.
         training_set, validation_set, feature_durations = get_mixed_training_validation(
-            period_ms, stride_ms,
+            window_ms, stride_ms,
             imp_split, dos_type,
             verbose=verbose,
             in_parallel=in_parallel)
 
-        __write_datapoints_csv(training_set, period_ms, stride_ms, imp_split, dos_type, 'training')
-        __write_datapoints_csv(validation_set, period_ms, stride_ms, imp_split, dos_type, 'validation')
+        __write_datapoints_csv(training_set, window_ms, stride_ms, imp_split, dos_type, 'training')
+        __write_datapoints_csv(validation_set, window_ms, stride_ms, imp_split, dos_type, 'validation')
         datawriter_csv.save_feature_durations(feature_durations, time_path, directory)
 
     return training_set, validation_set, feature_durations

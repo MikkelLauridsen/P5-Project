@@ -11,7 +11,7 @@ import configuration as conf
 from plotting import feature_plotting
 
 if __name__ == '__main__':
-    period_ms = 100
+    window_ms = 100
     stride_ms = 100
 
     datapoints1, datapoints2, _ = load_or_create_datasets(imp_split=conf.imp_split, dos_type=conf.dos_type, force_create=True)
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     figure = plt.figure(figsize=(22, 15))
     plt.matshow(corrmat, fignum=figure.number)
     plt.colorbar().ax.tick_params(labelsize=20, length=10)
-    # plt.title(f"Correlations at {period_ms}ms windows and {stride_ms}ms overlap", fontsize=30)
+    # plt.title(f"Correlations at {window_ms}ms windows and {stride_ms}ms overlap", fontsize=30)
     plt.xticks(range(data.shape[1]), list(range(22)), fontsize=20)
     plt.tick_params(length=10, bottom=False)
     plt.clim(-1, 1)

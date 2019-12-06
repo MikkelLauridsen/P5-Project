@@ -48,7 +48,7 @@ class Metrics:
 
 
 class Result:
-    period_ms: int
+    window_ms: int
     stride_ms: int
     model: str
     imp_split: bool
@@ -59,8 +59,8 @@ class Result:
     metrics: {}
     times: {}
 
-    def __init__(self, period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, is_test, metrics, times):
-        self.period_ms = period_ms
+    def __init__(self, window_ms, stride_ms, model, imp_split, dos_type, baseline, subset, is_test, metrics, times):
+        self.window_ms = window_ms
         self.stride_ms = stride_ms
         self.model = model
         self.imp_split = imp_split
@@ -72,13 +72,13 @@ class Result:
         self.times = times
 
 
-def filter_results(results, periods=None, strides=None, models=None, imp_splits=None,
+def filter_results(results, windows=None, strides=None, models=None, imp_splits=None,
                    dos_types=None, parameter_types=None, subsets=None, features=None,
                    without_features=None, f1_threshold=None, is_test=False):
     """Creates a list of filtered results from the specified list.
 
     :param results: a list of Result objects.
-    :param periods: a list of window sizes (int ms).
+    :param windows: a list of window sizes (int ms).
     :param strides: a list of step-sizes (int ms).
     :param models: a list of model labels ('bn', 'dt', 'knn', 'lr', 'mlp', 'nbc', 'rf', 'svm').
     :param imp_splits: a list of flags indicating whether the dataset used had split impersonation labels.
@@ -95,7 +95,7 @@ def filter_results(results, periods=None, strides=None, models=None, imp_splits=
     kept_results = []
 
     for result in results:
-        if (periods is None or result.period_ms in periods) and \
+        if (windows is None or result.window_ms in windows) and \
                 (strides is None or result.stride_ms in strides) and \
                 (models is None or result.model in models) and \
                 (imp_splits is None or result.imp_split in imp_splits) and \
@@ -202,10 +202,10 @@ def get_metrics(y_actual, y_predict):
     return metrics
 
 
-def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_time=False, is_test=False):
+def get_metrics_path(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_time=False, is_test=False):
     """Returns the file path and directory path associated with the specified parameters.
 
-    :param period_ms: window size (int ms).
+    :param window_ms: window size (int ms).
     :param stride_ms: stride size (int ms).
     :param imp_split: the impersonation type (True, False).
     :param dos_type: the DoS type ('modified', 'original').
@@ -221,7 +221,7 @@ def get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline,
     baseline_name = "baseline" if baseline else "selected_parameters"
     result_type = "test" if is_test else "validation"
     metric_type = "score" if is_time is False else "time"
-    name = f"mixed_{result_type}_{metric_type}_{period_ms}ms_{stride_ms}ms"
+    name = f"mixed_{result_type}_{metric_type}_{window_ms}ms_{stride_ms}ms"
 
     labels = datapoint.datapoint_features.copy()
 
@@ -241,7 +241,7 @@ def get_result_feature_breakdown(result: Result, type='validation'):
     :return:
     """
     imp_name = "imp_split" if result.imp_split else "imp_full"
-    name = f"mixed_{type}_time_{result.period_ms}ms_{result.stride_ms}ms"
+    name = f"mixed_{type}_time_{result.window_ms}ms_{result.stride_ms}ms"
     directory = f"data/feature/{imp_name}/{result.dos_type}/"
 
     path = directory + name + ".csv"

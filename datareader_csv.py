@@ -125,10 +125,10 @@ def load_fuzzy(start=0, limit=None, verbose=False):
     return load_messages("data/manipulated/Fuzzy_attack_dataset.csv", start, limit, verbose)
 
 
-def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=False):
+def load_metrics(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=False):
     """Loads metrics from the file associated with the specified parameters.
 
-    :param period_ms: the used window size (int ms).
+    :param window_ms: the used window size (int ms).
     :param stride_ms: the used step-size (int ms).
     :param imp_split: a flag indicating whether the impersonation labels were split.
     :param dos_type: a string indicating the type of DoS dataset used ('modified', 'original').
@@ -139,7 +139,7 @@ def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, sub
     :return: a dictionary of Metrics objects, with a key for each class as well as 'total'.
     """
 
-    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=is_test)
+    path, _ = get_metrics_path(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=is_test)
     metrics = {}
 
     with open(path, newline="") as file:
@@ -154,10 +154,10 @@ def load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, sub
     return metrics
 
 
-def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=False):
+def load_times(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test=False):
     """Loads time scores from the file associated with the specified parameters.
 
-    :param period_ms: the used window size (int ms).
+    :param window_ms: the used window size (int ms).
     :param stride_ms: the used step-size (int ms).
     :param imp_split: a flag indicating whether the impersonation labels were split.
     :param dos_type: a string indicating the type of DoS dataset used ('modified', 'original').
@@ -167,7 +167,7 @@ def load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subse
     :param is_test: a flag indicating whether the test set was used.
     :return: a dictionary of times, with keys 'model_time', 'feature_time', 'total_time'.
     """
-    path, _ = get_metrics_path(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset, True, is_test)
+    path, _ = get_metrics_path(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, True, is_test)
 
     with open(path, newline="") as file:
         reader = csv.reader(file, delimiter=",")
@@ -201,7 +201,7 @@ def __load_result(path):
     file_split = substrings[begin + 5].split("_")[1:]
 
     is_test = file_split[0] == 'test'
-    period_ms = int((file_split[2])[:-2])
+    window_ms = int((file_split[2])[:-2])
     stride_ms = int((file_split[3])[:-2])
     subset = []
 
@@ -212,10 +212,10 @@ def __load_result(path):
         subset.append(labels[index])
 
     # Use the gathered information to load the metrics and times
-    metrics = load_metrics(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
-    times = load_times(period_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
+    metrics = load_metrics(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
+    times = load_times(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
 
-    return Result(period_ms, stride_ms, model, imp_split, dos_type, baseline, subset, is_test, metrics, times)
+    return Result(window_ms, stride_ms, model, imp_split, dos_type, baseline, subset, is_test, metrics, times)
 
 
 def __load_results(directory):
