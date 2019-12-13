@@ -551,18 +551,21 @@ def __get_in_range(xs, ys, min_x, max_x):
     return xs_new, ys_new
 
 
-def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[250, 250]):
+def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[250, 250], include_predictions=True, weights=(0, 0, 1)):
     """
     Trains models on the test dataset and plots their performance on an artificial dataset that transitions
         from normal state to impersonation attack state.
     :param results: The results for which to choose the best models from
     :param model_labels: Model labels to include in plot
     :param run_stride: The stride of the models. I.e. how long (in ms) of a duration there should be between predictions
+    :param slice_sizes: Sizes of slices to combine into one dataset
+    :param include_predictions: Whether or not to include predictions in plot
+    :param weights: Weights to find best results. Must be a 3-tuple
     :return:
     """
 
     # Find best result for each model
-    best_results = model_selection.get_best_for_models(results, model_labels, -1, -1, 0, 'normal')
+    best_results = model_selection.get_best_for_models(results, model_labels, *weights, 'normal')
 
     transitions = []
     max_timestamp = 0
@@ -570,14 +573,14 @@ def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[25
 
     plt.figure(figsize=[6.4*1.5, 4.8])
 
+    legend_groups = {}
     for configuration in best_results:
         dataset, transitions = get_transitioning_dataset(configuration.window_ms, run_stride, slice_sizes, True)
 
         # Train models and get their probabilities on the transition dataset
-        probabilities, timestamps = run_models.get_impersonation_probabilities(configuration, dataset)
+        timestamps, probabilities, predictions = run_models.get_impersonation_probabilities(configuration, dataset)
 
-        # Remove probabilities outside the range of +- 250 ms from transition point
-        # timestamps, probabilities = __get_in_range(timestamps, probabilities, transitions[2] - 250, transitions[2] + 250)
+        # Remove probabilities outside range from transition point
         offset = timestamps[0]
 
         # Offset points to start from 0
@@ -590,11 +593,31 @@ def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[25
         # Plot model
         plt.plot(timestamps, probabilities, label=configuration.model)
 
+        for label in ['normal', 'dos', 'fuzzy', 'impersonation']:
+            filtered_items = list(filter(lambda x: x[2] == label, list(zip(timestamps, probabilities, predictions))))
+            legend_groups.setdefault(label, [])
+            legend_groups[label] += filtered_items
+
         if min_timestamp is None:
             min_timestamp = timestamps[0]
 
         max_timestamp = max([max_timestamp] + timestamps)
         min_timestamp = min([min_timestamp] + timestamps)
+
+    if include_predictions:
+        for label in ['normal', 'dos', 'fuzzy', 'impersonation']:
+            if len(legend_groups[label]) == 0:
+                continue
+
+            color = {
+                'normal': '#C3C3C3',
+                'impersonation': '#585858',
+            }.get(label, None)
+
+            xs = list(map(lambda x: x[0], legend_groups[label]))
+            ys = list(map(lambda x: x[1], legend_groups[label]))
+            plt.scatter(xs, ys, label=label, s=25, color=color)
+
 
     # Create ground truth line
     transition_xs = [min_timestamp]
@@ -625,9 +648,10 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=True)
 
-    # _models = ['nbc', 'rf']
-    plot_transition_dataset(validation_results, _models, 5, [300, 400, 300])
-    plot_transition_dataset(validation_results, _models, 5, [300, 50, 50, 50, 50, 50, 250])
+    _models = ['rf']
+    for weights in [(0, 0, 1), (-1, -1, 0)]:
+        plot_transition_dataset(validation_results, _models, 5, [300, 400, 300], True, weights)
+        plot_transition_dataset(validation_results, _models, 5, [300, 50, 50, 50, 50, 50, 250], True, weights)
 
     # Subset plotting stuff
     barchart_subsets_results = metrics.filter_results(validation_results, [100])

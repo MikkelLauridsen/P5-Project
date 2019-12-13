@@ -229,7 +229,7 @@ def get_impersonation_probabilities(configuration, prediction_dataset):
     Gets a list of impersonation prediction probabilites on a dataset based on a model configuration
     :param configuration: A model configuration
     :param prediction_datasetset: A list of datapoints to predict on
-    :return: List of predictions, list of timestamps of predictions
+    :return: List of impersonation probabilites, list of timestamps of predictions
     """
     # Create dataset to train on
     X_train, y_train, X_validation, y_validation, _ = utility.get_training_validation(
@@ -254,16 +254,17 @@ def get_impersonation_probabilities(configuration, prediction_dataset):
         classifier = CalibratedClassifierCV(classifier, cv=5)
     classifier.fit(X_train, y_train)
 
-    predictions = list(classifier.predict_proba(X))
+    predictions = list(classifier.predict(X))
+    probabilies = list(classifier.predict_proba(X))
     timestamps = [window.time_ms for window in prediction_dataset]
-    imp_predictions = []
+    imp_probabilies = []
 
     imp_index = list(classifier.classes_).index('impersonation')
 
-    for prediction in predictions:
-        imp_predictions.append(prediction[imp_index])
+    for prediction in probabilies:
+        imp_probabilies.append(prediction[imp_index])
 
-    return imp_predictions, timestamps
+    return timestamps, imp_probabilies, predictions
 
 
 if __name__ == "__main__":
