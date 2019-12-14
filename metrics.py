@@ -202,6 +202,14 @@ def get_metrics(y_actual, y_predict):
     return metrics
 
 
+def get_result_path(result, is_test):
+    return get_metrics_path(
+        result.window_ms, result.stride_ms,
+        result.imp_split, result.dos_type,
+        result.model, result.baseline,
+        result.subset, False, is_test)
+
+
 def get_metrics_path(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_time=False, is_test=False):
     """Returns the file path and directory path associated with the specified parameters.
 
