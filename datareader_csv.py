@@ -212,8 +212,8 @@ def __load_result(path):
         subset.append(labels[index])
 
     # Use the gathered information to load the metrics and times
-    metrics = load_metrics(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
-    times = load_times(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset)
+    metrics = load_metrics(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test)
+    times = load_times(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test)
 
     return Result(window_ms, stride_ms, model, imp_split, dos_type, baseline, subset, is_test, metrics, times)
 
