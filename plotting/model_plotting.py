@@ -407,14 +407,18 @@ def plot_barchart_results(results, plot_type='f1', metrics_type='macro'):
     ys = []
     models = []
 
+    metrics_name = metrics_type
+    if metrics_name == 'normal':
+        metrics_name = "attack-free"
+
     # Determine y function and title from plot type
     y_func, title = {
-        'f1':           (lambda r: r.metrics[metrics_type].f1,                f"F1 {metrics_type}"),
-        'fpr':          (lambda r: r.metrics[metrics_type].fpr,               f"FPR {metrics_type}"),
-        'fnr':          (lambda r: r.metrics[metrics_type].fnr,               f"FNR {metrics_type}"),
-        'recall':       (lambda r: r.metrics[metrics_type].recall,            f"Recall {metrics_type}"),
-        'precision':    (lambda r: r.metrics[metrics_type].precision,         f"Precision {metrics_type}"),
-        'accuracy':     (lambda r: r.metrics[metrics_type].balanced_accuracy, f"Accuracy {metrics_type}"),
+        'f1':           (lambda r: r.metrics[metrics_type].f1,                f"F1 {metrics_name}"),
+        'fpr':          (lambda r: r.metrics[metrics_type].fpr,               f"FPR {metrics_name}"),
+        'fnr':          (lambda r: r.metrics[metrics_type].fnr,               f"FNR {metrics_name}"),
+        'recall':       (lambda r: r.metrics[metrics_type].recall,            f"Recall {metrics_name}"),
+        'precision':    (lambda r: r.metrics[metrics_type].precision,         f"Precision {metrics_name}"),
+        'accuracy':     (lambda r: r.metrics[metrics_type].balanced_accuracy, f"Accuracy {metrics_name}"),
         'model_time':   (lambda r: r.times['model_time'] / 1e6,                "Model prediction time (ms)"),
         'feature_time': (lambda r: r.times['feature_time'] / 1e6,              "Feature calculation time (ms)"),
     }[plot_type]
@@ -648,7 +652,7 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=True)
 
-    _models = ['rf']
+    # _models = ['rf']
     for weights in [(0, 0, 1), (-1, -1, 0)]:
         plot_transition_dataset(validation_results, _models, 5, [300, 400, 300], True, weights)
         plot_transition_dataset(validation_results, _models, 5, [300, 50, 50, 50, 50, 50, 250], True, weights)
@@ -664,7 +668,7 @@ if __name__ == '__main__':
     plot_barchart_subsets(barchart_subsets_results, None, subsets, labels, title)
 
     # Bar plots
-    best_test_results = model_selection.get_best_for_models(test_results, conf.selected_models.keys(), -1, -1, 0, 'macro', True)
+    best_test_results = model_selection.get_best_for_models(test_results, conf.selected_models.keys(), 0, 0, 1, 'normal', True)
     plot_types = ['f1', 'fpr', 'fnr', 'recall', 'precision', 'accuracy']
     metrics_types = ['macro', 'normal', 'impersonation', 'dos', 'fuzzy']
 
