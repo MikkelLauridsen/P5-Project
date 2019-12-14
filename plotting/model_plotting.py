@@ -668,8 +668,13 @@ if __name__ == '__main__':
     #plot_barchart_subsets(barchart_subsets_results, None, subsets, labels, title)
 
     # Bar plots
-    best_validation_results = model_selection.get_best_for_models(validation_results, conf.selected_models.keys(), 0, 0, 1, 'normal', True)
-    best_test_results = [datareader_csv.__load_result(metrics.get_result_path(result, True)) for result in best_validation_results]
+    best_validation_results = model_selection.get_best_for_models(validation_results, conf.selected_models.keys(), 0, 0, 1, 'normal', False)
+    best_test_results = [metrics.load_result(
+        result.window_ms, result.stride_ms,
+        result.imp_split, result.dos_type,
+        result.model, result.baseline,
+        result.subset, True) for result in best_validation_results]
+
     plot_types = ['f1', 'fpr', 'fnr', 'recall', 'precision', 'accuracy']
     metrics_types = ['macro', 'normal', 'impersonation', 'dos', 'fuzzy']
 
