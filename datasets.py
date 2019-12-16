@@ -365,10 +365,15 @@ def get_transitioning_dataset(window_ms=100, stride_ms=100, slice_sizes=[250, 25
 
     final_messages = None
     final_transitions = []
-    attack_free_index = math.floor(len(attack_free_messages) * 0.96)  # Starting attack free index
-    imp_index = math.floor(len(imp_messages) * 0.89)  # Starting impersonation index
+    attack_free_messages = attack_free_messages[math.floor(len(attack_free_messages) * 0.96):-1]
+    imp_messages = imp_messages[math.floor(len(imp_messages) * 0.89):-1]
+    attack_free_index = 0
+    imp_index = 0
     transition_index = 0
     is_attack_free = True  # Bool to keep track of whether to current slice corresponds to a attack free or imp
+
+    attack_free_messages = __neutralize_offset(attack_free_messages)
+    imp_messages = __neutralize_offset(imp_messages)
 
     for size in slice_sizes:
         if is_attack_free:
@@ -388,6 +393,14 @@ def get_transitioning_dataset(window_ms=100, stride_ms=100, slice_sizes=[250, 25
 
     # Calculate datapoints from found messages
     datapoints, _ = __messages_to_datapoints(final_messages, window_ms, 'normal', stride_ms)
+
+    current_slice_index = 0
+    current_upper = 0
+    for datapoint in datapoints:
+        if datapoint.time_ms > current_upper:
+            current_upper += slice_sizes[current_slice_index]
+            current_slice_index += 1
+        datapoint.class_label = 'impersonation' if current_slice_index % 2 == 0 else 'normal'
 
     return datapoints, final_transitions[0:-1]
 
