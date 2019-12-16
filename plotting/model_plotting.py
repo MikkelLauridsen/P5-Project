@@ -427,7 +427,9 @@ def plot_barchart_results(results, plot_type='f1', metrics_type='macro'):
         ys.append(y_func(result))
         models.append(result.model)
 
-    plt.ylim(0, 1)
+    if plot_type != 'model_time' and plot_type != 'feature_time':
+        plt.ylim(0, 1)
+
     plt.bar(models, ys)
     plt.title(title)
     plt.savefig(f"plots/{plot_type}_{metrics_type}")
@@ -555,7 +557,7 @@ def __get_in_range(xs, ys, min_x, max_x):
     return xs_new, ys_new
 
 
-def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[250, 250], include_predictions=True, weights=(0, 0, 1)):
+def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[250, 250], metric_type='normal', include_predictions=True, weights=(0, 0, 1)):
     """
     Trains models on the test dataset and plots their performance on an artificial dataset that transitions
         from normal state to impersonation attack state.
@@ -569,7 +571,7 @@ def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[25
     """
 
     # Find best result for each model
-    best_results = model_selection.get_best_for_models(results, model_labels, *weights, 'normal')
+    best_results = model_selection.get_best_for_models(results, model_labels, *weights, metric_type)
 
     transitions = []
     max_timestamp = 0
@@ -594,8 +596,7 @@ def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[25
         for i in range(len(timestamps)):
             timestamps[i] -= offset
 
-        # Plot model
-        plt.plot(timestamps, probabilities, label=configuration.model)
+        legend_groups[configuration.model] = list(zip(timestamps, probabilities, predictions))
 
         for label in ['normal', 'dos', 'fuzzy', 'impersonation']:
             filtered_items = list(filter(lambda x: x[2] == label, list(zip(timestamps, probabilities, predictions))))
@@ -608,6 +609,16 @@ def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[25
         max_timestamp = max([max_timestamp] + timestamps)
         min_timestamp = min([min_timestamp] + timestamps)
 
+    # Plot models
+    for label in model_labels:
+        if len(legend_groups[label]) == 0:
+            continue
+
+        xs = list(map(lambda x: x[0], legend_groups[label]))
+        ys = list(map(lambda x: x[1], legend_groups[label]))
+        plt.plot(xs, ys, label=label)
+
+    # Plot scatter predictions
     if include_predictions:
         for label in ['normal', 'dos', 'fuzzy', 'impersonation']:
             if len(legend_groups[label]) == 0:
@@ -622,7 +633,6 @@ def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[25
             ys = list(map(lambda x: x[1], legend_groups[label]))
             plt.scatter(xs, ys, label=label, s=25, color=color)
 
-
     # Create ground truth line
     transition_xs = [min_timestamp]
     for transition in transitions:
@@ -636,9 +646,40 @@ def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[25
     # Plot ground truth line
     plt.plot(transition_xs, transition_ys, label="Ground truth", linewidth=3)
 
-    plt.title("Normal to impersonation transition probabilities")
+    plt.title("Attack-free to impersonation transition probabilities")
     plt.legend()
     plt.ylabel("Impersonation probability")
+    plt.xlabel("Time (ms)")
+    plt.show()
+
+    for i, label in enumerate(model_labels):
+        if len(legend_groups[label]) == 0:
+            continue
+
+        xs = list(map(lambda x: x[0], legend_groups[label]))
+        ys = list(map(lambda x: x[2], legend_groups[label]))
+
+        for j, y in enumerate(ys):
+            y = 1 if y == 'impersonation' else 0
+            y += (len(model_labels) - i) * 1.5
+            ys[j] = y
+
+        plt.plot(xs, ys, label=label)
+
+    # Plot ground truth line
+    plt.plot(transition_xs, transition_ys, label="Ground truth")
+
+    current_pos = 0
+    grid_lines = []
+    for slice in slice_sizes:
+        current_pos += slice
+        grid_lines.append(current_pos)
+
+    # plt.gca().axes.get_yaxis().set_ticks([])
+    plt.grid(axis='x')
+    plt.legend(loc='lower left', fontsize='small')
+    plt.title("Attack-free to impersonation class assignments")
+    plt.ylabel("Impersonation classification")
     plt.xlabel("Time (ms)")
     plt.show()
 
@@ -652,10 +693,11 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=True)
 
-    # _models = ['rf']
-    for weights in [(0, 0, 1), (-1, -1, 0)]:
-        plot_transition_dataset(validation_results, _models, 5, [300, 400, 300], True, weights)
-        plot_transition_dataset(validation_results, _models, 5, [300, 50, 50, 50, 50, 50, 250], True, weights)
+    _models = ['nbc', 'dt']
+    for type in [('normal', (0, 0, 1)), ('macro', (0, 0, 1)), ('macro', (-1, -1, 0))]:
+        pass
+        plot_transition_dataset(validation_results, _models, 5, [300, 400, 300], type[0], False, type[1])
+        plot_transition_dataset(validation_results, _models, 5, [300, 50, 50, 50, 50, 50, 250], type[0], False, type[1])
 
     # Subset plotting stuff
     #barchart_subsets_results = metrics.filter_results(validation_results, [100])
@@ -668,7 +710,7 @@ if __name__ == '__main__':
     #plot_barchart_subsets(barchart_subsets_results, None, subsets, labels, title)
 
     # Bar plots
-    best_validation_results = model_selection.get_best_for_models(validation_results, conf.selected_models.keys(), 0, 0, 1, 'normal', False)
+    best_validation_results = model_selection.get_best_for_models(validation_results, conf.selected_models.keys(), 0, 0, 1, 'macro', False)
     best_test_results = [metrics.load_result(
         result.window_ms, result.stride_ms,
         result.imp_split, result.dos_type,
