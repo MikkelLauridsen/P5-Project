@@ -4,12 +4,17 @@ import datareader_csv
 import metrics
 from datapoint import datapoint_features
 from models.model_utility import get_scaled_test, get_training_validation
-import plotting.model_plotting as model_plotting
 from run_models import create_and_save_results
 import configuration as conf
 
 
 def run_on_test(configurations):
+    """
+    Trains and runs a model configuration on the test dataset and saves to result.
+    :param configurations: A list of model configurations to run on the test set
+    :return:
+    """
+
     for configuration in configurations:
         X_test, y_test, feature_time_dict = get_scaled_test(
             configuration.window_ms,
@@ -23,6 +28,7 @@ def run_on_test(configurations):
             configuration.imp_split,
             configuration.dos_type)
 
+        # For test on test set, train on both training and validation sets
         X_train = list(X_validation) + list(X_train)
         y_train = list(y_validation) + list(y_train)
 
