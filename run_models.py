@@ -13,6 +13,7 @@ from datapoint import datapoint_features
 from datareader_csv import load_metrics
 from datawriter_csv import save_metrics, save_time
 import configuration as config
+from sklearn.metrics import classification_report
 
 
 def generate_validation_results(windows=None, strides=None, imp_splits=None,
@@ -240,7 +241,7 @@ def get_impersonation_probabilities(configuration, prediction_dataset):
     y_train = list(y_train) + list(y_validation)
 
     # Create dataset to predict on
-    X, _ = utility.split_feature_label(prediction_dataset)
+    X, y_actual = utility.split_feature_label(prediction_dataset)
     X = __create_feature_subset(X, configuration.subset)
 
     # Scale datasets
@@ -264,7 +265,13 @@ def get_impersonation_probabilities(configuration, prediction_dataset):
     for prediction in probabilies:
         imp_probabilies.append(prediction[imp_index])
 
-    return timestamps, imp_probabilies, predictions
+    for i, prediction in enumerate(predictions):
+        if prediction != 'normal' and prediction != 'impersonation':
+            predictions[i] = 'impersonation'
+
+    metrics = classification_report(y_actual, predictions, output_dict=True)
+
+    return timestamps, imp_probabilies, predictions, metrics
 
 
 if __name__ == "__main__":
