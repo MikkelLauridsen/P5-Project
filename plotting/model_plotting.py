@@ -679,7 +679,7 @@ def plot_transition_dataset(results, model_labels, run_stride=5, slice_sizes=[25
         current_pos += slice
         grid_lines.append(current_pos)
 
-    # plt.gca().axes.get_yaxis().set_ticks([])
+    plt.gca().axes.get_yaxis().set_ticks([])
     plt.grid(axis='x')
     plt.legend(loc='lower left', fontsize='small')
     plt.title("Attack-free to impersonation class assignments")
@@ -699,7 +699,7 @@ if __name__ == '__main__':
     validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=True)
 
-    # _models = ['nbc']
+    _models = ['bn', 'nbc', 'dt']
     for type in [((0, 0, 1), 'macro'), ((0, 0, 1), 'normal'), ((-1, -1, 0), 'macro')]:
         plot_transition_dataset(validation_results, _models, 5, [300, 400, 300], False, type[0], type[1])
         plot_transition_dataset(validation_results, _models, 5, [300, 50, 50, 50, 50, 50, 250], False, type[0], type[1])
