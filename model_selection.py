@@ -82,6 +82,14 @@ def get_best_for_models(results, models, w_ft=-0.25, w_mt=-10, w_f1=3.5, f1_type
 
 
 def get_feature_statistics(results):
+    """
+    Returns a dictionary with feature labels as keys,
+    in which values are comprised of prevalence and feature importance statistics.
+    Here, feature importance denotes the average performance difference,
+    between configurations with and without a given feature.
+    :param results: a list of Result objects.
+    :return: a dictionary of the format {'FEATURE': [PREVALENCE, DoS_IMPORTANCE, Fuzzy_IMPORTANCE, Imp_IMPORTANCE]}.
+    """
     to_be_deleted = []
 
     for result in results:
@@ -124,11 +132,6 @@ def get_feature_statistics(results):
 if __name__ == '__main__':
     results = datareader_csv.load_all_results()
     results = metrics.filter_results(results, dos_types=[conf.dos_type], imp_splits=[conf.imp_split])
-
-    # statistics = get_feature_statistics(results)
-
-    # for statistic in statistics.keys():
-    #     print("{}: {:.2f}, {:.2f}, {:.2f}, {:.2f}".format(statistic, statistics[statistic][0], statistics[statistic][1], statistics[statistic][2], statistics[statistic][3]))
 
     best_results = get_best_for_models(results, conf.selected_models.keys(), 0, 0, 1, 'macro')
     run_on_test(best_results)

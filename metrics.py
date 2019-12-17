@@ -203,6 +203,8 @@ def get_metrics(y_actual, y_predict):
 
 
 def load_result(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test):
+    """Constructs and returns the Result object associated with specified parameters,
+    if the corresponding file exists."""
     metrics = datareader_csv.load_metrics(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test)
     times = datareader_csv.load_times(window_ms, stride_ms, imp_split, dos_type, model, baseline, subset, is_test)
 
@@ -210,6 +212,7 @@ def load_result(window_ms, stride_ms, imp_split, dos_type, model, baseline, subs
 
 
 def get_result_path(result, is_test):
+    """Returns the filepath associated with the existing specified Result object."""
     return get_metrics_path(
         result.window_ms, result.stride_ms,
         result.imp_split, result.dos_type,
