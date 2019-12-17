@@ -12,6 +12,7 @@ For finding the new attack-free/impersonation-attack split after remote frame re
 Sum of removed time intervals.
 Index of message before time cut-off.
 """
+import os
 import numpy as np
 from datareader_csv import load_messages
 
@@ -152,6 +153,8 @@ def analyze_data():
 
 
 if __name__ == "__main__":
+    os.chdir("..")
+
     information = analyze_data()
     for key, value in information.items():
         print(f"{key}: {value}")

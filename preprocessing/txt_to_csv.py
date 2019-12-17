@@ -77,4 +77,6 @@ def txt_to_csv(start_dir, target_dir):
 
 
 if __name__ == "__main__":
+    os.chdir("..")
+
     txt_to_csv("data/raw/", "data/csv/")

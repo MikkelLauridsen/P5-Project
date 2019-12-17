@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 
-import data_analysis
+from preprocessing import data_analysis
 import datareader_csv
 
 

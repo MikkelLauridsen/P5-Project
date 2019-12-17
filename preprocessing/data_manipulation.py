@@ -132,6 +132,8 @@ def __remove_remote_frames(messages):
 
 
 if __name__ == "__main__":
+    os.chdir("..")
+
     source_dir = "data/csv/"
     target_dir = "data/manipulated/"
 

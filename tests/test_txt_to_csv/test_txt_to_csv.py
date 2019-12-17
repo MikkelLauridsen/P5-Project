@@ -1,6 +1,6 @@
 from unittest import TestCase
 import os
-import txt_to_csv
+from preprocessing import txt_to_csv
 import shutil
 import pandas as pd
 
