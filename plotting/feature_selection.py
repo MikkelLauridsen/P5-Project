@@ -7,10 +7,13 @@ from models.model_utility import scale_features, split_feature_label
 from datapoint import datapoint_features, datapoint_attribute_descriptions
 import matplotlib.pyplot as plt
 import configuration as conf
+import os
 
 from plotting import feature_plotting
 
 if __name__ == '__main__':
+    os.chdir("..")
+
     window_ms = 100
     stride_ms = 100
 
@@ -35,6 +38,7 @@ if __name__ == '__main__':
     plt.xticks(range(data.shape[1]), list(range(22)), fontsize=20)
     plt.tick_params(length=10, bottom=False)
     plt.clim(-1, 1)
+
     # Add feature names as y-axis labels
     plt.yticks([-0.5] + list(range(data.shape[1])) + [data.shape[1] - 0.5], [""] + column_labels + [""], fontsize=25)
     plt.savefig('heatmap.png', bbox_inches='tight')

@@ -104,7 +104,7 @@ if __name__ == "__main__":
         in_parallel=True)
 
     # Plot features
-    #plot_all_features(training_points)
+    plot_all_features(training_points)
 
     durations_path = f"data\\feature\\{conf.imp_type}\\{conf.dos_type}\\mixed_validation_time_100ms_100ms.csv"
     feature_times = datareader_csv.load_feature_durations(durations_path)

@@ -79,7 +79,7 @@ def plot_windows(windows, imp_split=True, dos_type='modified'):
         __generate_results([window], [window], [imp_split], [dos_type], {model: __models[model]})
         metrics = load_metrics(window, window, imp_split, dos_type, model, __models[model] == {},
                                datapoint_features)
-        return metrics["total"].f1
+        return metrics["macro"].f1
 
     __plot_elements(
         windows, value_func, __models,
@@ -695,6 +695,18 @@ if __name__ == '__main__':
 
     _models = __models.keys()
 
+    # Options
+    _windows = [100, 50, 20, 10]
+    _strides = [100, 50, 20, 10]
+    angle = 15
+
+    plot_windows(_windows, imp_split=False, dos_type='modified')
+    plot_strides(_strides, imp_split=False, dos_type='modified')
+    plot_feature_stride_times(_strides, imp_split=False, dos_type='modified')
+    plot_feature_window_times(_windows, imp_split=False, dos_type='modified')
+    plot_model_window_times(_windows, imp_split=False, dos_type='modified')
+    plot_model_stride_times(_strides, imp_split=False, dos_type='modified')
+
     results = datareader_csv.load_all_results()
     validation_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=False)
     test_results = metrics.filter_results(results, dos_types=[conf.dos_type], is_test=True)
@@ -705,14 +717,14 @@ if __name__ == '__main__':
         plot_transition_dataset(validation_results, _models, 5, [300, 50, 50, 50, 50, 50, 250], False, type[0], type[1])
 
     # Subset plotting stuff
-    #barchart_subsets_results = metrics.filter_results(validation_results, [100])
-    #subset1 = [index_to_feature_label(index) for index in [1, 10, 11]]
-    #subset2 = [index_to_feature_label(index) for index in [0, 5, 9, 12, 14]]
-    #subset3 = [index_to_feature_label(index) for index in [6, 7, 8, 13]]
-    #subsets = [subset1, subset2, subset3]
-    #labels = ["Message frequency", "Message interval", "Message data-field"]
-    #title = f"Relation between performance and feature groups with 100ms windows"
-    #plot_barchart_subsets(barchart_subsets_results, None, subsets, labels, title)
+    barchart_subsets_results = metrics.filter_results(validation_results, [100])
+    subset1 = [index_to_feature_label(index) for index in [1, 10, 11]]
+    subset2 = [index_to_feature_label(index) for index in [0, 5, 9, 12, 14]]
+    subset3 = [index_to_feature_label(index) for index in [6, 7, 8, 13]]
+    subsets = [subset1, subset2, subset3]
+    labels = ["Message frequency", "Message interval", "Message data-field"]
+    title = f"Relation between performance and feature groups with 100ms windows"
+    plot_barchart_subsets(barchart_subsets_results, None, subsets, labels, title)
 
     # Bar plots
     best_validation_results = model_selection.get_best_for_models(validation_results, conf.selected_models.keys(), 0, 0, 1, 'macro', False)
@@ -755,11 +767,3 @@ if __name__ == '__main__':
     for labeling in labelings:
         plot_all_results_2d(validation_results, _models, _windows, _strides, labeling, f1_type)
         plot_all_results_3d(validation_results, angle, _models, _windows, _strides, labeling, f1_type)
-
-
-    #plot_windows(_windows, imp_split=False, dos_type='modified')
-    #plot_strides(_strides, imp_split=False, dos_type='modified')
-    #plot_feature_stride_times(_strides, imp_split=False, dos_type='modified')
-    #plot_feature_window_times(_windows, imp_split=False, dos_type='modified')
-    #plot_model_window_times(_windows, imp_split=False, dos_type='modified')
-    #plot_model_stride_times(_strides, imp_split=False, dos_type='modified')
